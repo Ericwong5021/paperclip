@@ -23,6 +23,7 @@ import type {
   WorkspaceFileListMode,
   WorkspaceFileSelector,
 } from "@paperclipai/shared";
+import { t as translateMessage, useTranslation } from "@/i18n";
 
 type BrowserSource = "current" | "other";
 
@@ -73,33 +74,33 @@ function selectedAncestorFolders(selectedPath: string | null | undefined, rootPa
  * states and the viewer's error panels read in one voice. Substring matching
  * keeps it resilient to small reason-string changes on the server.
  */
-export function describeUnavailable(reason: string): { title: string; body: string; icon: ReactNode } {
+export function describeUnavailable(reason: string, translate: (key: string) => string = translateMessage): { title: string; body: string; icon: ReactNode } {
   const lower = reason.toLowerCase();
   if (lower.includes("remote")) {
     return {
       icon: <Cloud aria-hidden="true" className="h-5 w-5 text-muted-foreground" />,
-      title: "Remote workspace preview not supported",
-      body: "This workspace is hosted remotely and is not available for inline preview yet.",
+      title: translate("projectWorkspace.remotePreviewUnsupported"),
+      body: translate("projectWorkspace.remotePreviewUnavailable"),
     };
   }
   if (lower.includes("no_workspace") || lower.includes("no_local")) {
     return {
       icon: <FolderOpen aria-hidden="true" className="h-5 w-5 text-muted-foreground" />,
-      title: "No workspace yet",
-      body: "This issue does not have a workspace to browse. Files appear here once a run creates one.",
+      title: translate("projectWorkspace.noWorkspaceYet"),
+      body: translate("projectWorkspace.issueNoWorkspace"),
     };
   }
   if (lower.includes("archiv") || lower.includes("cleaned") || lower.includes("unavailable")) {
     return {
       icon: <FolderOpen aria-hidden="true" className="h-5 w-5 text-muted-foreground" />,
-      title: "Workspace is no longer available",
-      body: "The isolated worktree for this issue has been cleaned up, so files cannot be previewed.",
+      title: translate("projectWorkspace.workspaceNoLongerAvailable"),
+      body: translate("projectWorkspace.cleanedWorkspaceFiles"),
     };
   }
   return {
     icon: <AlertTriangle aria-hidden="true" className="h-5 w-5 text-amber-500" />,
-    title: "Workspace unavailable",
-    body: "These workspace files can't be browsed right now.",
+    title: translate("projectWorkspace.workspaceUnavailable"),
+    body: translate("projectWorkspace.workspaceFilesUnavailable"),
   };
 }
 
@@ -124,11 +125,12 @@ function WorkspaceFileBreadcrumbs({
   folderPath: string | null;
   onOpenFolder: (path: string | null) => void;
 }) {
+  const { t } = useTranslation();
   const segments = folderPath?.split("/").filter(Boolean) ?? [];
   if (!rootLabel && segments.length === 0) return null;
 
   return (
-    <nav aria-label="Current folder" className="min-w-0 overflow-hidden text-(length:--text-micro) text-muted-foreground">
+    <nav aria-label={t("projectWorkspace.currentFolder")} className="min-w-0 overflow-hidden text-(length:--text-micro) text-muted-foreground">
       <ol className="flex min-w-0 items-center gap-1 overflow-hidden">
         {rootLabel ? (
           <li className="min-w-0 shrink">
@@ -175,6 +177,7 @@ interface WorkspaceFileRowProps {
 }
 
 function WorkspaceFileRow({ item, treeItemId, selected, highlighted, depth, onOpen, onHover, downloadUrl }: WorkspaceFileRowProps) {
+  const { t } = useTranslation();
   const name = basename(item.relativePath);
   return (
     <div
@@ -196,8 +199,8 @@ function WorkspaceFileRow({ item, treeItemId, selected, highlighted, depth, onOp
         <a
           href={downloadUrl}
           download={name}
-          aria-label={`Download ${name}`}
-          title={`Download ${name}`}
+          aria-label={t("projectWorkspace.downloadFile", { name })}
+          title={t("projectWorkspace.downloadFile", { name })}
           onClick={(event) => event.stopPropagation()}
           className="ml-auto inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 hover:bg-background/70 hover:text-foreground hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
@@ -368,6 +371,7 @@ function WorkspaceFileTree({
   onHoverFile,
   getDownloadUrl,
 }: WorkspaceFileTreeProps) {
+  const { t } = useTranslation();
   function renderNode(node: WorkspaceFileTreeNode): ReactNode {
     if (node.kind === "folder") {
       const expanded = node.lazy
@@ -404,7 +408,7 @@ function WorkspaceFileTree({
                   style={{ paddingLeft: `${1 + (node.depth + 1) * 0.875}rem` }}
                 >
                   <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
-                  <span>Loading folder…</span>
+                  <span>{t("projectWorkspace.loadingFolder")}</span>
                 </div>
               ) : null}
               {truncated ? (
@@ -415,7 +419,7 @@ function WorkspaceFileTree({
                   style={{ paddingLeft: `${1 + (node.depth + 1) * 0.875}rem` }}
                 >
                   <span className="h-3.5 w-3.5 shrink-0" />
-                  <span>Load more from this folder</span>
+                  <span>{t("projectWorkspace.loadMoreFolder")}</span>
                 </button>
               ) : null}
             </>
@@ -440,7 +444,7 @@ function WorkspaceFileTree({
   }
 
   return (
-    <div role="tree" id={listboxId} aria-label="Workspace files" className="space-y-0.5 py-1">
+    <div role="tree" id={listboxId} aria-label={t("projectWorkspace.workspaceFiles")} className="space-y-0.5 py-1">
       {nodes.map(renderNode)}
     </div>
   );
@@ -493,6 +497,7 @@ export function WorkspaceFileBrowser({
   selectedWorkspaceId: activeWorkspaceId,
   className,
 }: WorkspaceFileBrowserProps) {
+  const { t } = useTranslation();
   const source: BrowserSource =
     initialProjectId && initialWorkspaceId ? "other" : "current";
   const workspace: WorkspaceFileSelector = "auto";
@@ -804,12 +809,12 @@ export function WorkspaceFileBrowser({
   ]);
 
   const announcement = useMemo(() => {
-    if (listQuery.isFetching) return "Loading workspace files…";
-    if (listQuery.isError) return "Unable to load workspace files.";
-    if (data?.state === "unavailable") return describeUnavailable(data.unavailableReason ?? "").title;
-    if (items.length === 0) return "No matching files.";
-    return `${items.length} item${items.length === 1 ? "" : "s"} found.`;
-  }, [data, items.length, listQuery.isError, listQuery.isFetching]);
+    if (listQuery.isFetching) return t("projectWorkspace.loadingWorkspaceFiles");
+    if (listQuery.isError) return t("projectWorkspace.failedLoadWorkspaceFiles");
+    if (data?.state === "unavailable") return describeUnavailable(data.unavailableReason ?? "", t).title;
+    if (items.length === 0) return t("projectWorkspace.noFilesMatch", { query: "" });
+    return `${items.length} ${t("projectWorkspace.workspaceFiles")}`;
+  }, [data, items.length, listQuery.isError, listQuery.isFetching, t]);
 
   function openTypedPath() {
     const value = searchInput.trim();
@@ -956,24 +961,24 @@ export function WorkspaceFileBrowser({
     body = (
       <StateMessage
         icon={<FolderOpen aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
-        title="No company selected"
-        body="Choose a company before browsing another project workspace."
+        title={t("projectWorkspace.noCompanySelected")}
+        body={t("projectWorkspace.noCompanyBrowse")}
       />
     );
   } else if (source === "other" && projectsQuery.isFetching && projectsWithWorkspaces.length === 0) {
     body = (
       <StateMessage
         icon={<Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-muted-foreground" />}
-        title="Loading project workspaces"
-        body="Registered workspaces will appear here."
+        title={t("projectWorkspace.loadingProjectWorkspaces")}
+        body={t("projectWorkspace.registeredWorkspacesAppear")}
       />
     );
   } else if (source === "other" && !canListFiles) {
     body = (
       <StateMessage
         icon={<FolderOpen aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
-        title="No project workspaces"
-        body="No same-company project has a registered workspace to browse."
+        title={t("projectWorkspace.noProjectWorkspaces")}
+        body={t("projectWorkspace.noSameCompanyWorkspace")}
       />
     );
   } else if (listQuery.isFetching && !data) {
@@ -992,23 +997,23 @@ export function WorkspaceFileBrowser({
     body = (
       <StateMessage
         icon={<AlertTriangle aria-hidden="true" className="h-5 w-5 text-amber-500" />}
-        title="Couldn't load files"
+        title={t("projectWorkspace.couldNotLoadFiles")}
         body={
           status === 404
-            ? "Workspace browsing isn't available for this issue."
-            : "Something went wrong loading workspace files."
+            ? t("projectWorkspace.workspaceBrowsingUnavailable")
+            : t("projectWorkspace.failedLoadWorkspaceFiles")
         }
       />
     );
   } else if (data?.state === "unavailable") {
-    const detail = describeUnavailable(data.unavailableReason ?? "");
+    const detail = describeUnavailable(data.unavailableReason ?? "", t);
     body = <StateMessage icon={detail.icon} title={detail.title} body={detail.body} />;
   } else if (items.length === 0) {
     body = (
       <StateMessage
         icon={<Search aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
-        title={isSearch ? `No files match “${q}”` : "No recently changed files yet"}
-        body="Try searching by name or path."
+        title={isSearch ? t("projectWorkspace.noFilesMatch", { query: q }) : t("projectWorkspace.noRecentlyChangedFiles")}
+        body={t("projectWorkspace.trySearchNamePath")}
       />
     );
   } else {
@@ -1046,8 +1051,8 @@ export function WorkspaceFileBrowser({
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
           onKeyDown={handleSearchKeyDown}
-          placeholder="Search files by name or path…"
-          aria-label="Search workspace files"
+          placeholder={t("projectWorkspace.searchFiles")}
+          aria-label={t("projectWorkspace.searchWorkspaceFiles")}
           role="combobox"
           aria-expanded={items.length > 0}
           aria-controls={items.length > 0 ? listboxId : undefined}
@@ -1079,10 +1084,10 @@ export function WorkspaceFileBrowser({
               onClick={() => loadMoreFolder(currentFolderKey)}
               className="rounded px-1 py-0.5 text-left hover:bg-accent hover:text-foreground"
             >
-              Load more from this folder
+              {t("projectWorkspace.loadMoreFolder")}
             </button>
           ) : (
-            <>Showing first {items.length} — refine the search to narrow.</>
+            <>{t("projectWorkspace.showingFirstFiles", { count: items.length })}</>
           )}
         </div>
       ) : null}

@@ -30,6 +30,7 @@ import {
 } from "@/components/timeline/WorkTimelineChart";
 import { formatDuration, TIMELINE_COLORS } from "@/lib/timeline/layout";
 import { cn } from "@/lib/utils";
+import { getLocale, t, useTranslation } from "@/i18n";
 
 type RangePreset = "today" | "7d" | "30d" | "custom";
 const TIMELINE_PAGE_LIMIT = 500;
@@ -128,17 +129,17 @@ function rangeWindow(range: DateRangeState): Pick<WorkTimelineParams, "from" | "
 }
 
 function rangeError(range: DateRangeState): string | null {
-  if (!range.fromDate || !range.toDate) return "Choose a start and end date.";
-  if (!rangeWindow(range)) return "Start date must be before end date.";
+  if (!range.fromDate || !range.toDate) return t("timelinePage.chooseDates");
+  if (!rangeWindow(range)) return t("timelinePage.invalidDates");
   return null;
 }
 
 function formatInteger(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
+  return new Intl.NumberFormat(getLocale() === "zh-CN" ? "zh-CN" : "en-US").format(value);
 }
 
 function formatCompactInteger(value: number): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(getLocale() === "zh-CN" ? "zh-CN" : "en-US", {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
@@ -247,22 +248,22 @@ function TimelineLegend() {
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-3.5 py-2 text-xs text-muted-foreground">
       <span className="flex items-center gap-1.5">
         <span className="h-2.5 w-4 rounded-sm" style={{ backgroundColor: TIMELINE_COLORS.delegated }} />
-        Delegated
+        {t("timelinePage.delegated")}
       </span>
       <span className="flex items-center gap-1.5">
         <span className="h-2.5 w-4 rounded-sm" style={{ backgroundColor: TIMELINE_COLORS.automation }} />
-        Automation
+        {t("timelinePage.automation")}
       </span>
       <span className="flex items-center gap-1.5">
         <span
           className="h-2.5 w-4 rounded-sm border border-dashed bg-transparent"
           style={{ borderColor: TIMELINE_COLORS.cancelled }}
         />
-        Cancelled
+        {t("timelinePage.cancelled")}
       </span>
       <span className="flex items-center gap-1.5">
         <span className="h-3.5 w-0.5" style={{ backgroundColor: TIMELINE_COLORS.now }} />
-        Now
+        {t("timelinePage.now")}
       </span>
     </div>
   );
@@ -274,12 +275,12 @@ function TimelineSummaryStats({
   summary: ReturnType<typeof timelineSummary>;
 }) {
   const stats: { label: string; value: string; icon: LucideIcon }[] = [
-    { label: "Runs", value: formatInteger(summary.runs), icon: GanttChartSquare },
-    { label: "Agents", value: formatInteger(summary.agents), icon: Bot },
-    { label: "Run time", value: formatDuration(0, summary.activeMs), icon: Clock3 },
+    { label: t("timelinePage.runs"), value: formatInteger(summary.runs), icon: GanttChartSquare },
+    { label: t("timelinePage.agents"), value: formatInteger(summary.agents), icon: Bot },
+    { label: t("timelinePage.runTime"), value: formatDuration(0, summary.activeMs), icon: Clock3 },
     {
-      label: "Tokens used",
-      value: summary.totalTokens > 0 ? formatCompactInteger(summary.totalTokens) : "Not tracked",
+      label: t("timelinePage.tokensUsed"),
+      value: summary.totalTokens > 0 ? formatCompactInteger(summary.totalTokens) : t("timelinePage.notTracked"),
       icon: Coins,
     },
   ];
@@ -303,6 +304,7 @@ function TimelineSummaryStats({
 }
 
 export function Timeline() {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const [zoom, setZoom] = useState<ZoomLevel>("day");
@@ -313,8 +315,8 @@ export function Timeline() {
   const [visibleWindow, setVisibleWindow] = useState<VisibleTimelineWindow | null>(null);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Timeline" }]);
-  }, [setBreadcrumbs]);
+    setBreadcrumbs([{ label: t("timelinePage.title") }]);
+  }, [setBreadcrumbs, t]);
 
   const dateRangeError = rangeError(dateRange);
   const params: WorkTimelineParams | null = useMemo(() => {
@@ -352,7 +354,7 @@ export function Timeline() {
     return (
       <>
         <RequestCollapsedSidebar />
-        <EmptyState icon={GanttChartSquare} message="Select a company to view its work timeline." />
+        <EmptyState icon={GanttChartSquare} message={t("timelinePage.selectCompany")} />
       </>
     );
   }
@@ -360,7 +362,7 @@ export function Timeline() {
   const header = (
     <div className="flex items-center gap-2">
       <GanttChartSquare className="h-6 w-6 text-muted-foreground" />
-      <h1 className="text-3xl font-semibold tracking-tight">Work Timeline</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{t("timelinePage.heading")}</h1>
     </div>
   );
 
@@ -385,7 +387,7 @@ export function Timeline() {
 
   const rangeControls = (
     <label className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
-      Range
+      {t("timelinePage.range")}
       <Segmented
         value={rangePreset}
         onChange={(preset) => {
@@ -394,9 +396,9 @@ export function Timeline() {
           setDateRange(presetRange(preset));
         }}
         options={[
-          { value: "today", label: "Today" },
-          { value: "7d", label: "7 days" },
-          { value: "30d", label: "30 days" },
+          { value: "today", label: t("timelinePage.today") },
+          { value: "7d", label: t("timelinePage.sevenDays") },
+          { value: "30d", label: t("timelinePage.thirtyDays") },
         ]}
       />
       <Input
@@ -407,9 +409,9 @@ export function Timeline() {
           setDateRange((prev) => ({ ...prev, fromDate: event.target.value }));
         }}
         className="h-8 w-(--sz-150px) text-xs"
-        aria-label="Timeline start date"
+        aria-label={t("timelinePage.startDate")}
       />
-      <span>to</span>
+      <span>{t("timelinePage.to")}</span>
       <Input
         type="date"
         value={dateRange.toDate}
@@ -418,7 +420,7 @@ export function Timeline() {
           setDateRange((prev) => ({ ...prev, toDate: event.target.value }));
         }}
         className="h-8 w-(--sz-150px) text-xs"
-        aria-label="Timeline end date"
+        aria-label={t("timelinePage.endDate")}
       />
     </label>
   );
@@ -426,14 +428,14 @@ export function Timeline() {
   const toolbar = (
     <div className="flex flex-wrap items-start gap-3">
       {summary && <TimelineSummaryStats summary={summary} />}
-      <div className="ml-auto flex items-center gap-1 pt-3" aria-label="Timeline zoom controls">
+      <div className="ml-auto flex items-center gap-1 pt-3" aria-label={t("timelinePage.zoomControls")}>
         <Button
           type="button"
           variant="outline"
           size="icon-xs"
           onClick={() => adjustZoom(0.8)}
-          aria-label="Zoom out"
-          title="Zoom out"
+          aria-label={t("timelinePage.zoomOut")}
+          title={t("timelinePage.zoomOut")}
         >
           <Minus className="h-3 w-3" />
         </Button>
@@ -442,8 +444,8 @@ export function Timeline() {
           variant="outline"
           size="icon-xs"
           onClick={() => adjustZoom(1.25)}
-          aria-label="Zoom in"
-          title="Zoom in"
+          aria-label={t("timelinePage.zoomIn")}
+          title={t("timelinePage.zoomIn")}
         >
           <Plus className="h-3 w-3" />
         </Button>
@@ -452,8 +454,8 @@ export function Timeline() {
           variant="outline"
           size="icon-xs"
           onClick={resetZoom}
-          aria-label="Reset zoom"
-          title="Reset zoom"
+          aria-label={t("timelinePage.resetZoom")}
+          title={t("timelinePage.resetZoom")}
         >
           <RotateCcw className="h-3 w-3" />
         </Button>
@@ -484,14 +486,14 @@ export function Timeline() {
       {error && (
         <EmptyState
           icon={GanttChartSquare}
-          message="Couldn't load the timeline. The aggregation endpoint may be unavailable."
+          message={t("timelinePage.loadFailed")}
         />
       )}
 
       {data && !isLoading && !dateRangeError && (
         data.spans.length === 0 ? (
           <div className="space-y-3">
-            <EmptyState icon={GanttChartSquare} message="No activity in this window." />
+            <EmptyState icon={GanttChartSquare} message={t("timelinePage.empty")} />
             <div className="flex flex-wrap items-center justify-end gap-3">
               {rangeControls}
             </div>
@@ -514,9 +516,9 @@ export function Timeline() {
             </Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs text-muted-foreground">
-                {data.spans.length} run{data.spans.length === 1 ? "" : "s"} ·{" "}
+                {data.spans.length} {data.spans.length === 1 ? t("timelinePage.run") : t("timelinePage.runs")} ·{" "}
                 {new Date(data.window.from).toLocaleString()} to {new Date(data.window.to).toLocaleString()}
-                {data.window.capped ? " · window capped" : ""}
+                {data.window.capped ? ` · ${t("timelinePage.windowCapped")}` : ""}
               </p>
               {rangeControls}
             </div>

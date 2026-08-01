@@ -10,6 +10,7 @@
 import type { Agent } from "@paperclipai/shared";
 import type { IssueChatComment } from "@/lib/issue-chat-messages";
 import type { TaskChatAuthorKind, TaskChatItem } from "./task-chat-model";
+import { t } from "@/i18n";
 
 export interface TaskChatAdapterContext {
   agentMap?: Map<string, Agent>;
@@ -53,7 +54,7 @@ export function commentsToTaskChatItems(
     let agentIcon: string | null | undefined;
     if (kind === "agent") {
       const agentId = effectiveAgentId(comment);
-      authorName = (agentId && ctx.agentMap?.get(agentId)?.name) || "Agent";
+      authorName = (agentId && ctx.agentMap?.get(agentId)?.name) || t("interactions.agent");
       agentIcon = agentId ? ctx.agentMap?.get(agentId)?.icon : undefined;
     } else if (kind === "human") {
       authorName =

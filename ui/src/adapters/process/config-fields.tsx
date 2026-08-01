@@ -4,6 +4,7 @@ import {
   DraftInput,
   help,
 } from "../../components/agent-config-primitives";
+import { t } from "@/i18n";
 
 const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
@@ -34,7 +35,7 @@ export function ProcessConfigFields({
 }: AdapterConfigFieldsProps) {
   return (
     <>
-      <Field label="Command" hint={help.command}>
+      <Field label={t("adapterTranscript.command")} hint={help.command}>
         <DraftInput
           value={
             isCreate
@@ -51,7 +52,7 @@ export function ProcessConfigFields({
           placeholder="e.g. node, python"
         />
       </Field>
-      <Field label="Args (comma-separated)" hint={help.args}>
+      <Field label={t("adapterTranscript.arguments")} hint={help.args}>
         <DraftInput
           value={
             isCreate

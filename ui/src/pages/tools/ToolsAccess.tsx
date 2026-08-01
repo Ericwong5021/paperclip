@@ -19,6 +19,7 @@ import {
   isAdvancedSetupTab,
   type ToolTabKey,
 } from "./tool-tabs";
+import { t } from "@/i18n";
 
 function renderTab(tab: ToolTabKey, companyId: string) {
   switch (tab) {
@@ -49,6 +50,7 @@ export function ToolsAccess() {
   const activeTab = (TOOL_TABS.find((t) => t.key === params.tab)?.key ?? "run-your-own") as ToolTabKey;
   const advanced = isAdvancedSetupTab(activeTab);
   const tabLabel = TOOL_TABS.find((t) => t.key === activeTab)?.label;
+  const translatedTabLabel = t(`appsTools.${activeTab.replace(/-/g, "")}`, { defaultValue: tabLabel ?? t("appsTools.developerTools", { defaultValue: "开发者工具" }) });
 
   useEffect(() => {
     setBreadcrumbs([
@@ -58,14 +60,14 @@ export function ToolsAccess() {
         ? [{ label: "Advanced setup" }]
         : [
             { label: "Advanced setup", href: advancedTabHref("run-your-own") },
-            { label: tabLabel ?? "Developer tools" },
+            { label: translatedTabLabel },
           ]),
     ]);
     return () => setBreadcrumbs([]);
-  }, [setBreadcrumbs, selectedCompany?.name, advanced, tabLabel]);
+  }, [setBreadcrumbs, selectedCompany?.name, advanced, translatedTabLabel]);
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company to open advanced setup.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("appsTools.selectCompanyAdvanced", { defaultValue: "请选择公司以打开高级设置。" })}</div>;
   }
 
   // Retired developer tabs (PAP-10915/PAP-10928) — keep old links working.
@@ -85,16 +87,15 @@ export function ToolsAccess() {
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 sm:p-6">
         <header>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-bold text-foreground">Advanced setup</h1>
+            <h1 className="text-xl font-bold text-foreground">{t("appsTools.advancedSettings")}</h1>
             <span className="inline-flex items-center rounded-full bg-foreground px-2.5 py-0.5 text-(length:--text-micro) font-bold text-background">
-              Advanced
+              {t("appsTools.advancedSettings")}
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            For tools that aren't in the gallery. You'll need details from the tool's documentation.
-            Most people never need this — if the app you want is in the gallery,{" "}
+            {t("appsTools.advancedDescription", { defaultValue: "适用于应用库中没有的工具，你需要准备工具文档中的连接信息。大多数人不需要这里的设置，如果目标应用在应用库中，" })}{" "}
             <Link to="/apps" className="font-medium text-primary hover:underline">
-              connect it there instead
+              {t("appsTools.connectThere", { defaultValue: "请在那里连接" })}
             </Link>
             .
           </p>
@@ -112,7 +113,7 @@ export function ToolsAccess() {
                   : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
-              {tab.label}
+              {t(`appsTools.${tab.key.replace(/-/g, "")}`, { defaultValue: tab.label })}
             </Link>
           ))}
         </nav>
@@ -121,9 +122,9 @@ export function ToolsAccess() {
 
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Wrench className="h-3.5 w-3.5" />
-          Looking for the developer surface?{" "}
+          {t("appsTools.developerSurfaceQuestion", { defaultValue: "在找开发者工具？" })}{" "}
           <Link to={advancedTabHref("profiles")} className="font-medium text-primary hover:underline">
-            Open developer tools
+            {t("appsTools.openDeveloperTools", { defaultValue: "打开开发者工具" })}
           </Link>
         </p>
       </div>
@@ -135,11 +136,10 @@ export function ToolsAccess() {
       <div>
         <div className="flex items-center gap-2">
           <Settings2 className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-xl font-bold text-foreground">Developer tools</h1>
+          <h1 className="text-xl font-bold text-foreground">{t("appsTools.developerTools", { defaultValue: "开发者工具" })}</h1>
         </div>
         <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
-          Apps is the simple way to connect tools. This Developer area is for wiring your own
-          servers, tokens, and rules by hand — most teams never need it.
+          {t("appsTools.developerToolsDescription", { defaultValue: "应用页面是连接工具的简单方式。此开发者区域用于手动配置自己的服务器、令牌和规则，大多数团队不需要这里的设置。" })}
         </p>
       </div>
 

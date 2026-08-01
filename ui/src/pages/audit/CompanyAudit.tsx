@@ -4,6 +4,7 @@ import { useCompany } from "../../context/CompanyContext";
 import { useBreadcrumbs } from "../../context/BreadcrumbContext";
 import { EmptyState } from "../../components/EmptyState";
 import { AuditFeed } from "./AuditFeed";
+import { t, useTranslation } from "../../i18n";
 
 /**
  * Company-level agent audit page — a permission-gated
@@ -12,15 +13,16 @@ import { AuditFeed } from "./AuditFeed";
  * lacks `audit:view_agent_actions` (server-authoritative, see `AuditFeed`).
  */
 export function CompanyAudit() {
+  const { t: translate } = useTranslation();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Audit" }]);
-  }, [setBreadcrumbs]);
+    setBreadcrumbs([{ label: translate("auditPage.title") }]);
+  }, [setBreadcrumbs, translate]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={ShieldCheck} message="Select a company to view the agent audit log." />;
+    return <EmptyState icon={ShieldCheck} message={t("auditPage.selectCompany")} />;
   }
 
   return <AuditFeed companyId={selectedCompanyId} />;

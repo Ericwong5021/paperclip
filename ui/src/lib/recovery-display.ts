@@ -1,5 +1,6 @@
 import type { IssueRecoveryAction, IssueRecoveryActionKind } from "@paperclipai/shared";
 import { Eye, OctagonAlert, RefreshCw, TriangleAlert } from "lucide-react";
+import { getLocale } from "@/i18n";
 
 export type RecoveryDisplayState =
   | "needed"
@@ -60,6 +61,15 @@ export function recoveryChipLabel(
   state: ActiveRecoveryDisplayState,
   kind: IssueRecoveryActionKind,
 ): string {
+  if (getLocale() === "zh-CN") {
+    if (kind === "workspace_validation" && state === "needed") return "需要恢复工作区";
+    return {
+      needed: "需要恢复",
+      in_progress: "正在恢复",
+      observe_only: "正在观察运行",
+      escalated: "恢复已升级",
+    }[state];
+  }
   if (kind === "workspace_validation" && state === "needed") {
     return "Workspace recovery needed";
   }

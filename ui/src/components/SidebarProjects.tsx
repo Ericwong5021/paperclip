@@ -26,7 +26,7 @@ import { useProjectExternalObjectSummary } from "../hooks/useIssueExternalObject
 import { BudgetSidebarMarker } from "./BudgetSidebarMarker";
 import { ExternalObjectStatusSummary } from "./ExternalObjectStatusSummary";
 import { ProjectTile } from "./ProjectTile";
-import { SidebarSection, type SidebarSectionRadioChoice } from "./SidebarSection";
+import { SidebarSection } from "./SidebarSection";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -45,14 +45,10 @@ import {
   writeProjectSortMode,
 } from "../lib/project-order";
 import type { Project } from "@paperclipai/shared";
+import { useTranslation } from "@/i18n";
 
 type ProjectSidebarSlot = ReturnType<typeof usePluginSlots>["slots"][number];
 
-const PROJECT_SORT_CHOICES: SidebarSectionRadioChoice[] = [
-  { value: "top", label: "Top" },
-  { value: "alphabetical", label: "Alphabetical" },
-  { value: "recent", label: "Recent" },
-];
 const REORDER_POINTER_MEDIA = "(hover: hover) and (pointer: fine)";
 
 type ProjectItemProps = {
@@ -123,6 +119,7 @@ function ProjectItem({
   leaving = false,
   isDragging = false,
 }: ProjectItemProps) {
+  const { t } = useTranslation();
   const routeRef = projectRouteRef(project);
   const { summary: externalObjectsSummary } = useProjectExternalObjectSummary(project.id);
 
@@ -147,7 +144,7 @@ function ProjectItem({
       <ProjectTile color={project.color ?? null} icon={project.icon ?? null} size="xs" />
       <span className={rail ? SIDEBAR_RAIL_HIDDEN_LABEL : "flex-1 truncate"}>{project.name}</span>
       {!rail ? <ExternalObjectStatusSummary summary={externalObjectsSummary} compact /> : null}
-      {!rail && project.pauseReason === "budget" ? <BudgetSidebarMarker title="Project paused by budget" /> : null}
+      {!rail && project.pauseReason === "budget" ? <BudgetSidebarMarker title={t("settingsShell.sidebar.projectPausedByBudget")} /> : null}
     </NavLink>
   );
 
@@ -182,7 +179,7 @@ function ProjectItem({
                   ? "opacity-100"
                   : "pointer-events-none opacity-0 group-hover/project:pointer-events-auto group-hover/project:opacity-100 group-focus-within/project:pointer-events-auto group-focus-within/project:opacity-100",
               )}
-              aria-label={`Open actions for ${project.name}`}
+              aria-label={t("settingsShell.sidebar.openProjectActions", { name: project.name })}
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
             </Button>
@@ -196,7 +193,7 @@ function ProjectItem({
               disabled={leaving}
             >
               {leaving ? <Loader2 className="size-4 motion-safe:animate-spin" /> : <LogOut className="size-4" />}
-              <span>{leaving ? "Leaving..." : "Leave project"}</span>
+              <span>{leaving ? t("settingsShell.sidebar.leavingProject") : t("settingsShell.sidebar.leaveProject")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -253,6 +250,7 @@ function SortableProjectItem(props: ProjectItemProps) {
 }
 
 export function SidebarProjects() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(true);
   const { selectedCompany, selectedCompanyId } = useCompany();
   const { openNewProject } = useDialogActions();
@@ -409,21 +407,25 @@ export function SidebarProjects() {
 
   return (
     <SidebarSection
-      label="Projects"
+      label={t("nav.projects")}
       collapsible={{ open, onOpenChange: setOpen }}
       headerAction={{
-        ariaLabel: "New project",
+        ariaLabel: t("settingsShell.sidebar.newProject"),
         icon: Plus,
         onClick: openNewProject,
       }}
       menu={{
-        ariaLabel: "Projects section actions",
+        ariaLabel: t("common.sectionActions", { section: t("nav.projects") }),
         actions: [
-          { type: "item", label: "Browse projects", icon: FolderOpen, href: "/projects" },
+          { type: "item", label: t("settingsShell.sidebar.browseProjects"), icon: FolderOpen, href: "/projects" },
           { type: "separator" },
         ],
-        radioLabel: "Project sort",
-        radioChoices: PROJECT_SORT_CHOICES,
+        radioLabel: t("settingsShell.sidebar.projectSort"),
+        radioChoices: [
+          { value: "top", label: t("settingsShell.sidebar.sortTop") },
+          { value: "alphabetical", label: t("settingsShell.sidebar.sortAlphabetical") },
+          { value: "recent", label: t("settingsShell.sidebar.sortRecent") },
+        ],
         radioValue: sortMode,
         onRadioValueChange: persistSortMode,
       }}

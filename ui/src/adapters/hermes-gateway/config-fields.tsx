@@ -8,6 +8,7 @@ import {
   Field,
   ToggleField,
 } from "../../components/agent-config-primitives";
+import { t } from "@/i18n";
 
 const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
@@ -79,7 +80,7 @@ function SecretField({
           type="button"
           onClick={() => setVisible((v) => !v)}
           className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-          aria-label={visible ? `Hide ${label}` : `Show ${label}`}
+          aria-label={visible ? t("adapterTranscript.hideSecret", { label }) : t("adapterTranscript.showSecret", { label })}
         >
           {visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
         </button>
@@ -89,7 +90,7 @@ function SecretField({
           immediate
           type={visible ? "text" : "password"}
           className={inputClass + " pl-8"}
-          placeholder={stored ? "Stored secret; enter a new value to replace it" : placeholder}
+          placeholder={stored ? t("adapterTranscript.storedSecretPlaceholder") : placeholder}
         />
       </div>
     </Field>
@@ -141,8 +142,8 @@ export function HermesGatewayConfigFields({
   return (
     <>
       <Field
-        label="API base URL"
-        hint="Hermes API server base URL that Paperclip can reach, such as http://127.0.0.1:8642 or a private HTTPS URL. Default dashboard root/chat URLs such as http://127.0.0.1:9119/chat are accepted and map to /api."
+        label={t("adapterTranscript.apiBaseUrl")}
+        hint={t("adapterTranscript.hermesApiBaseHint")}
       >
         <DraftInput
           value={apiBaseUrl}
@@ -154,7 +155,7 @@ export function HermesGatewayConfigFields({
       </Field>
 
       <SecretField
-        label="API key"
+        label={t("adapterTranscript.apiKey")}
         value={isCreate ? String(readCreateValue(values, "apiKey", "") ?? "") : editApiKeyValue}
         onCommit={(v) => writeValue("apiKey", v || undefined)}
         placeholder="Hermes API_SERVER_KEY, not PAPERCLIP_API_KEY"
@@ -162,8 +163,8 @@ export function HermesGatewayConfigFields({
       />
 
       <Field
-        label="Paperclip API URL"
-        hint="Optional Paperclip API URL reachable by the Hermes host. This is not a credential."
+        label={t("adapterTranscript.paperclipApiUrl")}
+        hint={t("adapterTranscript.paperclipApiUrlHint")}
       >
         <DraftInput
           value={paperclipApiUrl}
@@ -175,22 +176,22 @@ export function HermesGatewayConfigFields({
       </Field>
 
       <Field
-        label="Session key strategy"
-        hint="Controls X-Hermes-Session-Key. Issue scoped prevents cross-task memory bleed by default."
+        label={t("adapterTranscript.sessionKeyStrategy")}
+        hint={t("adapterTranscript.sessionKeyStrategyHint")}
       >
         <select
           value={sessionKeyStrategy}
           onChange={(event) => writeValue("sessionKeyStrategy", event.target.value)}
           className={inputClass}
         >
-          <option value="issue">Issue scoped</option>
-          <option value="agent">Agent scoped</option>
-          <option value="run">Run scoped</option>
-          <option value="none">None</option>
+          <option value="issue">{t("adapterTranscript.issueScoped")}</option>
+          <option value="agent">{t("adapterTranscript.agentScoped")}</option>
+          <option value="run">{t("adapterTranscript.runScoped")}</option>
+          <option value="none">{t("adapterTranscript.none")}</option>
         </select>
       </Field>
 
-      <Field label="Timeout seconds">
+      <Field label={t("adapterTranscript.timeoutSeconds")}>
         <DraftNumberInput
           value={Number.isFinite(timeoutSec) ? timeoutSec : DEFAULT_TIMEOUT_SEC}
           onCommit={(v) => writeValue("timeoutSec", v)}
@@ -200,8 +201,8 @@ export function HermesGatewayConfigFields({
       </Field>
 
       <Field
-        label="Event reconnect ms"
-        hint="Delay before reconnecting the Hermes SSE events stream after a nonterminal disconnect."
+        label={t("adapterTranscript.eventReconnect")}
+        hint={t("adapterTranscript.eventReconnectHint")}
       >
         <DraftNumberInput
           value={Number.isFinite(eventReconnectMs) ? eventReconnectMs : DEFAULT_EVENT_RECONNECT_MS}
@@ -212,15 +213,15 @@ export function HermesGatewayConfigFields({
       </Field>
 
       <ToggleField
-        label="Dangerously allow remote HTTP"
-        hint="Unsafe dev-only escape hatch. Remote Hermes gateways should use HTTPS; loopback HTTP remains allowed."
+        label={t("adapterTranscript.allowRemoteHttp")}
+        hint={t("adapterTranscript.allowRemoteHttpHint")}
         checked={allowInsecureRemoteHttp}
         onChange={(v) => writeValue("dangerouslyAllowInsecureRemoteHttp", v)}
       />
 
       <Field
-        label="Extra headers"
-        hint="Optional JSON object of extra nonsecret headers. Security-critical headers are generated by the adapter."
+        label={t("adapterTranscript.extraHeaders")}
+        hint={t("adapterTranscript.extraHeadersHint")}
       >
         <textarea
           value={headers}
@@ -239,7 +240,7 @@ export function HermesGatewayConfigFields({
         />
       </Field>
 
-      <Field label="Instructions" hint="Optional stable Hermes instructions sent separately from the wake input.">
+      <Field label={t("adapterTranscript.instructions")} hint={t("adapterTranscript.instructionsHint")}>
         <DraftTextarea
           value={instructions}
           onCommit={(v) => writeValue("instructions", v || undefined)}

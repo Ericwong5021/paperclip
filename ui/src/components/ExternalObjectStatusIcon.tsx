@@ -15,6 +15,7 @@ import {
 } from "../lib/external-objects";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import { cn } from "../lib/utils";
+import { t } from "@/i18n";
 
 interface ExternalObjectStatusIconProps {
   category: ExternalObjectStatusCategory;
@@ -58,8 +59,9 @@ export function ExternalObjectStatusIcon({
     : externalObjectStatusIcon[category] ?? externalObjectStatusIconDefault;
   const livenessSuffix = liveness === "fresh" || liveness === "unknown"
     ? ""
-    : ` (${externalObjectLivenessLabel(liveness)})`;
-  const ariaLabel = `${label ?? externalObjectCategoryLabel(category)}${livenessSuffix}`;
+    : ` (${t(`routinesStatus.external.liveness.${liveness}`, { defaultValue: externalObjectLivenessLabel(liveness) })})`;
+  const categoryLabel = t(`routinesStatus.external.category.${category}`, { defaultValue: externalObjectCategoryLabel(category) });
+  const ariaLabel = `${label ?? categoryLabel}${livenessSuffix}`;
 
   // The clock overlay needs a positioned wrapper. Inline mode keeps the icon
   // tight to the surrounding text; pill mode expects to size by sizeClassName.

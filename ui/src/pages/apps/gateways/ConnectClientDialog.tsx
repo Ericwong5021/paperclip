@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/context/ToastContext";
+import { t } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { formatSnippetConfig, maskedTokenLabel, orderedSnippets } from "./gateway-helpers";
 
@@ -56,11 +57,11 @@ export function ConnectClientDialog({
         throw new Error("Clipboard access is unavailable.");
       }
       await navigator.clipboard.writeText(value);
-      pushToast({ title: "Copied", body: label, tone: "success" });
+      pushToast({ title: t("appsTools.copied", { defaultValue: "已复制" }), body: label, tone: "success" });
     } catch (error) {
       pushToast({
-        title: "Copy failed",
-        body: error instanceof Error ? error.message : "Clipboard access is unavailable.",
+        title: t("appsTools.copyFailed", { defaultValue: "复制失败" }),
+        body: error instanceof Error ? error.message : t("appsTools.clipboardUnavailable", { defaultValue: "剪贴板不可用。" }),
         tone: "error",
       });
     }
@@ -73,14 +74,14 @@ export function ConnectClientDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Connect a client</DialogTitle>
+          <DialogTitle>{t("appsTools.connectClient", { defaultValue: "连接客户端" })}</DialogTitle>
           <DialogDescription>
-            Pick how you’ll point your client at this gateway.
+            {t("appsTools.connectClientHint", { defaultValue: "选择客户端连接此网关的方式。" })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 sm:grid-cols-(--gtc-10)">
-          <nav className="flex gap-1 overflow-x-auto sm:flex-col" aria-label="Clients">
+          <nav className="flex gap-1 overflow-x-auto sm:flex-col" aria-label={t("appsTools.clients", { defaultValue: "客户端" })}>
             {snippets.map((snippet) => (
               <button
                 key={snippet.client}
@@ -106,25 +107,25 @@ export function ConnectClientDialog({
                   : "text-muted-foreground hover:bg-muted/60",
               )}
             >
-              Raw URL
+              {t("appsTools.rawUrl", { defaultValue: "原始 URL" })}
             </button>
           </nav>
 
           <div className="min-w-0 space-y-3">
             {active === "raw_url" ? (
               <div className="space-y-1.5">
-                <div className="text-sm font-medium text-foreground">Endpoint URL</div>
+                <div className="text-sm font-medium text-foreground">{t("appsTools.endpointUrl", { defaultValue: "端点 URL" })}</div>
                 <div className="flex items-center gap-2">
                   <code className="min-w-0 flex-1 truncate rounded-md bg-muted px-3 py-2 font-mono text-xs text-muted-foreground">
                     {endpoint}
                   </code>
-                  <Button variant="outline" size="sm" onClick={() => void copyText(endpoint, "Endpoint URL")}>
+                  <Button variant="outline" size="sm" onClick={() => void copyText(endpoint, t("appsTools.endpointUrl", { defaultValue: "端点 URL" }))}>
                     <Copy className="mr-1 h-3.5 w-3.5" />
-                    Copy
+                    {t("appsTools.copy", { defaultValue: "复制" })}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Authenticate with <code>Authorization: Bearer &lt;token&gt;</code> over streamable HTTP.
+                  {t("appsTools.authenticateWith", { defaultValue: "通过可流式传输的 HTTP 使用" })} <code>Authorization: Bearer &lt;token&gt;</code>。
                 </p>
               </div>
             ) : activeSnippet ? (
@@ -137,7 +138,7 @@ export function ConnectClientDialog({
                     onClick={() => void copyText(configText, `${activeSnippet.label} config`)}
                   >
                     <Copy className="mr-1 h-3.5 w-3.5" />
-                    Copy
+                    {t("appsTools.copy", { defaultValue: "复制" })}
                   </Button>
                 </div>
                 <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 font-mono text-xs text-muted-foreground">
@@ -152,11 +153,11 @@ export function ConnectClientDialog({
                 ) : null}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No client snippets available for this gateway.</p>
+              <p className="text-sm text-muted-foreground">{t("appsTools.noClientSnippets", { defaultValue: "此网关没有可用的客户端配置片段。" })}</p>
             )}
 
             <div className="space-y-1.5 rounded-md border border-border p-3">
-              <div className="text-xs font-medium text-muted-foreground">Token</div>
+              <div className="text-xs font-medium text-muted-foreground">{t("appsTools.token", { defaultValue: "令牌" })}</div>
               {createdToken ? (
                 <div className="flex items-center gap-2">
                   <code className="min-w-0 flex-1 truncate rounded bg-background px-2 py-1.5 font-mono text-xs text-foreground">
@@ -166,27 +167,24 @@ export function ConnectClientDialog({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => void copyText(createdToken.token, "Access token")}
+                      onClick={() => void copyText(createdToken.token, t("appsTools.accessToken", { defaultValue: "访问令牌" }))}
                     >
                       <Copy className="mr-1 h-3.5 w-3.5" />
-                      Copy
+                      {t("appsTools.copy", { defaultValue: "复制" })}
                     </Button>
                   ) : (
                     <Button variant="outline" size="sm" onClick={() => setRevealed(true)}>
-                      Show
+                      {t("appsTools.show", { defaultValue: "显示" })}
                     </Button>
                   )}
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Mint a token on the <span className="font-medium">Tokens</span> tab, then paste it where the
-                  snippet shows <code>Bearer …</code>. You won’t see a token’s full value again after it’s
-                  created.
+                  {t("appsTools.mintTokenHint", { defaultValue: "请先在“令牌”页签创建令牌，再将其粘贴到配置片段显示" })} <code>Bearer …</code>{t("appsTools.tokenCreatedHint", { defaultValue: "的位置。令牌创建后将无法再次查看完整值。" })}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                Treat this like a password. Anyone with the token can call exactly the tools this gateway
-                allows. If it leaks, revoke it — the client goes silent immediately.
+                {t("appsTools.tokenSecurityHint", { defaultValue: "请像保护密码一样保护令牌。持有令牌的人可以调用此网关允许的工具。如果令牌泄露，请立即撤销，客户端会马上停止工作。" })}
               </p>
             </div>
           </div>
@@ -195,7 +193,7 @@ export function ConnectClientDialog({
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>
             <Check className="mr-1.5 h-4 w-4" />
-            Done
+            {t("appsTools.done", { defaultValue: "完成" })}
           </Button>
         </DialogFooter>
       </DialogContent>

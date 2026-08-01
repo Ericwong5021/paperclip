@@ -19,6 +19,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { useToast } from "@/context/ToastContext";
 import { useSmokeLabEnabled } from "@/hooks/useSmokeLabEnabled";
 import { cn } from "@/lib/utils";
+import { t } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -53,10 +54,10 @@ function serviceTone(status: string): "success" | "warn" | "error" | "muted" {
 }
 
 function CellGlyph({ status }: { status: CellStatus }) {
-  if (status === "pass") return <Check className="mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-label="pass" />;
-  if (status === "fail") return <X className="mx-auto h-4 w-4 text-destructive" aria-label="fail" />;
-  if (status === "skipped") return <Minus className="mx-auto h-4 w-4 text-amber-500" aria-label="skipped" />;
-  return <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-muted-foreground/30" aria-label="not run" />;
+  if (status === "pass") return <Check className="mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-label={t("appsTools.pass", { defaultValue: "通过" })} />;
+  if (status === "fail") return <X className="mx-auto h-4 w-4 text-destructive" aria-label={t("appsTools.fail", { defaultValue: "失败" })} />;
+  if (status === "skipped") return <Minus className="mx-auto h-4 w-4 text-amber-500" aria-label={t("appsTools.skipped", { defaultValue: "已跳过" })} />;
+  return <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-muted-foreground/30" aria-label={t("appsTools.notRun", { defaultValue: "未运行" })} />;
 }
 
 const HEALTH_STYLES: Record<string, string> = {
@@ -109,55 +110,55 @@ export function SmokeLabTab({ companyId }: { companyId: string }) {
   const startMutation = useMutation({
     mutationFn: () => smokeLabApi.startServices(companyId),
     onSuccess: () => {
-      pushToast({ title: "Smoke services started", tone: "success" });
+      pushToast({ title: t("appsTools.smokeServicesStarted", { defaultValue: "Smoke 服务已启动" }), tone: "success" });
       refresh();
     },
-    onError: (e: Error) => pushToast({ title: "Couldn't start services", body: e.message, tone: "error" }),
+    onError: (e: Error) => pushToast({ title: t("appsTools.couldNotStartServices", { defaultValue: "无法启动服务" }), body: e.message, tone: "error" }),
   });
 
   const stopMutation = useMutation({
     mutationFn: () => smokeLabApi.stopServices(companyId),
     onSuccess: () => {
-      pushToast({ title: "Smoke services stopped", tone: "info" });
+      pushToast({ title: t("appsTools.smokeServicesStopped", { defaultValue: "Smoke 服务已停止" }), tone: "info" });
       refresh();
     },
-    onError: (e: Error) => pushToast({ title: "Couldn't stop services", body: e.message, tone: "error" }),
+    onError: (e: Error) => pushToast({ title: t("appsTools.couldNotStopServices", { defaultValue: "无法停止服务" }), body: e.message, tone: "error" }),
   });
 
   const installMutation = useMutation({
     mutationFn: () => smokeLabApi.installFixtures(companyId),
     onSuccess: (r) => {
       pushToast({
-        title: r.created ? "Fixture apps installed" : "Fixture apps already present",
+        title: r.created ? t("appsTools.fixtureAppsInstalled", { defaultValue: "Fixture 应用已安装" }) : t("appsTools.fixtureAppsPresent", { defaultValue: "Fixture 应用已存在" }),
         tone: "success",
       });
       refresh();
     },
-    onError: (e: Error) => pushToast({ title: "Couldn't install fixtures", body: e.message, tone: "error" }),
+    onError: (e: Error) => pushToast({ title: t("appsTools.couldNotInstallFixtures", { defaultValue: "无法安装 Fixture" }), body: e.message, tone: "error" }),
   });
 
   const resetMutation = useMutation({
     mutationFn: () => smokeLabApi.reset(companyId),
     onSuccess: () => {
-      pushToast({ title: "Smoke Lab reset", tone: "info" });
+      pushToast({ title: t("appsTools.smokeLabReset", { defaultValue: "Smoke Lab 已重置" }), tone: "info" });
       setSelectedRunId(null);
       refresh();
     },
-    onError: (e: Error) => pushToast({ title: "Couldn't reset", body: e.message, tone: "error" }),
+    onError: (e: Error) => pushToast({ title: t("appsTools.couldNotReset", { defaultValue: "无法重置" }), body: e.message, tone: "error" }),
   });
 
   const runSmokeMutation = useMutation({
     mutationFn: () => smokeLabApi.createRun(companyId, { trigger: "manual", summary: {} }),
     onSuccess: (r) => {
       pushToast({
-        title: "Smoke run started",
-        body: "The browser runner records each step as it completes.",
+        title: t("appsTools.smokeRunStarted", { defaultValue: "Smoke 运行已开始" }),
+        body: t("appsTools.smokeRunStartedHint", { defaultValue: "浏览器运行器会记录每一步的完成情况。" }),
         tone: "success",
       });
       setSelectedRunId(r.run.id);
       refresh();
     },
-    onError: (e: Error) => pushToast({ title: "Couldn't start a run", body: e.message, tone: "error" }),
+    onError: (e: Error) => pushToast({ title: t("appsTools.couldNotStartRun", { defaultValue: "无法开始运行" }), body: e.message, tone: "error" }),
   });
 
   const anyMutating =
@@ -173,19 +174,17 @@ export function SmokeLabTab({ companyId }: { companyId: string }) {
       <div className="rounded-lg border border-border bg-card p-6">
         <div className="flex items-center gap-2 text-foreground">
           <FlaskConical className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-base font-semibold">Smoke Lab is turned off</h2>
+          <h2 className="text-base font-semibold">{t("appsTools.smokeLabOff", { defaultValue: "Smoke Lab 已关闭" })}</h2>
         </div>
         <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-          The Smoke Lab is an experimental developer surface for exercising the integration paths
-          against deterministic local fixtures. Turn on <code className="rounded bg-muted px-1 py-0.5 text-xs">Smoke Lab</code>{" "}
-          under Instance settings → Experimental to enable it.
+          {t("appsTools.smokeLabOffHint", { defaultValue: "Smoke Lab 是用于使用确定性本地 fixture 测试集成路径的实验性开发界面。请在实例设置 → 实验功能中开启" })} <code className="rounded bg-muted px-1 py-0.5 text-xs">Smoke Lab</code>。
         </p>
       </div>
     );
   }
 
   if (!loaded) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading Smoke Lab…</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("appsTools.loadingSmokeLab", { defaultValue: "正在加载 Smoke Lab…" })}</div>;
   }
 
   const services = servicesQuery.data?.services ?? [];
@@ -197,15 +196,15 @@ export function SmokeLabTab({ companyId }: { companyId: string }) {
       <header>
         <div className="flex flex-wrap items-center gap-2">
           <FlaskConical className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-xl font-bold text-foreground">Smoke Lab</h1>
-          <Badge variant="outline">Experimental</Badge>
+          <h1 className="text-xl font-bold text-foreground">{t("appsTools.smokeLab", { defaultValue: "Smoke Lab" })}</h1>
+          <Badge variant="outline">{t("appsTools.experimental", { defaultValue: "实验性" })}</Badge>
           <a
             href="https://github.com/paperclipai/paperclip/blob/master/doc/connections/SMOKE-LAB-TUTORIAL.md"
             target="_blank"
             rel="noreferrer"
             className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
           >
-            <BookOpen className="h-4 w-4" /> Hands-on tutorial
+            <BookOpen className="h-4 w-4" /> {t("appsTools.handsOnTutorial", { defaultValue: "实践教程" })}
           </a>
         </div>
         <p className="mt-1.5 max-w-3xl text-sm text-muted-foreground">
@@ -230,7 +229,7 @@ export function SmokeLabTab({ companyId }: { companyId: string }) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <ServerCog className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground">Fixture services</h2>
+            <h2 className="text-sm font-semibold text-foreground">{t("appsTools.fixtureServices", { defaultValue: "Fixture 服务" })}</h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button

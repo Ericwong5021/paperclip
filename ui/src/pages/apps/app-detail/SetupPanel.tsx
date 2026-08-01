@@ -6,6 +6,7 @@ import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { appDefinitionSlug } from "../app-definition-display";
 import type { AppDetailSectionProps } from "./types";
 import { googleSheetsConfigWithAllowlist, parseGoogleSheetIds } from "../google-sheets";
+import { t } from "@/i18n";
 
 export function SetupPanel({
   connection,
@@ -73,16 +74,16 @@ function OAuthConnectionSection({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-bold text-foreground">
-            {connected ? `Connected with ${providerName}` : `Connect with ${providerName}`}
+            {t("appsToolsResidual.connectWithProvider", { provider: providerName })}
           </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {connected
-              ? "Sign in again to replace this connection's OAuth session."
-              : "Open the provider's consent page to finish connecting this app."}
+              ? t("appsToolsResidual.signInAgain")
+              : t("appsToolsResidual.openConsentPage")}
           </p>
         </div>
         <Button type="button" disabled={disabled} onClick={onStart}>
-          {connected ? "Reconnect" : `Connect with ${providerName}`}
+          {connected ? t("appsTools.reconnect") : t("appsToolsResidual.connectWithProvider", { provider: providerName })}
         </Button>
       </div>
     </section>
@@ -116,15 +117,15 @@ function GoogleSheetsAllowlistSection({
   return (
     <section className="rounded-xl border border-border bg-card px-5 py-4">
       <div>
-        <h2 className="text-sm font-bold text-foreground">Sheets agents can use</h2>
+        <h2 className="text-sm font-bold text-foreground">{t("appsTools.sheetsAgentsCanUse", { defaultValue: "Agent 可以使用的表格" })}</h2>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          Agents can only use the sheets listed here.
+          {t("appsToolsResidual.sheetsAllowlistHint")}
         </p>
       </div>
 
       <div className="mt-4 space-y-2">
         {ids.length === 0 ? (
-          <div className="text-sm text-muted-foreground">No sheets are connected yet.</div>
+          <div className="text-sm text-muted-foreground">{t("appsTools.noSheets", { defaultValue: "尚未连接表格。" })}</div>
         ) : (
           ids.map((id) => {
             const sheetUrl = googleSheetsUrlForId(id);
@@ -136,7 +137,7 @@ function GoogleSheetsAllowlistSection({
                   rel="noreferrer"
                   className="min-w-0 flex-1 text-sm font-medium text-foreground underline-offset-2 hover:underline"
                 >
-                  <span className="block truncate">Open sheet</span>
+                  <span className="block truncate">{t("appsTools.openSheet", { defaultValue: "打开表格" })}</span>
                   <span className="block truncate font-mono text-xs font-normal text-muted-foreground">
                     {sheetUrl}
                   </span>
@@ -149,10 +150,10 @@ function GoogleSheetsAllowlistSection({
                   size="sm"
                   variant="outline"
                   disabled={disabled || ids.length <= 1}
-                  title={ids.length <= 1 ? "Add another sheet before removing this one." : undefined}
+                  title={ids.length <= 1 ? t("appsToolsResidual.addSheetBeforeRemove") : undefined}
                   onClick={() => saveIds(ids.filter((current) => current !== id))}
                 >
-                  Remove
+                  {t("appsToolsResidual.remove")}
                 </Button>
               </div>
             );
@@ -177,18 +178,18 @@ function GoogleSheetsAllowlistSection({
           onClick={() => {
             const parsed = parseGoogleSheetIds(draft);
             if (parsed.ids.length === 0) {
-              setError("Paste a Google Sheets link.");
+              setError(t("appsToolsResidual.pasteSheetsLink"));
               return;
             }
             if (parsed.invalidCount > 0) {
-              setError("That doesn't look like a Google Sheets link.");
+              setError(t("appsToolsResidual.invalidSheetsLink"));
               return;
             }
             saveIds(Array.from(new Set([...ids, ...parsed.ids])));
             setDraft("");
           }}
         >
-          Add sheet
+          {t("appsToolsResidual.addSheet")}
         </Button>
       </div>
       {error && <div className="mt-2 text-xs text-destructive">{error}</div>}
@@ -211,16 +212,16 @@ export function AppLifecycleSection({
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-bold text-foreground">
-            {enabled ? "Agents can use this app" : "This app is paused"}
+            {enabled ? t("appsToolsResidual.agentsCanUseApp") : t("appsToolsResidual.appPaused")}
           </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {enabled
-              ? "Pause it to stop every agent from using its actions."
-              : "Resume it when agents should be able to use its actions again."}
+              ? t("appsToolsResidual.pauseAppHint")
+              : t("appsToolsResidual.resumeAppHint")}
           </p>
         </div>
         <ToggleSwitch
-          aria-label={enabled ? "Pause this app" : "Resume this app"}
+          aria-label={enabled ? t("appsTools.pauseApp", { defaultValue: "暂停此应用" }) : t("appsTools.resumeApp", { defaultValue: "恢复此应用" })}
           checked={enabled}
           disabled={disabled}
           onCheckedChange={onToggle}
@@ -247,19 +248,19 @@ export function QuarantinePill({
     <div className="rounded-xl border border-amber-500/40 bg-amber-500/[0.08] p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-          {count} new {count === 1 ? "action" : "actions"} to review
+          {t("appsToolsResidual.newActionsToReview", { count })}
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}>
-            {open ? "Hide" : "Review"}
+            {open ? t("appsToolsResidual.hide") : t("appsToolsResidual.review")}
           </Button>
           <Button size="sm" disabled={disabled} onClick={() => onTurnOn(entries.map((e) => e.id))}>
-            Turn on all
+            {t("appsToolsResidual.turnOnAll")}
           </Button>
         </div>
       </div>
       <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-        This app added actions since you set it up. They stay off until you turn them on.
+        {t("appsToolsResidual.newActionsStayOff")}
       </p>
       {open && (
         <div className="mt-3 divide-y divide-amber-500/25 rounded-lg border border-amber-500/40 bg-background">
@@ -272,7 +273,7 @@ export function QuarantinePill({
                 )}
               </div>
               <Button size="sm" variant="outline" disabled={disabled} onClick={() => onTurnOn([entry.id])}>
-                Turn on
+                {t("appsToolsResidual.turnOn")}
               </Button>
             </div>
           ))}

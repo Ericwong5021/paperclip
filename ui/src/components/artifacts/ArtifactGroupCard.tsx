@@ -5,6 +5,7 @@ import { Link } from "@/lib/router";
 import { ArtifactPreview } from "@/components/artifacts/ArtifactCard";
 import { formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/i18n";
 
 interface ArtifactGroupCardProps {
   group: CompanyArtifactGroup;
@@ -19,9 +20,10 @@ interface ArtifactGroupCardProps {
  * than one artifact.
  */
 export function ArtifactGroupCard({ group, to }: ArtifactGroupCardProps) {
+  const { t } = useTranslation();
   const stacked = group.count > 1;
   const preview = group.previewArtifacts[0];
-  const countLabel = `${group.count} artifact${group.count === 1 ? "" : "s"}`;
+  const countLabel = t("artifactsPage.artifactCount", { count: group.count, plural: group.count === 1 ? "" : "s" });
 
   return (
     <div className="relative">
@@ -80,7 +82,7 @@ export function ArtifactGroupCard({ group, to }: ArtifactGroupCardProps) {
           <div className="mt-0.5 flex items-center gap-1.5 text-(length:--text-micro) text-muted-foreground/65">
             <span>{countLabel}</span>
             <span className="text-muted-foreground/50">·</span>
-            <span>Updated {formatDate(group.updatedAt)}</span>
+            <span>{t("artifactsPage.updated", { date: formatDate(group.updatedAt) })}</span>
           </div>
         </div>
       </Link>

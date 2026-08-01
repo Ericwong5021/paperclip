@@ -3,6 +3,7 @@ import { MarkdownBody } from "@/components/MarkdownBody";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AgentIcon } from "@/components/AgentIconPicker";
 import type { TaskChatMessageItem } from "./task-chat-model";
+import { t } from "@/i18n";
 
 interface TaskChatBubbleProps {
   item: TaskChatMessageItem;
@@ -68,7 +69,7 @@ export function TaskChatBubble({ item }: TaskChatBubbleProps) {
       </div>
       {item.optimistic ? (
         <span className="px-1 text-(length:--text-micro) text-muted-foreground">
-          {item.optimistic === "queued" ? "Queued" : "Sending…"}
+          {item.optimistic === "queued" ? t("interactions.chatQueued") : t("interactions.chatSending")}
         </span>
       ) : item.timestamp ? (
         <span className="px-1 text-(length:--text-micro) text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">

@@ -8,6 +8,7 @@ import {
   type IssueStatus,
 } from "@paperclipai/shared";
 import type { CompanySearchParams } from "@/api/search";
+import { t } from "@/i18n";
 
 const SEARCH_FILTER_PARAM_KEYS = [
   "status",
@@ -40,13 +41,13 @@ export interface SearchOperatorSuggestion {
 export const SEARCH_OPERATOR_QUICK_FILTERS = ["assignee:me", "is:open", "updated:>7d"] as const;
 
 export const SEARCH_OPERATOR_SUGGESTIONS: SearchOperatorSuggestion[] = [
-  { token: "status:todo", label: "Open todo tasks", description: "Filter by task status" },
-  { token: "status:blocked", label: "Blocked tasks", description: "Find blocked work" },
-  { token: "assignee:me", label: "Assigned to me", description: "Use your current board user" },
-  { token: "project:\"Paperclip App\"", label: "Project name", description: "Quote multi-word project names" },
-  { token: "label:bug", label: "Label", description: "Filter by issue label" },
-  { token: "priority:high", label: "High priority", description: "Filter by priority" },
-  { token: "updated:>7d", label: "Recently updated", description: "Updated in the last 7 days" },
+  { token: "status:todo", label: "search.operators.statusTodoLabel", description: "search.operators.statusTodoDescription" },
+  { token: "status:blocked", label: "search.operators.statusBlockedLabel", description: "search.operators.statusBlockedDescription" },
+  { token: "assignee:me", label: "search.operators.assigneeMeLabel", description: "search.operators.assigneeMeDescription" },
+  { token: "project:\"Paperclip App\"", label: "search.operators.projectLabel", description: "search.operators.projectDescription" },
+  { token: "label:bug", label: "search.operators.labelLabel", description: "search.operators.labelDescription" },
+  { token: "priority:high", label: "search.operators.priorityHighLabel", description: "search.operators.priorityHighDescription" },
+  { token: "updated:>7d", label: "search.operators.updatedLabel", description: "search.operators.updatedDescription" },
 ];
 
 export interface SearchQueryParserContext {
@@ -132,7 +133,11 @@ export function searchOperatorSuggestions(input: string, limit = 5): SearchOpera
   const candidates = normalized.length > 0
     ? SEARCH_OPERATOR_SUGGESTIONS.filter((suggestion) => suggestion.token.toLowerCase().startsWith(normalized))
     : SEARCH_OPERATOR_SUGGESTIONS;
-  return candidates.slice(0, limit);
+  return candidates.slice(0, limit).map((suggestion) => ({
+    ...suggestion,
+    label: t(suggestion.label),
+    description: t(suggestion.description),
+  }));
 }
 
 export function applySearchOperatorSuggestion(input: string, token: string): string {

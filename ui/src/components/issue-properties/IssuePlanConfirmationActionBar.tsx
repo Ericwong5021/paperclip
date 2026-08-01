@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PROPERTIES_PANE_FOOTER_SLOT_ID } from "../PropertiesPanel";
+import { t, useTranslation } from "@/i18n";
 
 /** The pending confirmation that targets the issue's `plan` document, if any. */
 function findPendingPlanConfirmation(
@@ -38,6 +39,7 @@ interface IssuePlanConfirmationActionBarProps {
  * and the optional decline reason) against the same interactions API.
  */
 export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfirmationActionBarProps) {
+  useTranslation();
   const queryClient = useQueryClient();
   const { data: interactions } = useQuery({
     queryKey: queryKeys.issues.interactions(issue.id),
@@ -65,7 +67,7 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
   const accept = useMutation({
     mutationFn: (interactionId: string) => issuesApi.acceptInteraction(issue.id, interactionId),
     onSuccess: invalidate,
-    onError: () => setActionError("Couldn't confirm — try again."),
+    onError: () => setActionError(t("interactions.confirmFailed", { defaultValue: "Couldn't confirm, try again." })),
   });
   const reject = useMutation({
     mutationFn: ({ interactionId, reason }: { interactionId: string; reason?: string }) =>
@@ -75,7 +77,7 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
       setRejectReason("");
       invalidate();
     },
-    onError: () => setActionError("Couldn't send that back — try again."),
+    onError: () => setActionError(t("interactions.sendBackFailed", { defaultValue: "Couldn't send that back, try again." })),
   });
 
   // Interaction changed under us (resolved elsewhere, superseded): reset.
@@ -113,7 +115,7 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
             onChange={(event) => setRejectReason(event.target.value)}
             placeholder={
               confirmation.payload.declineReasonPlaceholder
-              ?? "Optional: what would you like revised?"
+              ?? t("interactions.optionalRevision", { defaultValue: "Optional: what would you like revised?" })
             }
             aria-invalid={rejectAttempted && reasonInvalid}
             className={cn(
@@ -122,7 +124,7 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
             )}
           />
           {rejectAttempted && reasonInvalid ? (
-            <p className="text-xs text-destructive">A decline reason is required.</p>
+            <p className="text-xs text-destructive">{t("interactions.declineReasonRequired", { defaultValue: "A decline reason is required." })}</p>
           ) : null}
         </div>
       ) : null}
@@ -141,16 +143,16 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
                 setRejectAttempted(false);
               }}
             >
-              Cancel
+              {t("interactions.cancel")}
             </Button>
             <Button size="sm" variant="outline" disabled={working !== null} onClick={handleReject}>
               {working === "reject" ? (
                 <>
                   <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                  Sending back...
+                  {t("interactions.sendingBack")}
                 </>
               ) : (
-                confirmation.payload.rejectLabel ?? "Decline"
+                confirmation.payload.rejectLabel ?? t("interactions.decline")
               )}
             </Button>
           </>
@@ -171,10 +173,10 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
             {working === "reject" ? (
               <>
                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                Sending back...
+                {t("interactions.sendingBack")}
               </>
             ) : (
-              confirmation.payload.rejectLabel ?? "Decline"
+              confirmation.payload.rejectLabel ?? t("interactions.decline")
             )}
           </Button>
         )}

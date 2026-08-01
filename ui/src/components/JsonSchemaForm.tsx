@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { isUuidLike, type EnvSecretRefBinding } from "@paperclipai/shared";
 import { cn } from "@/lib/utils";
+import { t } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -185,7 +186,7 @@ export function validateField(
 
   // Required check
   if (isRequired && (value === undefined || value === null || value === "")) {
-    return "This field is required";
+    return t("forms.required");
   }
 
   // Skip further validation if empty and not required
@@ -195,16 +196,16 @@ export function validateField(
     return null;
   }
   if (type === "secret-ref" && typeof value === "object") {
-    return "Invalid secret reference";
+    return t("forms.invalidSecretReference");
   }
 
   if (type === "string" || type === "secret-ref") {
     const str = String(value);
     if (schema.minLength != null && str.length < schema.minLength) {
-      return `Must be at least ${schema.minLength} characters`;
+      return t("forms.minCharacters", { count: schema.minLength });
     }
     if (schema.maxLength != null && str.length > schema.maxLength) {
-      return `Must be at most ${schema.maxLength} characters`;
+      return t("forms.maxCharacters", { count: schema.maxLength });
     }
     if (schema.pattern) {
       // Guard against ReDoS: reject overly complex patterns from plugin JSON Schemas.
@@ -214,7 +215,7 @@ export function validateField(
         try {
           const re = new RegExp(schema.pattern);
           if (!re.test(str)) {
-            return `Must match pattern: ${schema.pattern}`;
+            return t("forms.matchPattern", { pattern: schema.pattern });
           }
         } catch {
           // Invalid regex in schema — skip
@@ -225,34 +226,34 @@ export function validateField(
 
   if (type === "number" || type === "integer") {
     const num = Number(value);
-    if (isNaN(num)) return "Must be a valid number";
+    if (isNaN(num)) return t("forms.validNumber");
     if (schema.minimum != null && num < schema.minimum) {
-      return `Must be at least ${schema.minimum}`;
+      return t("forms.atLeast", { value: schema.minimum });
     }
     if (schema.maximum != null && num > schema.maximum) {
-      return `Must be at most ${schema.maximum}`;
+      return t("forms.atMost", { value: schema.maximum });
     }
     if (schema.exclusiveMinimum != null && num <= schema.exclusiveMinimum) {
-      return `Must be greater than ${schema.exclusiveMinimum}`;
+      return t("forms.greaterThan", { value: schema.exclusiveMinimum });
     }
     if (schema.exclusiveMaximum != null && num >= schema.exclusiveMaximum) {
-      return `Must be less than ${schema.exclusiveMaximum}`;
+      return t("forms.lessThan", { value: schema.exclusiveMaximum });
     }
     if (type === "integer" && !Number.isInteger(num)) {
-      return "Must be a whole number";
+      return t("forms.wholeNumber");
     }
     if (schema.multipleOf != null && num % schema.multipleOf !== 0) {
-      return `Must be a multiple of ${schema.multipleOf}`;
+      return t("forms.multipleOf", { value: schema.multipleOf });
     }
   }
 
   if (type === "array") {
     const arr = value as unknown[];
     if (schema.minItems != null && arr.length < schema.minItems) {
-      return `Must have at least ${schema.minItems} items`;
+      return t("forms.minItems", { count: schema.minItems });
     }
     if (schema.maxItems != null && arr.length > schema.maxItems) {
-      return `Must have at most ${schema.maxItems} items`;
+      return t("forms.maxItems", { count: schema.maxItems });
     }
   }
 
@@ -525,12 +526,12 @@ const EnumField = React.memo(({
         disabled={disabled}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an option" />
+          <SelectValue placeholder={t("forms.selectOption")} />
         </SelectTrigger>
         <SelectContent>
           {showUnsetOption && (
-            <SelectItem value={ENUM_UNSET_VALUE} textValue="None">
-              <span className="text-muted-foreground">None</span>
+            <SelectItem value={ENUM_UNSET_VALUE} textValue={t("forms.none")}>
+              <span className="text-muted-foreground">{t("forms.none")}</span>
             </SelectItem>
           )}
           {options.map((option) => (
@@ -636,7 +637,7 @@ const SecretField = React.memo(({
           value={
             stringValue.length === 0
               ? ""
-              : `Sensitive — ${stringValue.length} characters hidden. Click the eye to reveal.`
+              : t("forms.sensitiveHidden", { count: stringValue.length })
           }
           readOnly
           placeholder={String(defaultValue ?? "")}
@@ -659,7 +660,7 @@ const SecretField = React.memo(({
           <Eye className="h-4 w-4 text-muted-foreground" />
         )}
         <span className="sr-only">
-          {isVisible ? "Hide secret" : "Show secret"}
+          {isVisible ? t("forms.hideSecret") : t("forms.showSecret")}
         </span>
       </Button>
     </div>
@@ -699,7 +700,7 @@ const SecretField = React.memo(({
       label={label}
       description={
         description ||
-        "Pick an existing company secret, or paste a raw value (Paperclip will store it as a secret on save)."
+        t("forms.noActiveSecrets")
       }
       required={isRequired}
       error={error}
@@ -710,9 +711,9 @@ const SecretField = React.memo(({
           value={bindingValue}
           onChange={handlePickerChange}
           label=""
-          placeholder="Select an existing secret"
+          placeholder={t("forms.selectExistingSecret")}
           allowVersionSelector={false}
-          emptyHint="No active secrets yet. Create one or paste a raw value below."
+          emptyHint={t("forms.noActiveSecrets")}
           disabled={disabled}
         />
         {!isBoundToSecret ? (
@@ -729,7 +730,7 @@ const SecretField = React.memo(({
                   }}
                   disabled={disabled}
                 >
-                  Hide raw value input
+                  {t("forms.hideRawValue")}
                 </button>
               ) : null}
             </div>
@@ -740,7 +741,7 @@ const SecretField = React.memo(({
               onClick={() => setShowRawInput(true)}
               disabled={disabled}
             >
-              Or paste a raw value
+              {t("forms.pasteRawValue")}
             </button>
           )
         ) : null}
@@ -935,7 +936,7 @@ const ArrayField = React.memo(({
           }}
         >
           <Plus className="mr-2 h-4 w-4" />
-          {isComplex ? "Add item" : "Add"}
+          {isComplex ? t("forms.addItem") : t("forms.add")}
         </Button>
       </div>
 
@@ -947,7 +948,7 @@ const ArrayField = React.memo(({
           >
             <div className="flex-1">
               <div className="mb-2 text-xs font-medium text-muted-foreground">
-                Item {index + 1}
+                {t("forms.item", { index: index + 1 })}
               </div>
               <FormField
                 propSchema={itemSchema}
@@ -980,13 +981,13 @@ const ArrayField = React.memo(({
               }}
             >
               <Trash2 className="h-4 w-4" />
-              <span className="sr-only">Remove item</span>
+              <span className="sr-only">{t("forms.removeItem")}</span>
             </Button>
           </div>
         ))}
         {items.length === 0 && (
           <div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
-            No items added yet.
+            {t("forms.noItems")}
           </div>
         )}
       </div>
@@ -1213,8 +1214,9 @@ export function JsonSchemaForm({
   errors = {},
   disabled,
   className,
-  advancedLabel = "Advanced options",
+  advancedLabel,
 }: JsonSchemaFormProps) {
+  const resolvedAdvancedLabel = advancedLabel ?? t("forms.advancedOptions");
   const type = resolveType(schema);
 
   const handleRootScalarChange = useCallback((newVal: unknown) => {
@@ -1319,7 +1321,7 @@ export function JsonSchemaForm({
           className,
         )}
       >
-        No configuration options available.
+        {t("forms.noConfigurationOptions")}
       </div>
     );
   }
@@ -1359,7 +1361,7 @@ export function JsonSchemaForm({
             onClick={() => setIsAdvancedOpen((open) => !open)}
             aria-expanded={isAdvancedOpen}
           >
-            <span className="text-sm font-medium">{advancedLabel}</span>
+            <span className="text-sm font-medium">{resolvedAdvancedLabel}</span>
             {isAdvancedOpen ? (
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             ) : (

@@ -5,22 +5,42 @@ import { Link } from "@/lib/router";
 import { cn } from "@/lib/utils";
 import { StatusIcon } from "../StatusIcon";
 import { Identity } from "../Identity";
+import { t, useTranslation } from "@/i18n";
 import { HighlightedText, type HighlightedTextProps } from "./HighlightedText";
 
 type SnippetStyle = {
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
-  label: string;
+  labelKey: string;
 };
 
 const SNIPPET_STYLES: Record<string, SnippetStyle> = {
-  comment: { Icon: MessageSquare, label: "Comment" },
-  document: { Icon: FileText, label: "Doc" },
-  artifact: { Icon: Paperclip, label: "Artifact" },
-  description: { Icon: Quote, label: "Description" },
+  comment: { Icon: MessageSquare, labelKey: "search.matchSource.comment" },
+  document: { Icon: FileText, labelKey: "search.matchSource.document" },
+  artifact: { Icon: Paperclip, labelKey: "search.matchSource.artifact" },
+  description: { Icon: Quote, labelKey: "search.matchSource.description" },
 };
 
-function snippetStyle(field: string, fallbackLabel: string): SnippetStyle {
-  return SNIPPET_STYLES[field] ?? { Icon: Quote, label: fallbackLabel };
+function sourceLabel(value: string | null | undefined, fallbackKey: string): string {
+  switch (value) {
+    case "Title":
+      return t("search.matchSource.title");
+    case "Identifier":
+      return t("search.matchSource.identifier");
+    case "Comment":
+      return t("search.matchSource.comment");
+    case "Document":
+      return t("search.matchSource.document");
+    case "Artifact":
+      return t("search.matchSource.artifact");
+    case "Description":
+      return t("search.matchSource.description");
+    case "Agent":
+      return t("search.matchSource.agent");
+    case "Project":
+      return t("search.matchSource.project");
+    default:
+      return value ?? t(fallbackKey);
+  }
 }
 
 function formatRelativeTime(input: string | null): string {
@@ -29,19 +49,19 @@ function formatRelativeTime(input: string | null): string {
   if (Number.isNaN(value.getTime())) return "";
   const diffMs = Date.now() - value.getTime();
   const seconds = Math.round(diffMs / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return t("search.time.justNow");
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 60) return t("search.time.minutes", { count: minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return t("search.time.hours", { count: hours });
   const days = Math.round(hours / 24);
-  if (days < 7) return `${days}d`;
+  if (days < 7) return t("search.time.days", { count: days });
   const weeks = Math.round(days / 7);
-  if (weeks < 5) return `${weeks}w`;
+  if (weeks < 5) return t("search.time.weeks", { count: weeks });
   const months = Math.round(days / 30);
-  if (months < 12) return `${months}mo`;
+  if (months < 12) return t("search.time.months", { count: months });
   const years = Math.round(days / 365);
-  return `${years}y`;
+  return t("search.time.years", { count: years });
 }
 
 export interface SearchResultRowProps {
@@ -60,6 +80,7 @@ function SearchResultRowImpl({
   isActive,
   className,
 }: SearchResultRowProps) {
+  useTranslation();
   if (result.type === "agent") {
     return (
       <Link
@@ -79,7 +100,7 @@ function SearchResultRowImpl({
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="agent"
-              fallbackLabel={result.sourceLabel ?? "Agent"}
+              fallbackLabel={sourceLabel(result.sourceLabel, "search.matchSource.agent")}
             />
           ) : null}
         </div>
@@ -102,7 +123,7 @@ function SearchResultRowImpl({
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="project"
-              fallbackLabel={result.sourceLabel ?? "Project"}
+              fallbackLabel={sourceLabel(result.sourceLabel, "search.matchSource.project")}
             />
           ) : null}
         </div>
@@ -134,7 +155,7 @@ function SearchResultRowImpl({
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="artifact"
-              fallbackLabel={result.sourceLabel ?? "Artifact"}
+              fallbackLabel={sourceLabel(result.sourceLabel, "search.matchSource.artifact")}
               multiline
             />
           ) : null}
@@ -244,7 +265,8 @@ interface SnippetLineProps {
 }
 
 function SnippetLine({ text, highlights, field, fallbackLabel, multiline = false }: SnippetLineProps) {
-  const { Icon, label } = snippetStyle(field, fallbackLabel);
+  const { Icon, labelKey } = SNIPPET_STYLES[field] ?? { Icon: Quote, labelKey: fallbackLabel };
+  const label = field in SNIPPET_STYLES ? t(labelKey) : fallbackLabel;
   return (
     <div
       className={cn(

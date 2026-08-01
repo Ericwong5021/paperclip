@@ -24,34 +24,35 @@ import {
 import { agentsApi } from "@/api/agents";
 import { ToolsPageHeader, LoadingState, ErrorState, RelativeTime } from "./shared";
 import { advancedTabHref } from "./tool-tabs";
+import { t } from "@/i18n";
 
 const PAGE_SIZE = 50;
 const ALL = "__all";
 
 /** Outcome chip vocabulary (spec §4C / §5): Allowed · Blocked · Asked first · Failed · Waiting. */
 const OUTCOME_META: Record<ToolAuditOutcome, { label: string; status: string }> = {
-  allowed: { label: "Allowed", status: "allowed" },
-  blocked: { label: "Blocked", status: "denied" },
-  asked_first: { label: "Asked first", status: "require-approval" },
-  waiting: { label: "Waiting", status: "deferred" },
-  failed: { label: "Failed", status: "failed" },
-  unknown: { label: "Recorded", status: "unchecked" },
+  allowed: { label: t("appsToolsResidual.allowedAudit"), status: "allowed" },
+  blocked: { label: t("appsToolsResidual.blockedAudit"), status: "denied" },
+  asked_first: { label: t("appsToolsResidual.askedFirstAudit"), status: "require-approval" },
+  waiting: { label: t("appsToolsResidual.waitingAudit"), status: "deferred" },
+  failed: { label: t("appsToolsResidual.failedAudit"), status: "failed" },
+  unknown: { label: t("appsToolsResidual.recordedAudit"), status: "unchecked" },
 };
 
 const OUTCOME_FILTERS: { value: string; label: string }[] = [
-  { value: ALL, label: "All outcomes" },
-  { value: "allowed", label: "Allowed" },
-  { value: "blocked", label: "Blocked" },
-  { value: "asked_first", label: "Asked first" },
-  { value: "waiting", label: "Waiting" },
-  { value: "failed", label: "Failed" },
+  { value: ALL, label: t("appsToolsResidual.allOutcomes") },
+  { value: "allowed", label: t("appsToolsResidual.allowedAudit") },
+  { value: "blocked", label: t("appsToolsResidual.blockedAudit") },
+  { value: "asked_first", label: t("appsToolsResidual.askedFirstAudit") },
+  { value: "waiting", label: t("appsToolsResidual.waitingAudit") },
+  { value: "failed", label: t("appsToolsResidual.failedAudit") },
 ];
 
 const WINDOW_FILTERS: { value: ToolAuditWindow; label: string }[] = [
-  { value: "1h", label: "Last 1 hour" },
-  { value: "24h", label: "Last 24 hours" },
-  { value: "7d", label: "Last 7 days" },
-  { value: "30d", label: "Last 30 days" },
+  { value: "1h", label: t("appsToolsResidual.lastHour") },
+  { value: "24h", label: t("appsToolsResidual.last24Hours") },
+  { value: "7d", label: t("appsToolsResidual.last7Days") },
+  { value: "30d", label: t("appsToolsResidual.last30Days") },
 ];
 
 function detailString(details: Record<string, unknown> | null, key: string): string | undefined {
@@ -182,17 +183,17 @@ function ActivityRow({
         <span className="min-w-0 flex-1">
           {isRuntimeMcpDeliveryDiagnostic ? (
             <span className="block text-foreground">
-              <span className="font-medium">{who}</span>'s run received 0 MCP servers —{" "}
+              <span className="font-medium">{who}</span>{t("appsToolsResidual.runReceivedServers", { count: 0 })}{" "}
               <span className="font-medium">{permittedNotInstalledCount ?? permittedNotInstalledConnections.length}</span>{" "}
-              permitted {(permittedNotInstalledCount ?? permittedNotInstalledConnections.length) === 1 ? "connection" : "connections"} not installed
+              {t("appsToolsResidual.permittedConnectionsNotInstalled", { count: permittedNotInstalledCount ?? permittedNotInstalledConnections.length })}
             </span>
           ) : (
             <span className="block text-foreground">
-              <span className="font-medium">{who}</span> used <span className="font-medium">{action}</span>
+              <span className="font-medium">{who}</span> {t("appsToolsResidual.usedAction")} <span className="font-medium">{action}</span>
               {app ? (
                 <>
                   {" "}
-                  in <span className="font-medium">{app}</span>
+                  {t("appsToolsResidual.inApp", { app: "" })} <span className="font-medium">{app}</span>
                 </>
               ) : null}
             </span>
@@ -223,12 +224,12 @@ function ActivityRow({
           <div className="flex flex-wrap gap-3 text-xs">
             {issueId ? (
               <Link to={`/issues/${issueId}`} className="text-primary hover:underline">
-                View task
+                {t("appsToolsResidual.viewTask")}
               </Link>
             ) : null}
             {runId && agentId ? (
               <Link to={`/agents/${agentId}/runs/${runId}`} className="text-primary hover:underline">
-                View run
+                {t("appsToolsResidual.viewRun")}
               </Link>
             ) : null}
           </div>
@@ -240,32 +241,32 @@ function ActivityRow({
               className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               {detailsOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              Details
+              {t("appsToolsResidual.details")}
             </button>
             {detailsOpen ? (
               <div className="mt-2 space-y-1.5 text-xs">
-                {rawTool ? <DetailFact label="Action name" value={rawTool} mono /> : null}
-                <DetailFact label="Reason code" value={reasonCode} mono />
-                <DetailFact label="Actor type" value={event.actorType ?? "—"} />
-                {runId ? <DetailFact label="Run ID" value={runId} mono /> : null}
-                {transport ? <DetailFact label="Transport" value={transport} mono /> : null}
-                {requestMethod && endpoint ? <DetailFact label="HTTP request" value={`${requestMethod} ${endpoint}`} mono /> : null}
-                {mcpMethod ? <DetailFact label="MCP method" value={mcpMethod} mono /> : null}
-                {requestId ? <DetailFact label="Request ID" value={requestId} mono /> : null}
-                {request ? <DetailFact label="Dispatched" value={request.dispatched === true ? "Yes" : "No"} /> : null}
-                {httpStatus !== undefined ? <DetailFact label="HTTP status" value={String(httpStatus)} mono /> : null}
-                {contentType ? <DetailFact label="Content type" value={contentType} mono /> : null}
-                {responseBytes !== undefined ? <DetailFact label="Response size" value={`${responseBytes} bytes`} /> : null}
-                {upstreamRequestId ? <DetailFact label="Upstream ID" value={upstreamRequestId} mono /> : null}
+                {rawTool ? <DetailFact label={t("appsToolsResidual.actionName")} value={rawTool} mono /> : null}
+                <DetailFact label={t("appsToolsResidual.reasonCode")} value={reasonCode} mono />
+                <DetailFact label={t("appsToolsResidual.actorType")} value={event.actorType ?? "—"} />
+                {runId ? <DetailFact label={t("appsToolsResidual.runId")} value={runId} mono /> : null}
+                {transport ? <DetailFact label={t("appsToolsResidual.transport")} value={transport} mono /> : null}
+                {requestMethod && endpoint ? <DetailFact label={t("appsToolsResidual.httpRequest")} value={`${requestMethod} ${endpoint}`} mono /> : null}
+                {mcpMethod ? <DetailFact label={t("appsToolsResidual.mcpMethod")} value={mcpMethod} mono /> : null}
+                {requestId ? <DetailFact label={t("appsToolsResidual.requestId")} value={requestId} mono /> : null}
+                {request ? <DetailFact label={t("appsToolsResidual.dispatched")} value={request.dispatched === true ? t("appsToolsResidual.yes") : t("appsToolsResidual.no")} /> : null}
+                {httpStatus !== undefined ? <DetailFact label={t("appsToolsResidual.httpStatus")} value={String(httpStatus)} mono /> : null}
+                {contentType ? <DetailFact label={t("appsToolsResidual.contentType")} value={contentType} mono /> : null}
+                {responseBytes !== undefined ? <DetailFact label={t("appsToolsResidual.responseSize")} value={t("appsToolsResidual.bytes", { count: responseBytes })} /> : null}
+                {upstreamRequestId ? <DetailFact label={t("appsToolsResidual.upstreamId")} value={upstreamRequestId} mono /> : null}
                 {isRuntimeMcpDeliveryDiagnostic ? (
                   <>
-                    <DetailFact label="Delivered MCP servers" value="0" mono />
+                    <DetailFact label={t("appsToolsResidual.deliveredMcpServers")} value="0" mono />
                     {permittedNotInstalledConnections.map((connection) => {
                       const connectionId = detailString(connection, "id");
                       const connectionName = detailString(connection, "name") ?? "Unnamed connection";
                       return connectionId ? (
                         <div key={connectionId} className="flex gap-2">
-                          <span className="shrink-0 text-muted-foreground">Not installed</span>
+                          <span className="shrink-0 text-muted-foreground">{t("appsToolsResidual.notInstalled")}</span>
                           <Link to={`/apps/${connectionId}/permissions`} className="font-medium text-primary hover:underline">
                             {connectionName}
                           </Link>
@@ -276,7 +277,7 @@ function ActivityRow({
                 ) : null}
                 {argumentsText ? (
                   <div className="space-y-1">
-                    <span className="text-muted-foreground">Parameters (redacted)</span>
+                    <span className="text-muted-foreground">{t("appsToolsResidual.redactedParameters")}</span>
                     <pre className="whitespace-pre-wrap break-words rounded-md border border-border bg-background p-3 font-mono text-xs text-foreground">
                       {argumentsText}
                     </pre>
@@ -364,17 +365,17 @@ export function AuditTab({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-4">
       <ToolsPageHeader
-        title="Activity"
-        description="What your agents actually did with your apps, newest first. Each line is one decision — allowed, blocked, asked first, waiting, or failed."
+        title={t("appsTools.activity", { defaultValue: "活动" })}
+        description={t("appsTools.activityDescription", { defaultValue: "查看 Agent 实际对应用执行的操作，最新记录在前。每行代表一个决定：允许、阻止、先询问、等待或失败。" })}
       />
 
       <div className="flex flex-wrap items-center gap-2">
         <Select value={app} onValueChange={setApp}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="App" />
+            <SelectValue placeholder={t("appsTools.app", { defaultValue: "应用" })} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>All apps</SelectItem>
+            <SelectItem value={ALL}>{t("appsTools.allApps", { defaultValue: "全部应用" })}</SelectItem>
             {(apps.data?.applications ?? []).map((a) => (
               <SelectItem key={a.id} value={a.id}>
                 {a.name}
@@ -384,10 +385,10 @@ export function AuditTab({ companyId }: { companyId: string }) {
         </Select>
         <Select value={agent} onValueChange={setAgent}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Agent" />
+            <SelectValue placeholder={t("appsTools.agent", { defaultValue: "Agent" })} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>All agents</SelectItem>
+            <SelectItem value={ALL}>{t("appsTools.allAgents", { defaultValue: "全部 Agent" })}</SelectItem>
             {(agents.data ?? []).map((a) => (
               <SelectItem key={a.id} value={a.id}>
                 {a.name}
@@ -420,14 +421,14 @@ export function AuditTab({ companyId }: { companyId: string }) {
           </SelectContent>
         </Select>
         <Input
-          placeholder="Search activity…"
+          placeholder={t("appsTools.searchActivity", { defaultValue: "搜索活动…" })}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           className="max-w-xs"
         />
         {hasActiveFilters ? (
           <Button variant="ghost" size="sm" onClick={clearFilters}>
-            Clear filters
+            {t("appsTools.clearFilters", { defaultValue: "清除筛选" })}
           </Button>
         ) : null}
       </div>
@@ -442,13 +443,13 @@ export function AuditTab({ companyId }: { companyId: string }) {
             <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
               <ScrollText className="h-10 w-10 text-muted-foreground/40" />
               <div>
-                <p className="text-sm font-medium text-foreground">No activity matches these filters</p>
+                <p className="text-sm font-medium text-foreground">{t("appsTools.noActivityMatch", { defaultValue: "没有活动匹配这些筛选条件" })}</p>
                 <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                  Try a wider time window or different filters.
+                  {t("appsTools.tryWiderFilters", { defaultValue: "请扩大时间范围或更换筛选条件。" })}
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={clearFilters}>
-                Clear filters
+                {t("appsTools.clearFilters", { defaultValue: "清除筛选" })}
               </Button>
             </CardContent>
           </Card>
@@ -457,9 +458,9 @@ export function AuditTab({ companyId }: { companyId: string }) {
             <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
               <ScrollText className="h-10 w-10 text-muted-foreground/40" />
               <div>
-                <p className="text-sm font-medium text-foreground">Nothing here yet</p>
+                <p className="text-sm font-medium text-foreground">{t("appsTools.nothingHereYet", { defaultValue: "这里还没有记录" })}</p>
                 <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                  As soon as your agents start using connected apps, what they do shows up here.
+                  {t("appsTools.activityEmptyHint", { defaultValue: "Agent 开始使用已连接应用后，执行记录会显示在这里。" })}
                 </p>
               </div>
             </CardContent>

@@ -78,6 +78,7 @@ import { AgentIcon } from "./AgentIconPicker";
 import { InlineEntitySelector, type InlineEntityOption } from "./InlineEntitySelector";
 import { getTrustPreset } from "../lib/trust-policy-ui";
 import { ReusableExecutionWorkspaceSelect } from "./ReusableExecutionWorkspaceSelect";
+import { useTranslation } from "@/i18n";
 
 const DRAFT_KEY = "paperclip:issue-draft";
 const DEBOUNCE_MS = 800;
@@ -221,24 +222,24 @@ function formatFileSize(file: File) {
   return `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function buildStatusOptions(): ReadonlyArray<{ value: string; label: string; color: string; description?: string }> {
+function buildStatusOptions(t: (key: string) => string): ReadonlyArray<{ value: string; label: string; color: string; description?: string }> {
   const palette = issueStatusText;
   return [
     {
       value: "backlog",
-      label: "Backlog",
+      label: t("taskDialog.status.backlog"),
       color: palette.backlog ?? issueStatusTextDefault,
-      description: "Parked - assignee will not be woken",
+      description: t("taskDialog.status.backlogDescription"),
     },
     {
       value: "todo",
-      label: "Todo",
+      label: t("taskDialog.status.todo"),
       color: palette.todo ?? issueStatusTextDefault,
-      description: "Executable - assignee will be woken",
+      description: t("taskDialog.status.todoDescription"),
     },
-    { value: "in_progress", label: "In Progress", color: palette.in_progress ?? issueStatusTextDefault },
-    { value: "in_review", label: "In Review", color: palette.in_review ?? issueStatusTextDefault },
-    { value: "done", label: "Done", color: palette.done ?? issueStatusTextDefault },
+    { value: "in_progress", label: t("taskDialog.status.inProgress"), color: palette.in_progress ?? issueStatusTextDefault },
+    { value: "in_review", label: t("taskDialog.status.inReview"), color: palette.in_review ?? issueStatusTextDefault },
+    { value: "done", label: t("taskDialog.status.done"), color: palette.done ?? issueStatusTextDefault },
   ];
 }
 
@@ -283,6 +284,25 @@ const EXECUTION_WORKSPACE_MODES = [
   { value: "reuse_existing", label: "Reuse existing workspace" },
 ] as const;
 
+function priorityLabel(t: (key: string) => string, value: string) {
+  return t(`taskDialog.priority.${value}`);
+}
+
+function thinkingEffortLabel(t: (key: string) => string, value: string) {
+  const key = value === "xhigh" ? "extraHigh" : value || "default";
+  return t(`taskDialog.${key}`);
+}
+
+function workModeLabels(t: (key: string) => string, value: IssueWorkMode) {
+  if (value === "planning") {
+    return { label: t("taskDialog.planModeLabel"), shortLabel: t("taskDialog.planMode") };
+  }
+  if (value === "ask") {
+    return { label: t("taskDialog.askModeLabel"), shortLabel: t("taskDialog.askMode") };
+  }
+  return { label: t("taskDialog.agentModeLabel"), shortLabel: t("taskDialog.agentMode") };
+}
+
 function defaultExecutionWorkspaceModeForIssueDefaults(
   defaults: {
     executionWorkspaceId?: unknown;
@@ -315,6 +335,7 @@ const IssueTitleTextarea = memo(function IssueTitleTextarea({
   descriptionEditorRef,
   assigneeSelectorRef,
   projectSelectorRef,
+  titlePlaceholder,
   onChange,
 }: {
   value: string;
@@ -324,6 +345,7 @@ const IssueTitleTextarea = memo(function IssueTitleTextarea({
   descriptionEditorRef: RefObject<MarkdownEditorRef | null>;
   assigneeSelectorRef: RefObject<HTMLButtonElement | null>;
   projectSelectorRef: RefObject<HTMLButtonElement | null>;
+  titlePlaceholder: string;
   onChange: (value: string) => void;
 }) {
   const [draftValue, setDraftValue] = useState(value);
@@ -335,7 +357,7 @@ const IssueTitleTextarea = memo(function IssueTitleTextarea({
   return (
     <textarea
       className="w-full text-lg font-semibold bg-transparent outline-none resize-none overflow-hidden placeholder:text-muted-foreground/50"
-      placeholder="Task title"
+      placeholder={titlePlaceholder}
       rows={1}
       value={draftValue}
       onChange={(e) => {
@@ -380,6 +402,7 @@ const IssueDescriptionEditor = memo(function IssueDescriptionEditor({
   mentions,
   descriptionEditorRef,
   imageUploadHandler,
+  descriptionPlaceholder,
   onChange,
 }: {
   value: string;
@@ -387,6 +410,7 @@ const IssueDescriptionEditor = memo(function IssueDescriptionEditor({
   mentions: MentionOption[];
   descriptionEditorRef: RefObject<MarkdownEditorRef | null>;
   imageUploadHandler: (file: File) => Promise<string>;
+  descriptionPlaceholder: string;
   onChange: (value: string) => void;
 }) {
   const [draftValue, setDraftValue] = useState(value);
@@ -403,7 +427,7 @@ const IssueDescriptionEditor = memo(function IssueDescriptionEditor({
         setDraftValue(nextValue);
         onChange(nextValue);
       }}
-      placeholder="Add description..."
+      placeholder={descriptionPlaceholder}
       bordered={false}
       mentions={mentions}
       contentClassName={cn("text-sm text-muted-foreground pb-12", expanded ? "min-h-(--sz-220px)" : "min-h-(--sz-120px)")}
@@ -413,10 +437,11 @@ const IssueDescriptionEditor = memo(function IssueDescriptionEditor({
 });
 
 export function NewIssueDialog() {
+  const { t } = useTranslation();
   const { newIssueOpen, newIssueDefaults, closeNewIssue } = useDialog();
   const { companies, selectedCompanyId, selectedCompany } = useCompany();
   const workModeOptions = useMemo(() => workModeMetaList(), []);
-  const statuses = useMemo(() => buildStatusOptions(), []);
+  const statuses = useMemo(() => buildStatusOptions(t), [t]);
   const queryClient = useQueryClient();
   const { pushToast } = useToastActions();
   const [title, setTitle] = useState("");
@@ -613,11 +638,14 @@ export function NewIssueDialog() {
         const prefix = (companies.find((company) => company.id === companyId)?.issuePrefix ?? "").trim();
         const issueRef = issue.identifier ?? issue.id;
         pushToast({
-          title: `Created ${issueRef} with upload warnings`,
-          body: `${failures.length} staged ${failures.length === 1 ? "file" : "files"} could not be added.`,
+          title: t("taskDialog.createdWithUploadWarnings", { issueRef }),
+          body: t("taskDialog.stagedFilesCouldNotBeAdded", {
+            count: failures.length,
+            fileWord: t(failures.length === 1 ? "taskDialog.file" : "taskDialog.files"),
+          }),
           tone: "warn",
           action: prefix
-            ? { label: `Open ${issueRef}`, href: `/${prefix}/issues/${issueRef}` }
+            ? { label: t("taskDialog.openIssue", { issueRef }), href: `/${prefix}/issues/${issueRef}` }
             : undefined,
         });
       }
@@ -629,7 +657,7 @@ export function NewIssueDialog() {
 
   const uploadDescriptionImage = useMutation({
     mutationFn: async (file: File) => {
-      if (!effectiveCompanyId) throw new Error("No company selected");
+      if (!effectiveCompanyId) throw new Error(t("taskDialog.noCompanySelected"));
       return assetsApi.uploadImage(effectiveCompanyId, file, "issues/drafts");
     },
   });
@@ -1156,12 +1184,12 @@ export function NewIssueDialog() {
     && !isUsingParentExecutionWorkspace;
   const assigneeOptionsTitle =
     assigneeAdapterType === "claude_local"
-      ? "Claude options"
+      ? t("taskDialog.claudeOptions")
       : assigneeAdapterType === "codex_local"
-        ? "Codex options"
+        ? t("taskDialog.codexOptions")
         : assigneeAdapterType === "opencode_local"
-          ? "OpenCode options"
-        : "Agent options";
+          ? t("taskDialog.openCodeOptions")
+        : t("taskDialog.assigneeOptions");
   const thinkingEffortOptions =
     assigneeAdapterType === "codex_local"
       ? ISSUE_THINKING_EFFORT_OPTIONS.codex_local
@@ -1215,7 +1243,7 @@ export function NewIssueDialog() {
   const hasSavedDraft = Boolean(savedDraft?.title.trim() || savedDraft?.description.trim());
   const canDiscardDraft = hasDraft || hasSavedDraft;
   const createIssueErrorMessage =
-    createIssue.error instanceof Error ? createIssue.error.message : "Failed to create task. Try again.";
+    createIssue.error instanceof Error ? createIssue.error.message : t("taskDialog.failedToCreate");
   const stagedDocuments = stagedFiles.filter((file) => file.kind === "document");
   const stagedAttachments = stagedFiles.filter((file) => file.kind === "attachment");
 
@@ -1373,7 +1401,7 @@ export function NewIssueDialog() {
               </PopoverContent>
             </Popover>
             <span className="text-muted-foreground/60">&rsaquo;</span>
-            <span>{isSubIssueMode ? "New sub-task" : "New task"}</span>
+            <span>{isSubIssueMode ? t("taskDialog.newSubTask") : t("taskDialog.newTask")}</span>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -1382,6 +1410,8 @@ export function NewIssueDialog() {
               className="text-muted-foreground"
               onClick={() => setExpanded(!expanded)}
               disabled={createIssue.isPending}
+              aria-label={expanded ? t("taskDialog.collapse") : t("taskDialog.expand")}
+              title={expanded ? t("taskDialog.collapse") : t("taskDialog.expand")}
             >
               {expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
             </Button>
@@ -1391,6 +1421,8 @@ export function NewIssueDialog() {
               className="text-muted-foreground"
               onClick={() => closeNewIssue()}
               disabled={createIssue.isPending}
+              aria-label={t("taskDialog.close")}
+              title={t("taskDialog.close")}
             >
               <span className="text-lg leading-none">&times;</span>
             </Button>
@@ -1408,6 +1440,7 @@ export function NewIssueDialog() {
               descriptionEditorRef={descriptionEditorRef}
               assigneeSelectorRef={assigneeSelectorRef}
               projectSelectorRef={projectSelectorRef}
+              titlePlaceholder={t("taskDialog.taskTitle")}
               onChange={handleTitleChange}
             />
           </div>
@@ -1426,17 +1459,17 @@ export function NewIssueDialog() {
           <div className="px-4 pb-2">
             <div className="overflow-x-auto overscroll-x-contain">
               <div className="inline-flex items-center gap-2 text-sm text-muted-foreground flex-wrap sm:flex-nowrap sm:min-w-max">
-              <span className="w-6 shrink-0 text-center">For</span>
+              <span className="w-6 shrink-0 text-center">{t("taskDialog.for")}</span>
               <InlineEntitySelector
                 ref={assigneeSelectorRef}
                 value={assigneeValue}
                 options={assigneeOptions}
                 recentOptionIds={recentAssigneeOptionIds}
-                placeholder="Assignee"
+                placeholder={t("taskDialog.assignee")}
                 disablePortal
-                noneLabel="No assignee"
-                searchPlaceholder="Search assignees..."
-                emptyMessage="No assignees found."
+                noneLabel={t("taskDialog.noAssignee")}
+                searchPlaceholder={t("taskDialog.searchAssignees")}
+                emptyMessage={t("taskDialog.noAssigneesFound")}
                 onChange={(value) => {
                   const nextAssignee = parseAssigneeValue(value);
                   if (nextAssignee.assigneeAgentId) {
@@ -1466,7 +1499,7 @@ export function NewIssueDialog() {
                       <span className="truncate">{option.label}</span>
                     )
                   ) : (
-                    <span className="text-muted-foreground">Assignee</span>
+                    <span className="text-muted-foreground">{t("taskDialog.assignee")}</span>
                   )
                 }
                 renderOption={(option) => {
@@ -1479,23 +1512,23 @@ export function NewIssueDialog() {
                       {assignee ? <AgentIcon icon={assignee.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
                       <span className="truncate">{option.label}</span>
                       {assignee && getTrustPreset(assignee.permissions) === "low_trust_review" ? (
-                        <ShieldAlert className="ml-auto h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" aria-label="Low-trust review agent" />
+                        <ShieldAlert className="ml-auto h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" aria-label={t("taskDialog.lowTrustReviewAgent")} />
                       ) : null}
                     </>
                   );
                 }}
               />
-              <span>in</span>
+              <span>{t("taskDialog.in")}</span>
               <InlineEntitySelector
                 ref={projectSelectorRef}
                 value={projectId}
                 options={projectOptions}
                 recentOptionIds={recentProjectIds}
-                placeholder="Project"
+                placeholder={t("taskDialog.project")}
                 disablePortal
-                noneLabel="No project"
-                searchPlaceholder="Search projects..."
-                emptyMessage="No projects found."
+                noneLabel={t("taskDialog.noProject")}
+                searchPlaceholder={t("taskDialog.searchProjects")}
+                emptyMessage={t("taskDialog.noProjectsFound")}
                 onChange={handleProjectChange}
                 onConfirm={() => {
                   descriptionEditorRef.current?.focus();
@@ -1510,7 +1543,7 @@ export function NewIssueDialog() {
                       <span className="truncate">{option.label}</span>
                     </>
                   ) : (
-                    <span className="text-muted-foreground">Project</span>
+                    <span className="text-muted-foreground">{t("taskDialog.project")}</span>
                   )
                 }
                 renderOption={(option) => {
@@ -1534,7 +1567,8 @@ export function NewIssueDialog() {
                   <button
                     type="button"
                     className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:bg-accent/50 transition-colors"
-                    title={taskWatchdogsEnabled ? "Add reviewer, approver, or watchdog" : "Add reviewer or approver"}
+                    title={taskWatchdogsEnabled ? t("taskDialog.addReviewerApproverWatchdog") : t("taskDialog.addReviewerApprover")}
+                    aria-label={taskWatchdogsEnabled ? t("taskDialog.addReviewerApproverWatchdog") : t("taskDialog.addReviewerApprover")}
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
@@ -1552,7 +1586,7 @@ export function NewIssueDialog() {
                     }}
                   >
                     <Eye className="h-3 w-3" />
-                    Reviewer
+                    {t("taskDialog.reviewer")}
                   </button>
                   <button
                     className={cn(
@@ -1566,7 +1600,7 @@ export function NewIssueDialog() {
                     }}
                   >
                     <ShieldCheck className="h-3 w-3" />
-                    Approver
+                    {t("taskDialog.approver")}
                   </button>
                   {taskWatchdogsEnabled && (
                     <button
@@ -1588,7 +1622,7 @@ export function NewIssueDialog() {
                       }}
                     >
                       <ScanEye className="h-3 w-3" />
-                      Watchdog
+                      {t("taskDialog.watchdog")}
                     </button>
                   )}
                 </PopoverContent>
@@ -1604,11 +1638,11 @@ export function NewIssueDialog() {
                 value={reviewerValue}
                 options={assigneeOptions}
                 recentOptionIds={recentAssigneeOptionIds}
-                placeholder="Reviewer"
+                placeholder={t("taskDialog.reviewer")}
                 disablePortal
-                noneLabel="No reviewer"
-                searchPlaceholder="Search reviewers..."
-                emptyMessage="No reviewers found."
+                noneLabel={t("taskDialog.noReviewer")}
+                searchPlaceholder={t("taskDialog.searchReviewers")}
+                emptyMessage={t("taskDialog.noReviewersFound")}
                 onChange={setReviewerValue}
                 renderTriggerValue={(option) =>
                   option ? (
@@ -1622,7 +1656,7 @@ export function NewIssueDialog() {
                       <span className="truncate">{option.label}</span>
                     </>
                   ) : (
-                    <span className="text-muted-foreground">Reviewer</span>
+                    <span className="text-muted-foreground">{t("taskDialog.reviewer")}</span>
                   )
                 }
                 renderOption={(option) => {
@@ -1649,11 +1683,11 @@ export function NewIssueDialog() {
                 value={approverValue}
                 options={assigneeOptions}
                 recentOptionIds={recentAssigneeOptionIds}
-                placeholder="Approver"
+                placeholder={t("taskDialog.approver")}
                 disablePortal
-                noneLabel="No approver"
-                searchPlaceholder="Search approvers..."
-                emptyMessage="No approvers found."
+                noneLabel={t("taskDialog.noApprover")}
+                searchPlaceholder={t("taskDialog.searchApprovers")}
+                emptyMessage={t("taskDialog.noApproversFound")}
                 onChange={setApproverValue}
                 renderTriggerValue={(option) =>
                   option ? (
@@ -1667,7 +1701,7 @@ export function NewIssueDialog() {
                       <span className="truncate">{option.label}</span>
                     </>
                   ) : (
-                    <span className="text-muted-foreground">Approver</span>
+                    <span className="text-muted-foreground">{t("taskDialog.approver")}</span>
                   )
                 }
                 renderOption={(option) => {
@@ -1695,7 +1729,8 @@ export function NewIssueDialog() {
                     <button
                       type="button"
                       className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors min-w-0"
-                      title="Configure watchdog"
+                      title={t("taskDialog.configureWatchdog")}
+                      aria-label={t("taskDialog.configureWatchdog")}
                     >
                       {selectedWatchdogAgent ? (
                         <>
@@ -1706,20 +1741,20 @@ export function NewIssueDialog() {
                           ) : null}
                         </>
                       ) : (
-                        <span className="text-muted-foreground">Set watchdog</span>
+                        <span className="text-muted-foreground">{t("taskDialog.setWatchdog")}</span>
                       )}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80 p-3 space-y-3" align="start">
                     <div className="space-y-1.5">
-                      <div className="text-xs font-medium text-foreground">Watchdog agent</div>
+                      <div className="text-xs font-medium text-foreground">{t("taskDialog.watchdogAgent")}</div>
                       <InlineEntitySelector
                         value={watchdogAgentId}
                         options={watchdogAgentOptions}
-                        placeholder="Select agent"
-                        noneLabel="No watchdog agent"
-                        searchPlaceholder="Search agents..."
-                        emptyMessage="No agents found."
+                        placeholder={t("taskDialog.selectAgent")}
+                        noneLabel={t("taskDialog.noWatchdogAgent")}
+                        searchPlaceholder={t("taskDialog.searchAgents")}
+                        emptyMessage={t("taskDialog.noAgentsFound")}
                         onChange={setWatchdogAgentId}
                         renderTriggerValue={(option) =>
                           option ? (
@@ -1730,7 +1765,7 @@ export function NewIssueDialog() {
                               <span className="truncate">{option.label}</span>
                             </>
                           ) : (
-                            <span className="text-muted-foreground">Select agent</span>
+                            <span className="text-muted-foreground">{t("taskDialog.selectAgent")}</span>
                           )
                         }
                         renderOption={(option) => {
@@ -1745,11 +1780,11 @@ export function NewIssueDialog() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <div className="text-xs font-medium text-foreground">Instructions <span className="font-normal text-muted-foreground">(optional)</span></div>
+                      <div className="text-xs font-medium text-foreground">{t("taskDialog.instructions")} <span className="font-normal text-muted-foreground">({t("taskDialog.optional")})</span></div>
                       <Textarea
                         value={watchdogInstructions}
                         onChange={(event) => setWatchdogInstructions(event.target.value)}
-                        placeholder="What should the watchdog watch for and how should it keep work moving?"
+                        placeholder={t("taskDialog.watchdogInstructions")}
                         rows={4}
                         className="text-xs"
                       />
@@ -1765,10 +1800,10 @@ export function NewIssueDialog() {
                           setWatchdogEditorOpen(false);
                         }}
                       >
-                        Remove
+                        {t("taskDialog.remove")}
                       </button>
                       <Button type="button" size="sm" className="h-7 text-xs" onClick={() => setWatchdogEditorOpen(false)}>
-                        Done
+                        {t("taskDialog.done")}
                       </Button>
                     </div>
                   </PopoverContent>
@@ -1782,7 +1817,7 @@ export function NewIssueDialog() {
             <div className="max-w-full rounded-md border border-border bg-muted/30 px-2.5 py-1.5 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <ListTree className="h-3.5 w-3.5 shrink-0" />
-                <span className="shrink-0">Sub-task of</span>
+                <span className="shrink-0">{t("taskDialog.subTaskOf")}</span>
                 <span className="font-medium text-foreground">{parentIssueLabel}</span>
               </div>
               {newIssueDefaults.parentTitle ? (
@@ -1797,9 +1832,9 @@ export function NewIssueDialog() {
           {currentProject && currentProjectSupportsExecutionWorkspace && (
             <div className="px-4 py-3 space-y-2">
             <div className="space-y-1.5">
-              <div className="text-xs font-medium">Execution workspace</div>
+              <div className="text-xs font-medium">{t("taskDialog.executionWorkspace")}</div>
               <div className="text-(length:--text-micro) text-muted-foreground">
-                Control whether this task runs in the shared workspace, a new isolated workspace, or an existing one.
+                {t("taskDialog.executionWorkspaceDescription")}
               </div>
               <select
                 className="w-full rounded border border-border bg-transparent px-2 py-1.5 text-xs outline-none"
@@ -1813,7 +1848,7 @@ export function NewIssueDialog() {
               >
                 {EXECUTION_WORKSPACE_MODES.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(`taskDialog.${option.value === "shared_workspace" ? "projectDefault" : option.value === "isolated_workspace" ? "newIsolatedWorkspace" : "reuseExistingWorkspace"}`)}
                   </option>
                 ))}
               </select>
@@ -1822,6 +1857,7 @@ export function NewIssueDialog() {
                   value={selectedExecutionWorkspaceId}
                   workspaces={selectableReusableWorkspaces}
                   onValueChange={(workspaceId) => setSelectedExecutionWorkspaceId(workspaceId)}
+                  placeholder={t("taskDialog.chooseExistingWorkspace")}
                   loading={reusableExecutionWorkspacesLoading}
                   error={reusableExecutionWorkspacesError}
                   disablePortal
@@ -1829,12 +1865,15 @@ export function NewIssueDialog() {
               )}
               {executionWorkspaceMode === "reuse_existing" && selectedReusableExecutionWorkspace && (
                 <div className="text-(length:--text-micro) text-muted-foreground">
-                  Reusing {selectedReusableExecutionWorkspace.name} from {selectedReusableExecutionWorkspace.branchName ?? selectedReusableExecutionWorkspace.cwd ?? "existing execution workspace"}.
+                  {t("taskDialog.reusingWorkspace", {
+                    name: selectedReusableExecutionWorkspace.name,
+                    location: selectedReusableExecutionWorkspace.branchName ?? selectedReusableExecutionWorkspace.cwd ?? t("taskDialog.existingExecutionWorkspace"),
+                  })}
                 </div>
               )}
               {showParentWorkspaceWarning ? (
                 <div className="rounded-md border border-amber-300/60 bg-amber-50 px-2 py-1.5 text-(length:--text-micro) text-amber-900 dark:border-amber-800/70 dark:bg-amber-950/30 dark:text-amber-100">
-                  Warning: this sub-task will no longer use the parent task workspace{parentExecutionWorkspaceLabel ? ` (${parentExecutionWorkspaceLabel})` : ""}.
+                  {t("taskDialog.parentWorkspaceWarning")}{parentExecutionWorkspaceLabel ? `（${parentExecutionWorkspaceLabel}）` : ""}。
                 </div>
               ) : null}
             </div>
@@ -1853,11 +1892,11 @@ export function NewIssueDialog() {
             {assigneeOptionsOpen && (
               <div className="mt-2 rounded-md border border-border p-3 bg-muted/20 space-y-3">
                 <div className="space-y-1.5">
-                  <div className="text-xs text-muted-foreground">Model lane</div>
+                  <div className="text-xs text-muted-foreground">{t("taskDialog.modelLane")}</div>
                   <div
                     className="flex w-full overflow-hidden rounded-md border border-border"
                     role="radiogroup"
-                    aria-label="Model lane"
+                    aria-label={t("taskDialog.modelLane")}
                   >
                     {(["primary", ...(assigneeSupportsCheapLane ? (["cheap"] as const) : ([] as const)), "custom"] as const).map((lane) => (
                       <button
@@ -1871,49 +1910,45 @@ export function NewIssueDialog() {
                         )}
                         onClick={() => setAssigneeModelLane(lane)}
                       >
-                        {lane === "primary"
-                          ? "Primary"
-                          : lane === "cheap"
-                            ? "Cheap"
-                            : "Custom"}
+                        {t(`taskDialog.${lane}`)}
                       </button>
                     ))}
                   </div>
                   {assigneeModelLane === "cheap" && (
                     <p className="text-(length:--text-micro) text-muted-foreground">
-                      Sends <code>modelProfile: "cheap"</code>{" "}
+                      {t("taskDialog.sendsCheapProfile")} {" "}
                       {assigneeCheapProfile?.adapterConfig && typeof (assigneeCheapProfile.adapterConfig as Record<string, unknown>).model === "string"
-                        ? <>· adapter default <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
+                        ? <>· {t("taskDialog.adapterDefault")} <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
                         : assigneeCheapProfile
-                          ? <>· uses the agent's configured cheap profile</>
-                          : <>· falls back to the primary model if no cheap profile is configured</>}
+                          ? <>· {t("taskDialog.usesConfiguredCheapProfile")}</>
+                          : <>· {t("taskDialog.fallsBackToPrimary")}</>}
                     </p>
                   )}
                   {assigneeModelLane === "primary" && (
-                    <p className="text-(length:--text-micro) text-muted-foreground">Runs on the agent's primary model.</p>
+                    <p className="text-(length:--text-micro) text-muted-foreground">{t("taskDialog.runsOnPrimaryModel")}</p>
                   )}
                   {assigneeModelLane === "custom" && (
-                    <p className="text-(length:--text-micro) text-muted-foreground">Override the model and effort for this task only.</p>
+                    <p className="text-(length:--text-micro) text-muted-foreground">{t("taskDialog.overrideModelEffort")}</p>
                   )}
                 </div>
                 {assigneeModelLane === "custom" && (
                   <div className="space-y-1.5">
-                    <div className="text-xs text-muted-foreground">Model</div>
+                    <div className="text-xs text-muted-foreground">{t("taskDialog.model")}</div>
                     <InlineEntitySelector
                       value={assigneeModelOverride}
                       options={modelOverrideOptions}
-                      placeholder="Default model"
+                      placeholder={t("taskDialog.defaultModel")}
                       disablePortal
-                      noneLabel="Default model"
-                      searchPlaceholder="Search models..."
-                      emptyMessage="No models found."
+                      noneLabel={t("taskDialog.defaultModel")}
+                      searchPlaceholder={t("taskDialog.searchModels")}
+                      emptyMessage={t("taskDialog.noModelsFound")}
                       onChange={setAssigneeModelOverride}
                     />
                   </div>
                 )}
                 {assigneeModelLane === "custom" && (
                   <div className="space-y-1.5">
-                    <div className="text-xs text-muted-foreground">Thinking effort</div>
+                    <div className="text-xs text-muted-foreground">{t("taskDialog.thinkingEffort")}</div>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {thinkingEffortOptions.map((option) => (
                         <button
@@ -1924,7 +1959,7 @@ export function NewIssueDialog() {
                           )}
                           onClick={() => setAssigneeThinkingEffort(option.value)}
                         >
-                          {option.label}
+                          {thinkingEffortLabel(t, option.value)}
                         </button>
                       ))}
                     </div>
@@ -1932,7 +1967,7 @@ export function NewIssueDialog() {
                 )}
                 {assigneeAdapterType === "claude_local" && assigneeModelLane === "custom" && (
                   <div className="flex items-center justify-between rounded-md border border-border px-2 py-1.5">
-                    <div className="text-xs text-muted-foreground">Enable Chrome (--chrome)</div>
+                    <div className="text-xs text-muted-foreground">{t("taskDialog.enableChrome")}</div>
                     <ToggleSwitch
                       checked={assigneeChrome}
                       onCheckedChange={() => setAssigneeChrome((value) => !value)}
@@ -1964,6 +1999,7 @@ export function NewIssueDialog() {
                 mentions={mentionOptions}
                 descriptionEditorRef={descriptionEditorRef}
                 imageUploadHandler={uploadDescriptionImageHandler}
+                descriptionPlaceholder={t("taskDialog.addDescription")}
                 onChange={handleDescriptionChange}
               />
             </div>
@@ -1971,7 +2007,7 @@ export function NewIssueDialog() {
               <div className="mt-4 space-y-3 rounded-lg border border-border/70 p-3">
               {stagedDocuments.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="text-xs font-medium text-muted-foreground">Documents</div>
+                  <div className="text-xs font-medium text-muted-foreground">{t("taskDialog.documents")}</div>
                   <div className="space-y-2">
                     {stagedDocuments.map((file) => (
                       <div key={file.id} className="flex items-start justify-between gap-3 rounded-md border border-border/70 px-3 py-2">
@@ -1995,7 +2031,8 @@ export function NewIssueDialog() {
                           className="shrink-0 text-muted-foreground"
                           onClick={() => removeStagedFile(file.id)}
                           disabled={createIssue.isPending}
-                          title="Remove document"
+                          title={t("taskDialog.removeDocument")}
+                          aria-label={t("taskDialog.removeDocument")}
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>
@@ -2007,7 +2044,7 @@ export function NewIssueDialog() {
 
               {stagedAttachments.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="text-xs font-medium text-muted-foreground">Attachments</div>
+                  <div className="text-xs font-medium text-muted-foreground">{t("taskDialog.attachments")}</div>
                   <div className="space-y-2">
                     {stagedAttachments.map((file) => (
                       <div key={file.id} className="flex items-start justify-between gap-3 rounded-md border border-border/70 px-3 py-2">
@@ -2026,7 +2063,8 @@ export function NewIssueDialog() {
                           className="shrink-0 text-muted-foreground"
                           onClick={() => removeStagedFile(file.id)}
                           disabled={createIssue.isPending}
-                          title="Remove attachment"
+                          title={t("taskDialog.removeAttachment")}
+                          aria-label={t("taskDialog.removeAttachment")}
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>
@@ -2083,12 +2121,12 @@ export function NewIssueDialog() {
                 {currentPriority ? (
                   <>
                     <currentPriority.icon className={cn("h-3 w-3", currentPriority.color)} />
-                    {currentPriority.label}
+                {priorityLabel(t, currentPriority.value)}
                   </>
                 ) : (
                   <>
                     <Minus className="h-3 w-3 text-muted-foreground" />
-                    Priority
+                    {t("taskDialog.priority.label")}
                   </>
                 )}
               </button>
@@ -2104,7 +2142,7 @@ export function NewIssueDialog() {
                   onClick={() => { setPriority(p.value); setPriorityOpen(false); }}
                 >
                   <p.icon className={cn("h-3 w-3", p.color)} />
-                  {p.label}
+                  {priorityLabel(t, p.value)}
                 </button>
               ))}
             </PopoverContent>
@@ -2128,9 +2166,10 @@ export function NewIssueDialog() {
             className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors text-muted-foreground"
             onClick={() => stageFileInputRef.current?.click()}
             disabled={createIssue.isPending}
+            aria-label={t("taskDialog.upload")}
           >
             <Paperclip className="h-3 w-3" />
-            Upload
+            {t("taskDialog.upload")}
           </button>
 
           {/* Work mode chip */}
@@ -2140,13 +2179,15 @@ export function NewIssueDialog() {
                 type="button"
                 data-issue-work-mode-chip={workMode}
                 aria-keyshortcuts="Meta+Period Control+Period"
+                aria-label={workModeLabels(t, workMode).label}
+                title={workModeLabels(t, workMode).label}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors",
                   currentWorkMode.classes.chip,
                 )}
               >
                 <CurrentWorkModeIcon className="h-3 w-3" />
-                {currentWorkMode.shortLabel}
+                {workModeLabels(t, workMode).shortLabel}
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-36 p-1" align="start">
@@ -2167,7 +2208,7 @@ export function NewIssueDialog() {
                     }}
                   >
                     <Icon className="h-3 w-3" />
-                    {option.label}
+                    {workModeLabels(t, option.value).label}
                     {option.value === workMode ? <Check className="ml-auto h-3 w-3" aria-hidden /> : null}
                   </button>
                 );
@@ -2182,6 +2223,8 @@ export function NewIssueDialog() {
                 type="button"
                 data-testid="new-issue-more-menu-trigger"
                 className="inline-flex items-center justify-center rounded-md border border-border p-1 text-xs text-muted-foreground transition-colors hover:bg-accent/50"
+                aria-label={t("taskDialog.moreOptions")}
+                title={t("taskDialog.moreOptions")}
               >
                 <MoreHorizontal className="h-3 w-3" />
               </button>
@@ -2189,7 +2232,7 @@ export function NewIssueDialog() {
             <PopoverContent className="w-44 p-1" align="start" data-testid="new-issue-more-menu">
               <div className="sm:hidden">
                 <div className="px-2 py-1 text-(length:--text-nano) font-medium uppercase text-muted-foreground">
-                  Priority
+                  {t("taskDialog.priority.label")}
                 </div>
                 {priorities.map((p) => (
                   <button
@@ -2206,18 +2249,18 @@ export function NewIssueDialog() {
                     }}
                   >
                     <p.icon className={cn("h-3 w-3", p.color)} />
-                    {p.label}
+                    {priorityLabel(t, p.value)}
                   </button>
                 ))}
                 <div className="my-1 border-t border-border" />
               </div>
               <button className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground">
                 <Calendar className="h-3 w-3" />
-                Start date
+                {t("taskDialog.startDate")}
               </button>
               <button className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground">
                 <Calendar className="h-3 w-3" />
-                Due date
+                {t("taskDialog.dueDate")}
               </button>
             </PopoverContent>
           </Popover>
@@ -2230,7 +2273,7 @@ export function NewIssueDialog() {
           >
             <Flag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
             <span className="leading-snug">
-              Assigning implies executable intent - leave status as <span className="font-medium">Backlog</span> only to deliberately park this. The assignee will not be woken until status moves to <span className="font-medium">Todo</span> or <span className="font-medium">In Progress</span>.
+              {t("taskDialog.backlogAssignmentNotice")}
             </span>
           </div>
         ) : null}
@@ -2242,7 +2285,7 @@ export function NewIssueDialog() {
           >
             <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
             <span className="leading-snug">
-              Low-trust review agent. It can only act inside its assigned review boundary; issue, project, or run policy defines the concrete scope.
+              {t("taskDialog.lowTrustNotice")}
             </span>
           </div>
         ) : null}
@@ -2256,14 +2299,14 @@ export function NewIssueDialog() {
             onClick={discardDraft}
             disabled={createIssue.isPending || !canDiscardDraft}
           >
-            Discard Draft
+            {t("taskDialog.discardDraft")}
           </Button>
           <div className="flex items-center gap-3">
             <div className="min-h-5 text-right">
               {createIssue.isPending ? (
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Creating issue...
+                  {t("taskDialog.creatingIssue")}
                 </span>
               ) : createIssue.isError ? (
                 <span className="text-xs text-destructive">{createIssueErrorMessage}</span>
@@ -2278,7 +2321,7 @@ export function NewIssueDialog() {
             >
               <span className="inline-flex items-center justify-center gap-1.5">
                 {createIssue.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                <span>{createIssue.isPending ? "Creating..." : isSubIssueMode ? "Create Sub-Task" : "Create Task"}</span>
+                <span>{createIssue.isPending ? t("taskDialog.creating") : isSubIssueMode ? t("taskDialog.createSubTask") : t("taskDialog.createTask")}</span>
               </span>
             </Button>
           </div>

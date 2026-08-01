@@ -3,6 +3,7 @@ import type { PipelineCaseLiveness } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/lib/router";
 import { cn } from "../lib/utils";
+import { t, useTranslation } from "@/i18n";
 import { createIssueDetailPath } from "../lib/issueDetailBreadcrumb";
 import {
   derivePipelineLivenessBanner,
@@ -64,13 +65,13 @@ const TONE_PALETTES: Record<LivenessBannerTone, TonePalette> = {
 };
 
 function blockerLinkLabel(link: LivenessBannerLink): string {
-  if (link.identifier) return `Open ${link.identifier}`;
-  return "Open blocker";
+  if (link.identifier) return t("workflow.pipelineFormatting.openItem", { identifier: link.identifier });
+  return t("workflow.pipelineFormatting.openBlocker");
 }
 
 function automationLinkLabel(link: LivenessBannerLink): string {
-  if (link.identifier) return `Open ${link.identifier}`;
-  return "Open automation task";
+  if (link.identifier) return t("workflow.pipelineFormatting.openItem", { identifier: link.identifier });
+  return t("workflow.pipelineFormatting.openAutomationTask");
 }
 
 export function PipelineLivenessBanner({
@@ -84,6 +85,7 @@ export function PipelineLivenessBanner({
   retryPending?: boolean;
   retryError?: string | null;
 }) {
+  useTranslation();
   const view = derivePipelineLivenessBanner(liveness);
   if (!view) return null;
 
@@ -115,11 +117,11 @@ export function PipelineLivenessBanner({
           <p className="text-sm opacity-85">{view.body}</p>
           {view.permissionKey ? (
             <p className="text-sm opacity-85">
-              Required permission:{" "}
+              {t("workflow.pipelineFormatting.requiredPermission")}{" "}
               <code className="rounded-sm bg-black/10 px-1 py-0.5 text-xs font-medium dark:bg-white/10">
                 {view.permissionKey}
               </code>{" "}
-              on the target pipeline.
+              {" "}{t("workflow.pipelineFormatting.targetPipeline")}
             </p>
           ) : null}
           {view.blockerLink || view.automationLink ? (
@@ -169,7 +171,7 @@ export function PipelineLivenessBanner({
           ) : (
             <RefreshCw className="mr-2 h-4 w-4" />
           )}
-          {retryPending ? "Retrying…" : view.retryLabel}
+          {retryPending ? t("workflow.pipelineFormatting.retrying") : view.retryLabel}
         </Button>
       ) : null}
     </section>

@@ -86,6 +86,7 @@ import { workflowSort } from "../lib/workflow-sort";
 import { isSuccessfulRunHandoffRequired } from "../lib/successful-run-handoff";
 import { deriveOriginatingActor, ISSUE_STATUSES, type Issue, type IssueStatus, type Project } from "@paperclipai/shared";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/i18n";
 const ISSUE_SEARCH_DEBOUNCE_MS = 250;
 const ISSUE_SEARCH_RESULT_LIMIT = 200;
 const ISSUE_BOARD_COLUMN_RESULT_LIMIT = 200;
@@ -504,6 +505,7 @@ function IssueSearchInput({
   value: string;
   onDebouncedChange?: (search: string) => void;
 }) {
+  const { t } = useTranslation();
   const [draftValue, setDraftValue] = useState(value);
   const lastCommittedValueRef = useRef(value);
 
@@ -550,9 +552,9 @@ function IssueSearchInput({
             e.currentTarget.blur();
           }
         }}
-        placeholder="Search tasks..."
+        placeholder={t("issues.search")}
         className="pl-7 text-xs sm:text-sm"
-        aria-label="Search tasks"
+        aria-label={t("issues.searchLabel")}
         data-page-search-target="true"
       />
     </div>
@@ -707,6 +709,7 @@ export function IssuesList({
   onSearchChange,
   onUpdateIssue,
 }: IssuesListProps) {
+  const { t } = useTranslation();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -1622,7 +1625,7 @@ export function IssuesList({
   ]);
 
   const createActionLabel = createIssueLabel ? `Create ${createIssueLabel}` : "Create Task";
-  const createButtonLabel = createIssueLabel ? `New ${createIssueLabel}` : "New Task";
+  const createButtonLabel = createIssueLabel ? `New ${createIssueLabel}` : t("issues.newTask");
   const openCreateIssueDialog = useCallback((group?: { key: string; items: Issue[] }) => {
     openNewIssue(newIssueDefaults(group));
   }, [newIssueDefaults, openNewIssue]);
@@ -1681,12 +1684,12 @@ export function IssuesList({
 
         <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           {/* View mode toggle */}
-          <div className="flex items-center border border-border rounded-md overflow-hidden mr-1" role="group" aria-label="View mode">
+          <div className="flex items-center border border-border rounded-md overflow-hidden mr-1" role="group" aria-label={t("issues.viewMode")}>
             <button
               className={`flex h-8 w-8 items-center justify-center transition-colors ${viewState.viewMode === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               onClick={() => updateView({ viewMode: "list" })}
-              title="List view"
-              aria-label="List view"
+              title={t("issues.listView")}
+              aria-label={t("issues.listView")}
               aria-pressed={viewState.viewMode === "list"}
             >
               <List className="h-3.5 w-3.5" />
@@ -1694,8 +1697,8 @@ export function IssuesList({
             <button
               className={`flex h-8 w-8 items-center justify-center transition-colors ${viewState.viewMode === "board" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               onClick={() => updateView({ viewMode: "board" })}
-              title="Board view"
-              aria-label="Board view"
+              title={t("issues.boardView")}
+              aria-label={t("issues.boardView")}
               aria-pressed={viewState.viewMode === "board"}
             >
               <SquareKanban className="h-3.5 w-3.5" />
@@ -1709,7 +1712,7 @@ export function IssuesList({
               size="icon"
               className={cn("hidden h-8 w-8 shrink-0 sm:inline-flex", viewState.nestingEnabled && "bg-accent")}
               onClick={() => updateView({ nestingEnabled: !viewState.nestingEnabled })}
-              title={viewState.nestingEnabled ? "Disable parent-child nesting" : "Enable parent-child nesting"}
+              title={viewState.nestingEnabled ? t("issues.disableNesting") : t("issues.enableNesting")}
             >
               <ListTree className="h-3.5 w-3.5" />
             </Button>
@@ -1821,7 +1824,7 @@ export function IssuesList({
           {viewState.viewMode === "list" && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" title="Sort">
+                <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" title={t("issues.sort")}>
                   <ArrowUpDown className="h-3.5 w-3.5" />
                 </Button>
               </PopoverTrigger>
@@ -1865,7 +1868,7 @@ export function IssuesList({
           {viewState.viewMode === "list" && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" title="Group">
+                <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" title={t("issues.group")}>
                   <Layers className="h-3.5 w-3.5" />
                 </Button>
               </PopoverTrigger>

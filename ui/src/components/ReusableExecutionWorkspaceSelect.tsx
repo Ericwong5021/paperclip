@@ -8,6 +8,7 @@ import {
   type ReusableWorkspaceOption,
 } from "@/lib/reusable-execution-workspaces";
 import { cn } from "@/lib/utils";
+import { t, useTranslation } from "@/i18n";
 
 const COMPACT_TRIGGER_CLASS = "h-8 px-2 py-1.5 text-xs font-normal";
 
@@ -36,6 +37,7 @@ export function ReusableExecutionWorkspaceSelect<TWorkspace extends ReusableExec
   triggerClassName,
   disablePortal,
 }: ReusableExecutionWorkspaceSelectProps<TWorkspace>) {
+  useTranslation();
   const groups = useMemo(() => buildReusableExecutionWorkspaceOptionGroups(workspaces), [workspaces]);
 
   return (
@@ -43,10 +45,10 @@ export function ReusableExecutionWorkspaceSelect<TWorkspace extends ReusableExec
       value={value}
       groups={groups}
       onValueChange={onValueChange}
-      placeholder={placeholder}
-      searchPlaceholder="Search workspaces..."
-      emptyMessage={error ? "Workspaces failed to load." : "No matching workspaces."}
-      loadingMessage="Loading workspaces..."
+      placeholder={placeholder === "Choose an existing workspace" ? t("workspace.chooseExisting") : placeholder}
+      searchPlaceholder={t("workspace.search")}
+      emptyMessage={error ? t("workspace.failed") : t("workspace.noMatch")}
+      loadingMessage={t("workspace.loading")}
       loading={loading}
       disabled={disabled}
       className={className}

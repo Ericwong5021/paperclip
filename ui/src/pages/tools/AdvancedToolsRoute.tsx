@@ -5,6 +5,7 @@ import { accessApi } from "@/api/access";
 import { queryKeys } from "@/lib/queryKeys";
 import { useCompany } from "@/context/CompanyContext";
 import { ToolsAccess } from "./ToolsAccess";
+import { t } from "@/i18n";
 
 /**
  * Admin gate for the Advanced door (PAP-10862, plan D8). The developer surface
@@ -22,7 +23,7 @@ export function AdvancedToolsRoute() {
   });
 
   if (boardAccess.isLoading) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading…</div>;
+    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">{t("appsTools.loading")}</div>;
   }
 
   const data = boardAccess.data;
@@ -38,13 +39,12 @@ export function AdvancedToolsRoute() {
         <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6">
           <div className="flex items-center gap-2 text-foreground">
             <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-lg font-semibold">Advanced setup is for administrators</h1>
+            <h1 className="text-lg font-semibold">{t("appsTools.adminSetupOnly", { defaultValue: "高级设置仅供管理员使用" })}</h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            This area lets administrators wire up tools that aren't in the gallery. Ask an administrator if you
-            need a new app connected, or head back to{" "}
+            {t("appsTools.adminSetupDescription", { defaultValue: "此区域用于连接应用库中没有的工具。如果需要连接新应用，请联系管理员，或返回" })}{" "}
             <Link to="/apps" className="font-medium text-primary hover:underline">
-              your apps
+              {t("appsTools.allApps")}
             </Link>
             .
           </p>

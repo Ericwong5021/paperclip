@@ -8,6 +8,7 @@ import type {
   PipelineStage,
 } from "../api/pipelines";
 import { assigneeValueFromSelection } from "./assignees";
+import { t } from "@/i18n";
 
 export const INTERNAL_FIELD_KEYS = new Set([
   "nextSuggestedStageId",
@@ -73,18 +74,23 @@ function humanizeKey(key: string) {
     .replace(/^./, (char) => char.toUpperCase());
 }
 
+function pipelineText(key: string, fallback: string, options?: Record<string, unknown>) {
+  const value = t(`workflow.pipelineFormatting.${key}`, options);
+  return value === `workflow.pipelineFormatting.${key}` ? fallback : value;
+}
+
 export function humanizePipelineItemStatus(status: string | null | undefined) {
-  if (!status) return "Open";
+  if (!status) return pipelineText("open", "Open");
   const normalized = status.trim().toLowerCase();
-  if (!normalized) return "Open";
+  if (!normalized) return pipelineText("open", "Open");
   const labels: Record<string, string> = {
-    open: "Open",
-    working: "In progress",
-    done: "Done",
-    cancelled: "Removed",
-    in_review: "In review",
-    review: "In review",
-    in_progress: "In progress",
+    open: pipelineText("open", "Open"),
+    working: pipelineText("inProgress", "In progress"),
+    done: pipelineText("done", "Done"),
+    cancelled: pipelineText("removed", "Removed"),
+    in_review: pipelineText("inReview", "In review"),
+    review: pipelineText("inReview", "In review"),
+    in_progress: pipelineText("inProgress", "In progress"),
   };
   return labels[normalized] ?? humanizeKey(normalized);
 }
@@ -92,15 +98,15 @@ export function humanizePipelineItemStatus(status: string | null | undefined) {
 export function formatFieldValue(value: unknown): string {
   if (Array.isArray(value)) {
     const formatted = value.map(formatFieldValue).filter(Boolean);
-    return formatted.length ? formatted.join(", ") : "None";
+    return formatted.length ? formatted.join(", ") : pipelineText("none", "None");
   }
-  if (value == null || value === "") return "None";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (value == null || value === "") return pipelineText("none", "None");
+  if (typeof value === "boolean") return value ? pipelineText("yes", "Yes") : pipelineText("no", "No");
   if (typeof value === "number") return String(value);
   if (typeof value === "string") return value;
   const record = readRecord(value);
   if (record) {
-    return readString(record.label) ?? readString(record.name) ?? readString(record.title) ?? "Added details";
+    return readString(record.label) ?? readString(record.name) ?? readString(record.title) ?? pipelineText("addedDetails", "Added details");
   }
   return String(value);
 }
@@ -235,7 +241,7 @@ export function getPendingTransitionBannerState(item: Pick<PipelineCase, "pendin
     visible: true as const,
     suggestionId: suggestion?.id ?? null,
     toStageKey,
-    stageName: stageNameFromLookup(stages, toStageKey) ?? "the next stage",
+    stageName: stageNameFromLookup(stages, toStageKey) ?? pipelineText("nextStage", "the next stage"),
     rationale: suggestion?.rationale ?? null,
   };
 }
@@ -248,8 +254,8 @@ export function itemHasChangedNotice(item: Pick<PipelineCase, "fields"> & {
   if (item.changeAcknowledgedAt || fields.changeAcknowledgedAt) return null;
   if (item.thisChanged || fields.thisChanged || fields.upstreamChanged || fields.upstreamDrift) {
     return {
-      title: "This changed",
-      body: "Upstream work changed after this item was created. Review the latest details before continuing.",
+      title: pipelineText("changedTitle", "This changed"),
+      body: pipelineText("changedBody", "Upstream work changed after this item was created. Review the latest details before continuing."),
     };
   }
   return null;
@@ -272,8 +278,8 @@ export function eventsHaveUnacknowledgedDrift(events: PipelineCaseEvent[]) {
 export function changedNoticeFromEvents(events: PipelineCaseEvent[]) {
   if (!eventsHaveUnacknowledgedDrift(events)) return null;
   return {
-    title: "This changed",
-    body: "Upstream work changed after this item was created. Review the latest details before continuing.",
+    title: pipelineText("changedTitle", "This changed"),
+    body: pipelineText("changedBody", "Upstream work changed after this item was created. Review the latest details before continuing."),
   };
 }
 
@@ -290,15 +296,15 @@ function readDecision(payload: Record<string, unknown>) {
 
 function actorName(event: PipelineCaseEvent) {
   if (event.actorAgent?.name) return event.actorAgent.name;
-  if (event.actorType === "user") return "Board";
-  if (event.actorType === "system") return "Paperclip";
+  if (event.actorType === "user") return pipelineText("board", "Board");
+  if (event.actorType === "system") return pipelineText("paperclip", "Paperclip");
   return null;
 }
 
 function movementReason(payload: Record<string, unknown>) {
   const reason = readString(payload.reason);
   if (!reason) return null;
-  if (reason === "children_terminal") return "all child items done";
+  if (reason === "children_terminal") return pipelineText("allChildItemsDone", "all child items done");
   return reason;
 }
 
@@ -323,19 +329,23 @@ function humanizeReason(reason: string) {
 export function formatPipelineItemEvent(event: PipelineCaseEvent, stages?: StageLookup) {
   const kind = event.type.startsWith("case.") ? event.type.slice("case.".length) : event.type;
   const payload = event.payload ?? {};
-  if (kind === "ingested") return "Item added.";
+  if (kind === "ingested") return pipelineText("itemAdded", "Item added.");
   if (kind === "updated") {
-    if (payload.action === "stage_automation_rerun_requested") return "Stage automation re-run requested.";
-    return "Item details updated.";
+    if (payload.action === "stage_automation_rerun_requested") return pipelineText("stageAutomationRerunRequested", "Stage automation re-run requested.");
+    return pipelineText("itemDetailsUpdated", "Item details updated.");
   }
   if (kind === "transitioned") {
     const from = stageName(event, stages, "from");
     const to = stageName(event, stages, "to");
-    const movement = from && to ? `Moved from ${from} to ${to}` : to ? `Moved to ${to}` : "Moved to another stage";
+    const movement = from && to
+      ? pipelineText("movedFromTo", `Moved from ${from} to ${to}`, { from, to })
+      : to
+        ? pipelineText("movedTo", `Moved to ${to}`, { to })
+        : pipelineText("movedToAnotherStage", "Moved to another stage");
     const reason = movementReason(payload);
     const transitionClass = movementClass(event, payload);
     if (transitionClass === "automatic") {
-      return `${movement} — automatic${reason ? ` (${reason})` : ""}.`;
+      return `${movement} — ${pipelineText("automatic", "automatic")}${reason ? ` (${reason})` : ""}.`;
     }
     const actor = actorName(event);
     if (reason && actor) return `${movement} — ${actor}: '${reason}'.`;
@@ -346,44 +356,44 @@ export function formatPipelineItemEvent(event: PipelineCaseEvent, stages?: Stage
   if (kind === "suggested" || kind === "transition_suggested") {
     const suggestion = readRecord(payload.suggestion);
     const toStageKey = readString(suggestion?.toStageKey) ?? readString(payload.toStageKey);
-    const to = stageNameFromLookup(stages, toStageKey) ?? "the next stage";
-    return `Suggested moving to ${to}.`;
+    const to = stageNameFromLookup(stages, toStageKey) ?? pipelineText("nextStage", "the next stage");
+    return pipelineText("suggestedMovingTo", `Suggested moving to ${to}.`, { stage: to });
   }
   if (kind === "suggestion_resolved") {
     const decision = readDecision(payload);
-    if (decision === "accept") return "Suggestion approved.";
-    if (decision === "dismiss") return "Suggestion dismissed.";
-    return "Suggestion resolved.";
+    if (decision === "accept") return pipelineText("suggestionApproved", "Suggestion approved.");
+    if (decision === "dismiss") return pipelineText("suggestionDismissed", "Suggestion dismissed.");
+    return pipelineText("suggestionResolved", "Suggestion resolved.");
   }
   if (kind === "reviewed" || kind === "review_decided") {
     const decision = readDecision(payload);
-    if (decision === "request_changes") return "Review requested changes.";
-    if (decision === "drop" || decision === "reject") return "Review removed this item.";
-    if (decision === "approve") return "Review approved this item.";
-    return "Review completed.";
+    if (decision === "request_changes") return pipelineText("reviewRequestedChanges", "Review requested changes.");
+    if (decision === "drop" || decision === "reject") return pipelineText("reviewRemovedItem", "Review removed this item.");
+    if (decision === "approve") return pipelineText("reviewApprovedItem", "Review approved this item.");
+    return pipelineText("reviewCompleted", "Review completed.");
   }
-  if (kind === "conversation_opened") return "Conversation started.";
-  if (kind === "issue_linked") return "Linked to work.";
-  if (kind === "issue_unlinked") return "Work link removed.";
-  if (kind === "blockers_set") return "Waiting items updated.";
-  if (kind === "blockers_resolved") return "Waiting items cleared.";
-  if (kind === "children_terminal") return "Built-from items completed.";
+  if (kind === "conversation_opened") return pipelineText("conversationStarted", "Conversation started.");
+  if (kind === "issue_linked") return pipelineText("linkedToWork", "Linked to work.");
+  if (kind === "issue_unlinked") return pipelineText("workLinkRemoved", "Work link removed.");
+  if (kind === "blockers_set") return pipelineText("waitingItemsUpdated", "Waiting items updated.");
+  if (kind === "blockers_resolved") return pipelineText("waitingItemsCleared", "Waiting items cleared.");
+  if (kind === "children_terminal") return pipelineText("builtFromItemsCompleted", "Built-from items completed.");
   if (kind === "upstream_drift") {
     const upstreamCaseKey = readString(payload.upstreamCaseKey);
-    if (upstreamCaseKey) return `Upstream change detected from ${upstreamCaseKey}.`;
-    return "Upstream change detected.";
+    if (upstreamCaseKey) return pipelineText("upstreamChangeDetectedFrom", `Upstream change detected from ${upstreamCaseKey}.`, { caseKey: upstreamCaseKey });
+    return pipelineText("upstreamChangeDetected", "Upstream change detected.");
   }
-  if (kind === "drift_acknowledged") return "Upstream change acknowledged.";
+  if (kind === "drift_acknowledged") return pipelineText("upstreamChangeAcknowledged", "Upstream change acknowledged.");
   if (kind === "automation_executed") {
-    const routineName = event.automation?.routine?.title ?? "the automation";
+    const routineName = event.automation?.routine?.title ?? pipelineText("automation", "the automation");
     const issueLabel = automationIssueLabel(event);
-    return `Automation completed — ran ${routineName}${issueLabel ? ` -> ${issueLabel}` : ""}.`;
+    return pipelineText("automationCompleted", `Automation completed — ran ${routineName}${issueLabel ? ` -> ${issueLabel}` : ""}.`, { routine: routineName, issue: issueLabel ? ` -> ${issueLabel}` : "" });
   }
   if (kind === "automation_failed") {
     const reason = readString(payload.error);
-    return `Automation needs attention${reason ? ` — ${humanizeReason(reason)}` : ""}.`;
+    return pipelineText("automationNeedsAttention", `Automation needs attention${reason ? ` — ${humanizeReason(reason)}` : ""}.`, { reason: reason ? ` — ${humanizeReason(reason)}` : "" });
   }
-  if (kind === "claimed") return "Work started.";
-  if (kind === "lease_released" || kind === "lease_expired") return "Work handoff cleared.";
-  return "Activity recorded.";
+  if (kind === "claimed") return pipelineText("workStarted", "Work started.");
+  if (kind === "lease_released" || kind === "lease_expired") return pipelineText("workHandoffCleared", "Work handoff cleared.");
+  return pipelineText("activityRecorded", "Activity recorded.");
 }

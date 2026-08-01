@@ -5,6 +5,7 @@ import { Link } from "@/lib/router";
 import { accessApi } from "@/api/access";
 import { queryKeys } from "@/lib/queryKeys";
 import { useCompany } from "@/context/CompanyContext";
+import { t } from "@/i18n";
 
 /**
  * Best-effort admin gate for the access-profiles surface, mirroring
@@ -21,7 +22,7 @@ export function ToolsAdminGate({ children }: { children: ReactNode }) {
   });
 
   if (boardAccess.isLoading) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading…</div>;
+    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">{t("appsTools.loading")}</div>;
   }
 
   const data = boardAccess.data;
@@ -37,13 +38,12 @@ export function ToolsAdminGate({ children }: { children: ReactNode }) {
         <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6">
           <div className="flex items-center gap-2 text-foreground">
             <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-lg font-semibold">Access profiles are for administrators</h1>
+            <h1 className="text-lg font-semibold">{t("appsTools.adminProfilesOnly", { defaultValue: "访问配置档案仅供管理员使用" })}</h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Access profiles decide which tools your agents can use. Ask an administrator to set these up, or
-            head back to{" "}
+            {t("appsTools.adminProfilesDescription", { defaultValue: "访问配置档案决定 Agent 可以使用哪些工具。请让管理员完成设置，或返回" })}{" "}
             <Link to="/apps" className="font-medium text-primary hover:underline">
-              your apps
+              {t("appsTools.yourApps", { defaultValue: "你的应用" })}
             </Link>
             .
           </p>

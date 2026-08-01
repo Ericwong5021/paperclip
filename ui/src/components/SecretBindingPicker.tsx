@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "../lib/utils";
+import { t, useTranslation } from "@/i18n";
 
 export interface SecretBindingValue {
   secretId: string;
@@ -63,9 +64,13 @@ const VERSION_LATEST: SecretVersionSelector = "latest";
 function describeSecret(secret: CompanySecret): string {
   const provider = secret.provider.replaceAll("_", " ");
   if (secret.managedMode === "external_reference") {
-    return `External · ${provider}`;
+    return `${t("forms.secret.external")} · ${provider}`;
   }
   return provider;
+}
+
+function describeStatus(status: CompanySecret["status"]): string {
+  return t(`forms.environment.${status}`, { defaultValue: status });
 }
 
 function statusTone(status: CompanySecret["status"]): string {
@@ -86,14 +91,18 @@ function statusTone(status: CompanySecret["status"]): string {
 export function SecretBindingPicker({
   value,
   onChange,
-  label = "Secret",
-  placeholder = "Select secret",
+  label,
+  placeholder,
   allowVersionSelector = true,
-  emptyHint = "No matching secrets. Create one to bind it here.",
+  emptyHint,
   className,
   disabled,
   statusFilter = ["active"],
 }: SecretBindingPickerProps) {
+  useTranslation();
+  const effectiveLabel = label ?? t("forms.secret.secret");
+  const effectivePlaceholder = placeholder ?? t("forms.secret.select");
+  const effectiveEmptyHint = emptyHint ?? t("forms.secret.noMatch");
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompany();
   const [createOpen, setCreateOpen] = useState(false);
@@ -148,12 +157,12 @@ export function SecretBindingPicker({
       setCreateError(null);
     },
     onError: (error) => {
-      setCreateError(error instanceof Error ? error.message : "Failed to create secret");
+      setCreateError(error instanceof Error ? error.message : t("forms.secret.failedCreate"));
     },
   });
 
   const versionDisplay = (selector: SecretVersionSelector | undefined) => {
-    if (selector === undefined || selector === VERSION_LATEST) return "latest";
+    if (selector === undefined || selector === VERSION_LATEST) return t("forms.secret.latest");
     return `v${selector}`;
   };
 
@@ -161,7 +170,7 @@ export function SecretBindingPicker({
     <div className={cn("space-y-1.5", className)}>
       {label ? (
         <div className="flex items-center justify-between text-xs font-medium text-foreground/80">
-          <span>{label}</span>
+          <span>{effectiveLabel}</span>
           {value ? (
             <button
               type="button"
@@ -169,7 +178,7 @@ export function SecretBindingPicker({
               onClick={() => onChange(null)}
               disabled={disabled}
             >
-              <X className="h-3 w-3" /> Clear
+              <X className="h-3 w-3" /> {t("forms.secret.clear")}
             </button>
           ) : null}
         </div>
@@ -193,14 +202,14 @@ export function SecretBindingPicker({
             }}
             disabled={disabled || secretsQuery.isPending}
           >
-            <option value="">{secretsQuery.isPending ? "Loading…" : placeholder}</option>
+            <option value="">{secretsQuery.isPending ? t("forms.secret.loading") : effectivePlaceholder}</option>
             {selectedMissing && value ? (
               <option value={value.secretId}>
                 {missingHint
-                  ? `${missingHint.name} — ${missingHint.companyName ?? "another company"}`
+                  ? `${missingHint.name} — ${missingHint.companyName ?? t("forms.secret.anotherCompany")}`
                   : hintsPending
-                    ? `Secret (${value.secretId.slice(0, 8)}…)`
-                    : `Missing secret (${value.secretId.slice(0, 8)}…)`}
+                    ? t("forms.secret.secretFromOtherCompany", { id: value.secretId.slice(0, 8) })
+                    : t("forms.secret.missing", { id: value.secretId.slice(0, 8) })}
               </option>
             ) : null}
             {filteredSecrets.map((secret) => (
@@ -221,9 +230,9 @@ export function SecretBindingPicker({
               onChange({ ...value, version: next });
             }}
             disabled={disabled || !value || !selectedSecret}
-            aria-label="Version"
+            aria-label={t("forms.secret.version")}
           >
-            <option value={VERSION_LATEST}>latest</option>
+            <option value={VERSION_LATEST}>{t("forms.secret.latest")}</option>
             {selectedSecret
               ? Array.from({ length: Math.max(0, selectedSecret.latestVersion) }, (_, index) => {
                   const version = selectedSecret.latestVersion - index;
@@ -243,7 +252,7 @@ export function SecretBindingPicker({
           size="sm"
           onClick={() => setCreateOpen(true)}
           disabled={disabled || !selectedCompanyId}
-          aria-label="Create secret"
+          aria-label={t("forms.secret.createAria")}
         >
           <Plus className="h-3.5 w-3.5" />
         </Button>
@@ -251,45 +260,49 @@ export function SecretBindingPicker({
 
       {selectedSecret ? (
         <p className={cn("text-(length:--text-micro) text-muted-foreground", statusTone(selectedSecret.status))}>
-          {selectedSecret.status !== "active" ? `Status: ${selectedSecret.status}. ` : null}
-          Bound to {versionDisplay(value?.version)} · {selectedSecret.key}
+          {selectedSecret.status !== "active" ? `${t("forms.secret.status")}: ${describeStatus(selectedSecret.status)}. ` : null}
+          {t("forms.secret.boundTo", { version: versionDisplay(value?.version) })} · {selectedSecret.key}
         </p>
       ) : crossCompanyHint ? (
         <p className="text-(length:--text-micro) text-muted-foreground flex items-center gap-1">
           <AlertCircle className="h-3 w-3" />
-          Owned by {crossCompanyHint.companyName ? `the ${crossCompanyHint.companyName} company` : "another company"}. The binding keeps working; selecting a secret from this list re-points it here.
+          {t("forms.secret.ownedBy", {
+            company: crossCompanyHint.companyName
+              ? t("forms.secret.namedCompany", { name: crossCompanyHint.companyName })
+              : t("forms.secret.anotherCompany"),
+          })}
         </p>
       ) : missingHint ? (
         <p className="text-(length:--text-micro) text-destructive flex items-center gap-1">
           <AlertCircle className="h-3 w-3" />
           {missingHint.status === "deleted"
-            ? "The previously selected secret was deleted. Pick another or remove the binding."
-            : `This secret is ${missingHint.status}; runs cannot resolve it until it is active again.`}
+            ? t("forms.secret.deletedHint")
+            : t("forms.secret.inactiveHint", { status: describeStatus(missingHint.status as CompanySecret["status"]) })}
         </p>
       ) : hintsPending ? (
         <p className="text-(length:--text-micro) text-muted-foreground flex items-center gap-1">
           <AlertCircle className="h-3 w-3" />
           {hintsContext?.status === "error"
-            ? "Could not load this secret reference's details."
-            : "Checking this secret reference…"}
+            ? t("forms.secret.failedReference")
+            : t("forms.secret.checkingReference")}
         </p>
       ) : selectedMissing ? (
         <p className="text-(length:--text-micro) text-destructive flex items-center gap-1">
           <AlertCircle className="h-3 w-3" />
-          The previously selected secret is no longer available. Pick another or remove the binding.
+          {t("forms.secret.unavailableHint")}
         </p>
       ) : (filteredSecrets.length === 0 && !secretsQuery.isPending) ? (
-        <p className="text-(length:--text-micro) text-muted-foreground">{emptyHint}</p>
+        <p className="text-(length:--text-micro) text-muted-foreground">{effectiveEmptyHint}</p>
       ) : null}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Create new secret</DialogTitle>
+            <DialogTitle>{t("forms.secret.createTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-name">Name</label>
+              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-name">{t("forms.secret.name")}</label>
               <Input
                 id="secret-name"
                 value={createName}
@@ -299,39 +312,39 @@ export function SecretBindingPicker({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-value">Value</label>
+              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-value">{t("forms.secret.value")}</label>
               <Textarea
                 id="secret-value"
                 value={createValue}
                 onChange={(event) => setCreateValue(event.target.value)}
                 rows={3}
-                placeholder="Paste the secret value"
+                placeholder={t("forms.secret.pasteValue")}
                 className="font-mono text-xs"
               />
               <p className="text-(length:--text-micro) text-muted-foreground mt-1">
-                The value is stored once and never re-displayed. Rotate to replace.
+                {t("forms.secret.storedOnce")}
               </p>
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-description">Description</label>
+              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-description">{t("forms.secret.description")}</label>
               <Input
                 id="secret-description"
                 value={createDescription}
                 onChange={(event) => setCreateDescription(event.target.value)}
-                placeholder="Optional notes (no values)"
+                placeholder={t("forms.secret.optionalNotes")}
               />
             </div>
             {createError ? <p className="text-xs text-destructive">{createError}</p> : null}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>{t("forms.secret.cancel")}</Button>
             <Button
               type="button"
               onClick={() => createMutation.mutate()}
               disabled={!createName.trim() || !createValue || createMutation.isPending}
             >
               {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-              Create &amp; bind
+              {t("forms.secret.createBind")}
             </Button>
           </DialogFooter>
         </DialogContent>

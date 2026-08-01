@@ -14,6 +14,7 @@ import { RelativeTime } from "@/pages/tools/shared";
 import { cn } from "@/lib/utils";
 import { gatewaysQueryKey } from "../NewGatewayDialog";
 import { maskedTokenLabel, TOKEN_STATUS_LABEL, tokenStatus, type TokenStatus } from "../gateway-helpers";
+import { t } from "@/i18n";
 
 const DEFAULT_ACTIONS: ToolMcpGatewayTokenAction[] = ["tools/list", "tools/call"];
 
@@ -93,8 +94,8 @@ export function TokensPanel({
       setOwnerNote("");
       setExpiresAt(defaultExpiry());
       pushToast({
-        title: "Token minted",
-        body: "Copy it now — you won’t see the full value again.",
+        title: t("appsToolsResidual.tokenMinted"),
+        body: t("appsToolsResidual.tokenMintedBody"),
         tone: "success",
       });
       onTokenCreated?.(token);
@@ -102,7 +103,7 @@ export function TokensPanel({
     },
     onError: (error) =>
       pushToast({
-        title: "Token was not minted",
+        title: t("appsToolsResidual.tokenNotMinted"),
         body: error instanceof Error ? error.message : String(error),
         tone: "error",
       }),
@@ -113,12 +114,12 @@ export function TokensPanel({
     onSuccess: async (token) => {
       setConfirmToken(null);
       setRevokeName("");
-      pushToast({ title: "Token revoked", body: `${token.name} can no longer connect.`, tone: "success" });
+      pushToast({ title: t("appsToolsResidual.tokenRevoked"), body: t("appsToolsResidual.tokenRevokedBody", { token: token.name }), tone: "success" });
       await invalidate();
     },
     onError: (error) =>
       pushToast({
-        title: "Token was not revoked",
+        title: t("appsToolsResidual.tokenNotRevoked"),
         body: error instanceof Error ? error.message : String(error),
         tone: "error",
       }),
@@ -130,11 +131,11 @@ export function TokensPanel({
         throw new Error("Clipboard access is unavailable.");
       }
       await navigator.clipboard.writeText(value);
-      pushToast({ title: "Copied", body: "Access token", tone: "success" });
+      pushToast({ title: t("appsToolsResidual.copied"), body: t("appsToolsResidual.accessToken"), tone: "success" });
     } catch (error) {
       pushToast({
-        title: "Copy failed",
-        body: error instanceof Error ? error.message : "Clipboard access is unavailable.",
+        title: t("appsToolsResidual.copyFailed"),
+        body: error instanceof Error ? error.message : t("appsToolsResidual.clipboardUnavailable"),
         tone: "error",
       });
     }
@@ -158,11 +159,11 @@ export function TokensPanel({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-          Each token is a separate way in. Revoke any one without breaking the others.
+          {t("appsToolsResidual.tokenListHint")}
         </p>
         <Button size="sm" onClick={() => setMinting((value) => !value)}>
           <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Mint token
+          {t("appsToolsResidual.mintToken")}
         </Button>
       </div>
 
@@ -170,34 +171,34 @@ export function TokensPanel({
         <form className="space-y-3 rounded-md border border-border p-4" onSubmit={submit}>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="space-y-1.5 text-sm">
-              <span className="text-xs font-medium text-muted-foreground">Name</span>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="cto-cursor" required autoFocus />
+              <span className="text-xs font-medium text-muted-foreground">{t("appsToolsResidual.name")}</span>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("appsToolsResidual.tokenNamePlaceholder")} required autoFocus />
             </label>
             <label className="space-y-1.5 text-sm">
-              <span className="text-xs font-medium text-muted-foreground">Owner / client</span>
+              <span className="text-xs font-medium text-muted-foreground">{t("appsToolsResidual.ownerClient")}</span>
               <Input
                 value={clientLabel}
                 onChange={(e) => setClientLabel(e.target.value)}
-                placeholder="Cursor on work laptop"
+                placeholder={t("appsToolsResidual.tokenOwnerPlaceholder")}
               />
             </label>
           </div>
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
             <label className="space-y-1.5 text-sm">
-              <span className="text-xs font-medium text-muted-foreground">Note (why it exists)</span>
-              <Input value={ownerNote} onChange={(e) => setOwnerNote(e.target.value)} placeholder="Dotta’s MacBook" />
+              <span className="text-xs font-medium text-muted-foreground">{t("appsToolsResidual.noteWhy")}</span>
+              <Input value={ownerNote} onChange={(e) => setOwnerNote(e.target.value)} placeholder={t("appsToolsResidual.tokenNoteExample")} />
             </label>
             <label className="space-y-1.5 text-sm">
-              <span className="text-xs font-medium text-muted-foreground">Expires</span>
+              <span className="text-xs font-medium text-muted-foreground">{t("appsToolsResidual.expires")}</span>
               <Input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} required />
             </label>
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => setMinting(false)}>
-              Cancel
+              {t("appsToolsResidual.cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={createMutation.isPending || !name.trim()}>
-              {createMutation.isPending ? "Minting…" : "Mint token"}
+              {createMutation.isPending ? t("appsToolsResidual.minting") : t("appsToolsResidual.mintToken")}
             </Button>
           </div>
         </form>
@@ -207,13 +208,13 @@ export function TokensPanel({
         <div className="space-y-2 rounded-md border-2 border-foreground/80 bg-muted/40 p-4">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <div className="text-sm font-semibold text-foreground">New token — copy now</div>
+              <div className="text-sm font-semibold text-foreground">{t("appsToolsResidual.newTokenCopyNow")}</div>
               <div className="text-xs text-muted-foreground">
-                You won’t see the full value again. Store it in your client’s config or your secret manager.
+                {t("appsToolsResidual.tokenOnlyOnceHint")}
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setCreated(null)} aria-label="Dismiss new token">
-              Dismiss
+            <Button variant="ghost" size="sm" onClick={() => setCreated(null)} aria-label={t("appsToolsResidual.dismissNewToken")}>
+              {t("appsToolsResidual.dismiss")}
             </Button>
           </div>
           <div className="flex items-center gap-2">
@@ -223,11 +224,11 @@ export function TokensPanel({
             {revealed ? (
               <Button variant="outline" size="sm" onClick={() => void copyToken(created.token)}>
                 <Copy className="mr-1 h-3.5 w-3.5" />
-                Copy
+                {t("appsTools.copy", { defaultValue: "Copy" })}
               </Button>
             ) : (
               <Button variant="outline" size="sm" onClick={() => setRevealed(true)}>
-                Show
+                {t("appsTools.show", { defaultValue: "Show" })}
               </Button>
             )}
           </div>
@@ -245,12 +246,12 @@ export function TokensPanel({
             <table className="w-full min-w-(--sz-44rem) text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-left text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-2.5">Token</th>
-                  <th className="px-4 py-2.5">Owner</th>
-                  <th className="px-4 py-2.5">Created</th>
-                  <th className="px-4 py-2.5">Last used</th>
-                  <th className="px-4 py-2.5">Expires</th>
-                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5">{t("appsToolsResidual.token")}</th>
+                  <th className="px-4 py-2.5">{t("appsToolsResidual.owner")}</th>
+                  <th className="px-4 py-2.5">{t("appsToolsResidual.created")}</th>
+                  <th className="px-4 py-2.5">{t("appsToolsResidual.lastUsed")}</th>
+                  <th className="px-4 py-2.5">{t("appsToolsResidual.expires")}</th>
+                  <th className="px-4 py-2.5">{t("appsToolsResidual.status")}</th>
                   <th className="px-4 py-2.5 text-right" />
                 </tr>
               </thead>
@@ -354,7 +355,7 @@ export function TokensPanel({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
           <div className="w-full max-w-md space-y-3 rounded-lg border border-border bg-card p-5 shadow-lg">
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Revoke this token?</h3>
+              <h3 className="text-sm font-semibold text-foreground">{t("appsToolsResidual.revokeThisToken")}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Any client using <span className="font-medium text-foreground">{confirmToken.name}</span> goes
                 silent immediately. This can’t be undone. Type the token name to confirm.
@@ -364,7 +365,7 @@ export function TokensPanel({
               value={revokeName}
               onChange={(e) => setRevokeName(e.target.value)}
               placeholder={confirmToken.name}
-              aria-label="Type the token name to confirm"
+              aria-label={t("appsToolsResidual.confirmTokenName")}
               autoFocus
             />
             <div className="flex justify-end gap-2">

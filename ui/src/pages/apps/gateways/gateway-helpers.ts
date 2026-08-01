@@ -6,6 +6,7 @@ import type {
   ToolMcpGatewayWithTokens,
   ToolProfileWithDetails,
 } from "@paperclipai/shared";
+import { t } from "@/i18n";
 import { humanizeConnectionDisplayName, isToolConnectionAttentionHealth } from "@paperclipai/shared";
 
 /** Days before expiry at which we surface a token as "Expiring". */
@@ -91,9 +92,9 @@ export function formatScope(
 
 export function formatOwner(gateway: ToolMcpGatewayWithTokens, agentNames: Map<string, string>): string {
   if (gateway.createdByAgentId) {
-    return agentNames.get(gateway.createdByAgentId) ?? `Agent ${shortId(gateway.createdByAgentId)}`;
+    return agentNames.get(gateway.createdByAgentId) ?? `${t("appsToolsResidual.agent")} ${shortId(gateway.createdByAgentId)}`;
   }
-  return "Board";
+  return t("appsToolsResidual.board");
 }
 
 /** Whether the gateway is exposing tools to clients right now. */
@@ -103,14 +104,14 @@ export function isGatewayOn(gateway: ToolMcpGatewayWithTokens): boolean {
 
 /** Human summary of how many tools a profile allows. */
 export function allowedToolsLabel(profile: ToolProfileWithDetails | undefined): string {
-  if (!profile) return "Profile unavailable";
+  if (!profile) return t("appsToolsResidual.profileUnavailable");
   const { accessMode, allowedToolCount, totalToolCount, excludedToolCount } = profile.summary;
   const count =
     accessMode === "all_except"
       ? Math.max(totalToolCount - excludedToolCount, 0)
       : allowedToolCount;
-  if (count === 0) return "No tools allowed";
-  return `${count} ${count === 1 ? "tool" : "tools"}`;
+  if (count === 0) return t("appsToolsResidual.noToolsAllowed");
+  return t("appsToolsResidual.toolsCount", { count });
 }
 
 export type GatewayAppRow = {
@@ -175,7 +176,7 @@ export function deriveGatewayApps(
       toolCount: toolCountByApp.get(applicationId) ?? 0,
       needsAttention: Boolean(attentionConnection),
       attentionReason: attentionConnection
-        ? "Sign-in expired — reconnect to restore access."
+        ? t("appsToolsResidual.signInExpired")
         : null,
     });
   }

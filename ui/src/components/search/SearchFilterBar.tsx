@@ -10,11 +10,14 @@ import {
 } from "@paperclipai/shared";
 import { StatusIcon } from "@/components/StatusIcon";
 import { PriorityIcon } from "@/components/PriorityIcon";
+import { t, useTranslation } from "@/i18n";
 import { SearchFilterMenu, type FilterMenuOption } from "./SearchFilterMenu";
 import { SearchSortMenu } from "./SearchSortMenu";
 import {
   applyAssigneeToken,
   assigneeToken,
+  searchPriorityLabel,
+  searchStatusLabel,
   updatedWithinLabel,
   type SearchFilters,
 } from "@/lib/search-filters";
@@ -46,10 +49,6 @@ const OPEN_STATUS_PRESET: IssueStatus[] = ISSUE_STATUSES.filter(
   (status) => status !== "done" && status !== "cancelled",
 );
 
-function humanize(value: string): string {
-  return value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
 function count(record: Record<string, number> | undefined, key: string): number | undefined {
   return record?.[key];
 }
@@ -73,14 +72,14 @@ export function buildSearchFilterOptions({
 }: SearchFilterDataProps): SearchFilterOptionGroups {
   const status: FilterMenuOption[] = ISSUE_STATUSES.map((value) => ({
     value,
-    label: humanize(value),
+    label: searchStatusLabel(value),
     icon: <StatusIcon status={value} />,
     count: count(counts?.status as Record<string, number> | undefined, value),
   }));
 
   const priority: FilterMenuOption[] = ISSUE_PRIORITIES.map((value) => ({
     value,
-    label: humanize(value),
+    label: searchPriorityLabel(value),
     icon: <PriorityIcon priority={value} />,
     count: count(counts?.priority as Record<string, number> | undefined, value),
   }));
@@ -97,7 +96,7 @@ export function buildSearchFilterOptions({
   }
   assignee.push({
     value: "none",
-    label: "Unassigned",
+    label: t("search.values.unassigned"),
     icon: <UserX className="h-3.5 w-3.5 text-muted-foreground" />,
     searchText: "unassigned none nobody",
   });
@@ -147,6 +146,7 @@ export function SearchFilterBar({
   onSortChange: (next: CompanySearchSort) => void;
   data: SearchFilterDataProps;
 }) {
+  const { t } = useTranslation();
   const options = useMemo(() => buildSearchFilterOptions(data), [data]);
 
   function toggleMulti(dimension: "status" | "priority", value: string) {
@@ -162,43 +162,43 @@ export function SearchFilterBar({
   return (
     <div className="flex flex-wrap items-center gap-1.5" data-testid="search-filter-bar">
       <SearchFilterMenu
-        label="Status"
+        label={t("search.filters.status")}
         multi
         options={options.status}
         selected={filters.status ?? []}
         onToggle={(value) => toggleMulti("status", value)}
         onClear={() => onChange({ ...filters, status: [] })}
-        presets={[{ label: "Open items", values: OPEN_STATUS_PRESET }]}
+        presets={[{ label: t("search.filters.openItems"), values: OPEN_STATUS_PRESET }]}
       />
       <SearchFilterMenu
-        label="Assignee"
+        label={t("search.filters.assignee")}
         options={options.assignee}
         selected={selectedAssignee ? [selectedAssignee] : []}
         onSelect={(value) => onChange(applyAssigneeToken(filters, value, data.currentUserId))}
         searchable
-        searchPlaceholder="Search assignees…"
-        emptyMessage="No assignees"
+        searchPlaceholder={t("search.filters.searchAssignees")}
+        emptyMessage={t("search.filters.noAssignees")}
       />
       <SearchFilterMenu
-        label="Project"
+        label={t("search.filters.project")}
         options={options.project}
         selected={filters.projectId ? [filters.projectId] : []}
         onSelect={(value) => onChange({ ...filters, projectId: value })}
         searchable
-        searchPlaceholder="Search projects…"
-        emptyMessage="No projects"
+        searchPlaceholder={t("search.filters.searchProjects")}
+        emptyMessage={t("search.filters.noProjects")}
       />
       <SearchFilterMenu
-        label="Label"
+        label={t("search.filters.label")}
         options={options.label}
         selected={filters.labelId ? [filters.labelId] : []}
         onSelect={(value) => onChange({ ...filters, labelId: value })}
         searchable
-        searchPlaceholder="Search labels…"
-        emptyMessage="No labels"
+        searchPlaceholder={t("search.filters.searchLabels")}
+        emptyMessage={t("search.filters.noLabels")}
       />
       <SearchFilterMenu
-        label="Priority"
+        label={t("search.filters.priority")}
         multi
         options={options.priority}
         selected={filters.priority ?? []}
@@ -206,7 +206,7 @@ export function SearchFilterBar({
         onClear={() => onChange({ ...filters, priority: [] })}
       />
       <SearchFilterMenu
-        label="Updated"
+        label={t("search.filters.updated")}
         options={options.updated}
         selected={filters.updatedWithin ? [filters.updatedWithin] : []}
         onSelect={(value) => onChange({ ...filters, updatedWithin: value })}

@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ErrorState } from "@/pages/tools/shared";
-import { GATEWAY_TABS, gatewayTabHref, isGatewayTabKey, type GatewayTabKey } from "./gateway-tabs";
+import { GATEWAY_TABS, gatewayTabHref, gatewayTabLabel, isGatewayTabKey, type GatewayTabKey } from "./gateway-tabs";
 import { gatewaysQueryKey } from "./NewGatewayDialog";
 import { ConnectClientDialog } from "./ConnectClientDialog";
 import { deriveGatewayApps, isGatewayOn } from "./gateway-helpers";
@@ -23,6 +23,7 @@ import { AppsToolsPanel } from "./panels/AppsToolsPanel";
 import { TokensPanel } from "./panels/TokensPanel";
 import { GatewayActivityPanel } from "./panels/GatewayActivityPanel";
 import { GatewayAdvancedPanel } from "./panels/GatewayAdvancedPanel";
+import { t } from "@/i18n";
 
 export function GatewayDetail() {
   const { gatewayId = "", tab } = useParams<{ gatewayId: string; tab?: string }>();
@@ -96,9 +97,9 @@ export function GatewayDetail() {
   useEffect(() => {
     if (!gateway) return;
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Apps", href: "/apps" },
-      { label: "Gateways", href: "/apps/gateways" },
+      { label: selectedCompany?.name ?? t("core.company", { defaultValue: "Company" }), href: "/dashboard" },
+      { label: t("appsToolsResidual.apps"), href: "/apps" },
+      { label: t("appsToolsResidual.gateways"), href: "/apps/gateways" },
       { label: gateway.name },
     ]);
     return () => setBreadcrumbs([]);
@@ -111,25 +112,25 @@ export function GatewayDetail() {
       }),
     onSuccess: async (updated) => {
       pushToast({
-        title: updated.status === "active" ? "Gateway on" : "Gateway off",
+        title: updated.status === "active" ? t("appsToolsResidual.gatewayOn") : t("appsToolsResidual.gatewayOff"),
         body:
           updated.status === "active"
-            ? `${updated.name} is exposing its tools again.`
-            : `${updated.name} is off — every client goes silent.`,
+            ? t("appsToolsResidual.gatewayOnBody", { gateway: updated.name })
+            : t("appsToolsResidual.gatewayOffBody", { gateway: updated.name }),
         tone: "success",
       });
       await queryClient.invalidateQueries({ queryKey: gatewaysQueryKey(selectedCompanyId!) });
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't update the gateway",
+        title: t("appsToolsResidual.gatewayUpdateFailed"),
         body: error instanceof Error ? error.message : String(error),
         tone: "error",
       }),
   });
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company to manage gateways.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("appsToolsResidual.selectCompanyGateways")}</div>;
   }
   if (!activeTab) {
     return <Navigate replace to={gatewayTabHref(gatewayId, "overview")} />;
@@ -149,9 +150,9 @@ export function GatewayDetail() {
   if (!gateway) {
     return (
       <div className="max-w-3xl p-6">
-        <p className="text-sm text-muted-foreground">We couldn’t find that gateway.</p>
+        <p className="text-sm text-muted-foreground">{t("appsToolsResidual.gatewayNotFound")}</p>
         <Button className="mt-4" variant="outline" onClick={() => navigate("/apps/gateways")}>
-          Back to gateways
+          {t("appsToolsResidual.backToGateways")}
         </Button>
       </div>
     );
@@ -183,7 +184,7 @@ export function GatewayDetail() {
         </Button>
       </div>
 
-      <nav className="flex items-center gap-6 overflow-x-auto border-b border-border text-sm" aria-label="Gateway tabs">
+      <nav className="flex items-center gap-6 overflow-x-auto border-b border-border text-sm" aria-label={t("appsToolsResidual.gatewayTabs")}>
         {GATEWAY_TABS.map((item) => {
           const isActive = item.key === activeTab;
           return (
@@ -198,7 +199,7 @@ export function GatewayDetail() {
               )}
               aria-current={isActive ? "page" : undefined}
             >
-              {item.label}
+              {gatewayTabLabel(item.key)}
             </Link>
           );
         })}

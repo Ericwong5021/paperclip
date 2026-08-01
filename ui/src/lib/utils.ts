@@ -2,6 +2,11 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { deriveAgentUrlKey, deriveProjectUrlKey, normalizeProjectUrlKey, hasNonAsciiContent } from "@paperclipai/shared";
 import type { BillingType, FinanceDirection, FinanceEventKind } from "@paperclipai/shared";
+import { getLocale } from "@/i18n";
+
+function intlLocale() {
+  return getLocale() === "zh-CN" ? "zh-CN" : "en-US";
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -34,11 +39,11 @@ export function asFiniteNumber(value: unknown, fallback: number) {
 }
 
 export function formatCents(cents: number): string {
-  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `$${(cents / 100).toLocaleString(intlLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function formatNumber(n: number): string {
-  return n.toLocaleString("en-US");
+  return n.toLocaleString(intlLocale());
 }
 
 /**
@@ -51,7 +56,7 @@ export function formatProjectBudget(budget: { amountCents: number; windowKind: s
 }
 
 export function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("en-US", {
+  return new Date(date).toLocaleDateString(intlLocale(), {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -59,7 +64,7 @@ export function formatDate(date: Date | string): string {
 }
 
 export function formatDateTime(date: Date | string): string {
-  return new Date(date).toLocaleString("en-US", {
+  return new Date(date).toLocaleString(intlLocale(), {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -69,7 +74,7 @@ export function formatDateTime(date: Date | string): string {
 }
 
 export function formatShortDate(date: Date | string): string {
-  return new Date(date).toLocaleString("en-US", {
+  return new Date(date).toLocaleString(intlLocale(), {
     month: "short",
     day: "numeric",
   });
@@ -79,13 +84,14 @@ export function relativeTime(date: Date | string): string {
   const now = Date.now();
   const then = new Date(date).getTime();
   const diffSec = Math.round((now - then) / 1000);
-  if (diffSec < 60) return "just now";
+  const chinese = getLocale() === "zh-CN";
+  if (diffSec < 60) return chinese ? "刚刚" : "just now";
   const diffMin = Math.round(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 60) return chinese ? `${diffMin} 分钟前` : `${diffMin}m ago`;
   const diffHr = Math.round(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
+  if (diffHr < 24) return chinese ? `${diffHr} 小时前` : `${diffHr}h ago`;
   const diffDay = Math.round(diffHr / 24);
-  if (diffDay < 30) return `${diffDay}d ago`;
+  if (diffDay < 30) return chinese ? `${diffDay} 天前` : `${diffDay}d ago`;
   return formatDate(date);
 }
 
@@ -98,20 +104,27 @@ export function formatTokens(n: number): string {
 
 /** Humanize a millisecond duration into a compact `1h 2m`, `45m 12s`, `12s` string. */
 export function formatDurationMs(ms: number): string {
+  const chinese = getLocale() === "zh-CN";
   if (!Number.isFinite(ms) || ms <= 0) return "0s";
   const totalSeconds = Math.round(ms / 1000);
-  if (totalSeconds < 60) return `${totalSeconds}s`;
+  if (totalSeconds < 60) return chinese ? `${totalSeconds} 秒` : `${totalSeconds}s`;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  if (minutes < 60) return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+  if (minutes < 60) return chinese
+    ? seconds > 0 ? `${minutes} 分 ${seconds} 秒` : `${minutes} 分钟`
+    : seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
   if (hours < 24) {
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+    return chinese
+      ? remainingMinutes > 0 ? `${hours} 小时 ${remainingMinutes} 分` : `${hours} 小时`
+      : remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
   }
   const days = Math.floor(hours / 24);
   const remainingHours = hours % 24;
-  return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+  return chinese
+    ? remainingHours > 0 ? `${days} 天 ${remainingHours} 小时` : `${days} 天`
+    : remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
 }
 
 /** Map a raw provider slug to a display-friendly name. */

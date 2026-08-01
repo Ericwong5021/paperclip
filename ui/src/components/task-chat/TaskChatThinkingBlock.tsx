@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import type { TaskChatThinkingItem } from "./task-chat-model";
+import { t } from "@/i18n";
 
 /**
  * Chain-of-thought (ACP agent_thought_chunk) as a flat left-railed block (v7):
@@ -12,7 +13,7 @@ import type { TaskChatThinkingItem } from "./task-chat-model";
  */
 export function TaskChatThinkingBlock({ item }: { item: TaskChatThinkingItem }) {
   const [open, setOpen] = useState(!item.collapsed);
-  const settledLabel = item.summaryLabel ?? "Thought process";
+  const settledLabel = item.summaryLabel ?? t("interactions.chatThoughtProcess");
 
   return (
     <div className="border-l-2 border-border pl-3 text-xs text-muted-foreground">
@@ -24,7 +25,7 @@ export function TaskChatThinkingBlock({ item }: { item: TaskChatThinkingItem }) 
       >
         <ChevronRight className={cn("h-3 w-3 shrink-0 transition-transform", open ? "rotate-90" : null)} aria-hidden />
         {item.streaming ? (
-          <span className="shimmer-text shimmer-text-muted font-medium">Thinking…</span>
+          <span className="shimmer-text shimmer-text-muted font-medium">{t("interactions.chatThinking")}</span>
         ) : (
           <span className="font-medium">{settledLabel}</span>
         )}

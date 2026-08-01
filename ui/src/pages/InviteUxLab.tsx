@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompanyPatternIcon } from "@/components/CompanyPatternIcon";
+import { inviteSystemLabT as labT } from "@/i18n/invite-system-lab-messages";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
@@ -205,29 +206,29 @@ function InviteSummaryPanel({
           className="h-16 w-16 rounded-none border border-zinc-800"
         />
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-(--tracking-caps) text-zinc-500">You&apos;ve been invited to join Paperclip</p>
+          <p className="text-xs uppercase tracking-(--tracking-caps) text-zinc-500">{labT("You've been invited to join Paperclip")}</p>
           <h3 className="mt-2 text-2xl font-semibold text-zinc-100">{title}</h3>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-300">{description}</p>
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <MetaCard label="Company" value="Acme Robotics" />
-        <MetaCard label="Invited by" value="Board User" />
-        <MetaCard label="Requested access" value={requestedAccess} />
-        <MetaCard label="Invite expires" value="Mar 7, 2027" />
+        <MetaCard label={labT("Company")} value="Acme Robotics" />
+        <MetaCard label={labT("Invited by")} value="Board User" />
+        <MetaCard label={labT("Requested access")} value={requestedAccess} />
+        <MetaCard label={labT("Invite expires")} value="Mar 7, 2027" />
       </div>
 
       {inviteMessage ? (
         <div className="border border-amber-500/40 bg-amber-500/10 p-4">
-          <div className="text-xs uppercase tracking-(--tracking-caps) text-amber-200/80">Message from inviter</div>
+          <div className="text-xs uppercase tracking-(--tracking-caps) text-amber-200/80">{labT("Message from inviter")}</div>
           <p className="mt-2 text-sm leading-6 text-amber-50">{inviteMessage}</p>
         </div>
       ) : null}
 
       {signedInLabel ? (
         <div className="border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-50">
-          Signed in as <span className="font-medium">{signedInLabel}</span>.
+          {labT("Signed in as")} <span className="font-medium">{signedInLabel}</span>.
         </div>
       ) : null}
     </>
@@ -256,7 +257,7 @@ function InlineAuthPreview({
     <div className="space-y-5">
       <div>
         <h3 className="text-lg font-semibold text-zinc-100">
-          {mode === "sign_up" ? "Create your account" : "Sign in to continue"}
+          {labT(mode === "sign_up" ? "Create your account" : "Sign in to continue")}
         </h3>
         <p className="mt-1 text-sm text-zinc-400">
           {mode === "sign_up"
@@ -293,16 +294,16 @@ function InlineAuthPreview({
       <form className="space-y-4">
         {mode === "sign_up" ? (
           <label className="block text-sm">
-            <span className="mb-1 block text-zinc-400">Name</span>
+          <span className="mb-1 block text-zinc-400">{labT("Name")}</span>
             <input name="name" className={fieldClassName} defaultValue="Jane Example" readOnly />
           </label>
         ) : null}
         <label className="block text-sm">
-          <span className="mb-1 block text-zinc-400">Email</span>
+          <span className="mb-1 block text-zinc-400">{labT("Email")}</span>
           <input name="email" type="email" className={fieldClassName} defaultValue="jane@example.com" readOnly />
         </label>
         <label className="block text-sm">
-          <span className="mb-1 block text-zinc-400">Password</span>
+          <span className="mb-1 block text-zinc-400">{labT("Password")}</span>
           <input name="password" type="password" className={fieldClassName} defaultValue="supersecret" readOnly />
         </label>
         {feedback ? (
@@ -311,7 +312,7 @@ function InlineAuthPreview({
           </p>
         ) : null}
         <Button type="button" className="w-full rounded-none" disabled={working}>
-          {working ? "Working..." : mode === "sign_in" ? "Sign in and continue" : "Create account and continue"}
+          {labT(working ? "Working..." : mode === "sign_in" ? "Sign in and continue" : "Create account and continue")}
         </Button>
       </form>
 
@@ -328,17 +329,17 @@ function AgentRequestPreview() {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-zinc-100">Submit agent details</h3>
+        <h3 className="text-lg font-semibold text-zinc-100">{labT("Submit agent details")}</h3>
         <p className="mt-1 text-sm text-zinc-400">
           This invite will create an approval request for a new agent in Acme Robotics.
         </p>
       </div>
       <label className="block text-sm">
-        <span className="mb-1 block text-zinc-400">Agent name</span>
+        <span className="mb-1 block text-zinc-400">{labT("Agent name")}</span>
         <input className={fieldClassName} defaultValue="Acme Ops Agent" readOnly />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block text-zinc-400">Adapter type</span>
+        <span className="mb-1 block text-zinc-400">{labT("Adapter type")}</span>
         <select className={fieldClassName} defaultValue="codex_local" disabled>
           <option value="codex_local">Codex</option>
           <option value="claude_local">Claude Code</option>
@@ -346,7 +347,7 @@ function AgentRequestPreview() {
         </select>
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block text-zinc-400">Capabilities</span>
+        <span className="mb-1 block text-zinc-400">{labT("Capabilities")}</span>
         <textarea
           className={fieldClassName}
           rows={4}
@@ -355,7 +356,7 @@ function AgentRequestPreview() {
         />
       </label>
       <Button type="button" className="w-full rounded-none">
-        Submit request
+        {labT("Submit request")}
       </Button>
     </div>
   );
@@ -373,7 +374,7 @@ function AcceptInvitePreview({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-zinc-100">Accept company invite</h3>
+        <h3 className="text-lg font-semibold text-zinc-100">{labT("Accept company invite")}</h3>
         <p className="mt-1 text-sm text-zinc-400">
           {autoAccept
             ? "Granting your access to Acme Robotics."
@@ -384,10 +385,10 @@ function AcceptInvitePreview({
       </div>
       {error ? <p className="text-xs text-red-400">{error}</p> : null}
       {autoAccept ? (
-        <div className="text-sm text-zinc-400">Submitting request...</div>
+        <div className="text-sm text-zinc-400">{labT("Submitting request...")}</div>
       ) : (
         <Button type="button" className="w-full rounded-none" disabled={isCurrentMember}>
-          Accept invite
+          {labT("Accept invite")}
         </Button>
       )}
     </div>
@@ -422,12 +423,12 @@ function InviteResultPreview({
         <p className="text-sm text-zinc-400">{description}</p>
         {joinedNow ? (
           <Button type="button" className="w-full rounded-none">
-            Open board
+            {labT("Open board")}
           </Button>
         ) : (
           <>
             <div className="border border-zinc-800 p-3">
-              <p className="mb-1 text-xs text-zinc-500">Approval page</p>
+              <p className="mb-1 text-xs text-zinc-500">{labT("Approval page")}</p>
               <a className="text-sm text-zinc-200 underline underline-offset-2" href="/company/settings/members">
                 Company Settings → Members
               </a>
@@ -439,7 +440,7 @@ function InviteResultPreview({
         )}
         {claimSecret ? (
           <div className="space-y-1 border border-zinc-800 p-3 text-xs text-zinc-400">
-            <div className="text-zinc-200">Claim secret</div>
+            <div className="text-zinc-200">{labT("Claim secret")}</div>
             <div className="font-mono break-all">{claimSecret}</div>
             <div className="font-mono break-all">POST /api/agents/claim-api-key</div>
           </div>
@@ -465,7 +466,7 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
               <span className="text-sm font-medium">Paperclip</span>
             </div>
             <h3 className="text-xl font-semibold">
-              {mode === "sign_in" ? "Sign in to Paperclip" : "Create your Paperclip account"}
+              {labT(mode === "sign_in" ? "Sign in to Paperclip" : "Create your Paperclip account")}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
               {mode === "sign_in"
@@ -475,7 +476,7 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
             <div className="mt-6 space-y-4">
               {mode === "sign_up" ? (
                 <label className="block">
-                  <span className="mb-1 block text-xs text-muted-foreground">Name</span>
+                  <span className="mb-1 block text-xs text-muted-foreground">{labT("Name")}</span>
                   <input
                     className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
                     defaultValue="Jane Example"
@@ -484,7 +485,7 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
                 </label>
               ) : null}
               <label className="block">
-                <span className="mb-1 block text-xs text-muted-foreground">Email</span>
+                <span className="mb-1 block text-xs text-muted-foreground">{labT("Email")}</span>
                 <input
                   className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
                   defaultValue="jane@example.com"
@@ -492,7 +493,7 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
                 />
               </label>
               <label className="block">
-                <span className="mb-1 block text-xs text-muted-foreground">Password</span>
+                <span className="mb-1 block text-xs text-muted-foreground">{labT("Password")}</span>
                 <input
                   className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
                   defaultValue="supersecret"
@@ -501,13 +502,13 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
               </label>
               {error ? <p className="text-xs text-destructive">{error}</p> : null}
               <Button type="button" className="w-full">
-                {mode === "sign_in" ? "Sign In" : "Create Account"}
+                {labT(mode === "sign_in" ? "Sign In" : "Create Account")}
               </Button>
             </div>
             <div className="mt-5 text-sm text-muted-foreground">
               {mode === "sign_in" ? "Need an account?" : "Already have an account?"}{" "}
               <span className="font-medium text-foreground underline underline-offset-2">
-                {mode === "sign_in" ? "Create one" : "Sign in"}
+                {labT(mode === "sign_in" ? "Create one" : "Sign in")}
               </span>
             </div>
           </div>
@@ -515,9 +516,9 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
         <div className="hidden min-h-(--sz-420px) items-center justify-center bg-[radial-gradient(circle_at_top,rgba(8,145,178,0.18),transparent_48%),linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,1))] px-8 py-10 md:flex">
           <div className="max-w-sm space-y-4 text-zinc-200">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/[0.08] px-3 py-1 text-(length:--text-nano) uppercase tracking-(--tracking-caps) text-cyan-200">
-              Auth preview
+              {labT("Auth preview")}
             </div>
-            <div className="text-2xl font-semibold">Side-by-side signup styling review</div>
+            <div className="text-2xl font-semibold">{labT("Side-by-side signup styling review")}</div>
             <p className="text-sm leading-6 text-zinc-400">
               This frame mirrors the production auth surface so spacing, label density, button treatments, and desktop composition are easy to compare.
             </p>
@@ -535,10 +536,10 @@ function CompanyInvitesPreview() {
         <CardHeader className="space-y-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MailPlus className="h-4 w-4" />
-            Company Invites
+            {labT("Company")} {labT("Invites")}
           </div>
           <div>
-            <CardTitle>Create invite</CardTitle>
+            <CardTitle>{labT("Create invite")}</CardTitle>
             <CardDescription className="mt-2">
               Generate a human invite link and choose the default access it should request.
             </CardDescription>
@@ -546,7 +547,7 @@ function CompanyInvitesPreview() {
         </CardHeader>
         <CardContent className="space-y-4">
           <fieldset className="space-y-3">
-            <legend className="text-sm font-medium">Choose a role</legend>
+            <legend className="text-sm font-medium">{labT("Choose a role")}</legend>
             <div className="rounded-2xl border border-border">
               {inviteRoleOptions.map((option, index) => (
                 <label
@@ -561,15 +562,15 @@ function CompanyInvitesPreview() {
                   />
                   <span className="min-w-0 space-y-1">
                     <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium">{option.label}</span>
+                      <span className="text-sm font-medium">{labT(option.label)}</span>
                       {option.value === "operator" ? (
                         <Badge variant="outline" className="border-border text-muted-foreground">
-                          Default
+                          {labT("Default")}
                         </Badge>
                       ) : null}
                     </span>
-                    <span className="block max-w-2xl text-sm text-muted-foreground">{option.description}</span>
-                    <span className="block text-sm text-foreground">{option.gets}</span>
+                    <span className="block max-w-2xl text-sm text-muted-foreground">{labT(option.description)}</span>
+                    <span className="block text-sm text-foreground">{labT(option.gets)}</span>
                   </span>
                 </label>
               ))}
@@ -581,21 +582,21 @@ function CompanyInvitesPreview() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="button">Create invite</Button>
+            <Button type="button">{labT("Create invite")}</Button>
             <span className="text-sm text-muted-foreground">Invite history below keeps the audit trail.</span>
           </div>
 
           <div className="space-y-3 rounded-2xl border border-border px-4 py-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm font-medium">Latest invite link</div>
+                <div className="text-sm font-medium">{labT("Latest invite link")}</div>
                 <div className="text-sm text-muted-foreground">
                   This URL includes the current Paperclip domain returned by the server.
                 </div>
               </div>
               <div className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
                 <Check className="h-3.5 w-3.5" />
-                Copied
+                {labT("Copied")}
               </div>
             </div>
             <button
@@ -607,7 +608,7 @@ function CompanyInvitesPreview() {
             <div className="flex flex-wrap gap-2">
               <Button type="button" size="sm" variant="outline">
                 <ExternalLink className="h-4 w-4" />
-                Open invite
+                {labT("Open invite")}
               </Button>
             </div>
           </div>
@@ -618,7 +619,7 @@ function CompanyInvitesPreview() {
         <CardHeader className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <CardTitle>Invite history</CardTitle>
+              <CardTitle>{labT("Invite history")}</CardTitle>
               <CardDescription className="mt-2">
                 Review invite status, role, inviter, and any linked join request.
               </CardDescription>
@@ -633,12 +634,12 @@ function CompanyInvitesPreview() {
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="px-5 py-3 font-medium text-muted-foreground">State</th>
-                  <th className="px-5 py-3 font-medium text-muted-foreground">Role</th>
-                  <th className="px-5 py-3 font-medium text-muted-foreground">Invited by</th>
-                  <th className="px-5 py-3 font-medium text-muted-foreground">Created</th>
-                  <th className="px-5 py-3 font-medium text-muted-foreground">Join request</th>
-                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">Action</th>
+                  <th className="px-5 py-3 font-medium text-muted-foreground">{labT("State")}</th>
+                  <th className="px-5 py-3 font-medium text-muted-foreground">{labT("Role")}</th>
+                  <th className="px-5 py-3 font-medium text-muted-foreground">{labT("Invited by")}</th>
+                  <th className="px-5 py-3 font-medium text-muted-foreground">{labT("Created")}</th>
+                  <th className="px-5 py-3 font-medium text-muted-foreground">{labT("Join request")}</th>
+                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">{labT("Action")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -646,10 +647,10 @@ function CompanyInvitesPreview() {
                   <tr key={invite.id} className="border-b border-border last:border-b-0">
                     <td className="px-5 py-3 align-top">
                       <Badge variant="outline" className="border-border text-muted-foreground">
-                        {invite.state}
+                        {labT(invite.state)}
                       </Badge>
                     </td>
-                    <td className="px-5 py-3 align-top">{invite.humanRole}</td>
+                    <td className="px-5 py-3 align-top">{labT(invite.humanRole[0].toUpperCase() + invite.humanRole.slice(1))}</td>
                     <td className="px-5 py-3 align-top">
                       <div>{invite.invitedBy}</div>
                       <div className="text-xs text-muted-foreground">{invite.email}</div>
@@ -658,19 +659,19 @@ function CompanyInvitesPreview() {
                     <td className="px-5 py-3 align-top">
                       {invite.relatedLabel === "Review request" ? (
                         <a href="/inbox/requests" className="underline underline-offset-4">
-                          {invite.relatedLabel}
+                          {labT(invite.relatedLabel)}
                         </a>
                       ) : (
-                        <span className="text-muted-foreground">{invite.relatedLabel}</span>
+                        <span className="text-muted-foreground">{labT(invite.relatedLabel)}</span>
                       )}
                     </td>
                     <td className="px-5 py-3 text-right align-top">
                       {invite.action === "Revoke" ? (
                         <Button type="button" size="sm" variant="outline">
-                          Revoke
+                          {labT("Revoke")}
                         </Button>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Inactive</span>
+                        <span className="text-xs text-muted-foreground">{labT("Inactive")}</span>
                       )}
                     </td>
                   </tr>
@@ -681,13 +682,13 @@ function CompanyInvitesPreview() {
 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-2xl border border-border p-4">
-              <div className="text-sm font-medium">Empty history state</div>
+              <div className="text-sm font-medium">{labT("Empty history state")}</div>
               <div className="mt-2 text-sm text-muted-foreground">
                 No invites have been created for this company yet.
               </div>
             </div>
             <div className="rounded-2xl border border-rose-400/40 bg-rose-500/[0.07] p-4">
-              <div className="text-sm font-medium text-foreground">Permission error</div>
+              <div className="text-sm font-medium text-foreground">{labT("Permission error")}</div>
               <div className="mt-2 text-sm text-muted-foreground">
                 You do not have permission to manage company invites.
               </div>
@@ -707,9 +708,9 @@ export function InviteUxLab() {
           <div className="p-6 sm:p-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/[0.08] px-3 py-1 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-caps) text-cyan-700 dark:text-cyan-300">
               <FlaskConical className="h-3.5 w-3.5" />
-              Invite UX Lab
+              {labT("Invite UX Lab")}
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight">Invite and signup UX review surface</h1>
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight">{labT("Invite and signup UX review surface")}</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
               This page collects the current invite landing, signup, approval-result, and company invite-management states in one place so styling changes can be reviewed without recreating each backend condition by hand.
             </p>
@@ -729,7 +730,7 @@ export function InviteUxLab() {
 
           <aside className="border-t border-border/60 bg-background/70 p-6 lg:border-l lg:border-t-0">
             <div className="mb-4 text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
-              Covered states
+              {labT("Covered states")}
             </div>
             <div className="space-y-3">
               {[
@@ -752,73 +753,73 @@ export function InviteUxLab() {
       </div>
 
       <LabSection
-        eyebrow="Top-level states"
-        title="Landing state coverage"
-        description="Small cards for the fast-return invite states that do not render the full split-screen layout."
+        eyebrow={labT("Top-level states")}
+        title={labT("Landing state coverage")}
+        description={labT("Small cards for the fast-return invite states that do not render the full split-screen layout.")}
         accentClassName="bg-[linear-gradient(180deg,rgba(59,130,246,0.05),transparent_30%),var(--background)]"
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatusCard
             icon={<Loader2 className="h-4 w-4 animate-spin" />}
-            title="Loading invite"
-            body="Shown while invite summary, deployment mode, or auth session data is still loading."
+            title={labT("Loading invite")}
+            body={labT("Shown while invite summary, deployment mode, or auth session data is still loading.")}
           />
           <StatusCard
             icon={<Clock3 className="h-4 w-4" />}
-            title="Checking your access"
-            body="Shown after sign-in while the app verifies whether the current user already belongs to the invited company."
+            title={labT("Checking your access")}
+            body={labT("Shown after sign-in while the app verifies whether the current user already belongs to the invited company.")}
           />
           <StatusCard
             icon={<KeyRound className="h-4 w-4" />}
-            title="Invalid invite token"
-            body="The token is missing entirely, so the page short-circuits before any invite lookup."
+            title={labT("Invalid invite token")}
+            body={labT("The token is missing entirely, so the page short-circuits before any invite lookup.")}
             tone="error"
           />
           <StatusCard
             icon={<Link2 className="h-4 w-4" />}
-            title="Invite not available"
-            body="Used for expired, revoked, already-consumed, or otherwise missing invites."
+            title={labT("Invite not available")}
+            body={labT("Used for expired, revoked, already-consumed, or otherwise missing invites.")}
             tone="warn"
           />
           <StatusCard
             icon={<ShieldCheck className="h-4 w-4" />}
-            title="Bootstrap complete"
-            body="Result screen for bootstrap CEO invites after setup has been accepted successfully."
+            title={labT("Bootstrap complete")}
+            body={labT("Result screen for bootstrap CEO invites after setup has been accepted successfully.")}
             tone="success"
           />
           <StatusCard
             icon={<ArrowRight className="h-4 w-4" />}
-            title="Auto-accept in progress"
-            body="Signed-in human users skip the extra button click and move straight into join submission."
+            title={labT("Auto-accept in progress")}
+            body={labT("Signed-in human users skip the extra button click and move straight into join submission.")}
           />
           <StatusCard
             icon={<Users className="h-4 w-4" />}
-            title="Already a member"
-            body="Acceptance stays disabled and the page redirects into the company once membership is confirmed."
+            title={labT("Already a member")}
+            body={labT("Acceptance stays disabled and the page redirects into the company once membership is confirmed.")}
           />
           <StatusCard
             icon={<UserPlus className="h-4 w-4" />}
-            title="Invite result surfaces"
-            body="Both pending-approval and joined-now confirmations are included below with claim and onboarding extras."
+            title={labT("Invite result surfaces")}
+            body={labT("Both pending-approval and joined-now confirmations are included below with claim and onboarding extras.")}
             tone="success"
           />
         </div>
       </LabSection>
 
       <LabSection
-        eyebrow="Invite landing"
-        title="Split-screen invite flows"
-        description="These frames mirror the production invite surface closely enough to review spacing, hierarchy, and control states while keeping data fixture-driven."
+        eyebrow={labT("Invite landing")}
+        title={labT("Split-screen invite flows")}
+        description={labT("These frames mirror the production invite surface closely enough to review spacing, hierarchy, and control states while keeping data fixture-driven.")}
         accentClassName="bg-[linear-gradient(180deg,rgba(234,179,8,0.06),transparent_28%),var(--background)]"
       >
         <div className="space-y-5">
           <InviteLandingShell
             left={
               <InviteSummaryPanel
-                title="Join Acme Robotics"
-                description="Create your Paperclip account first. If you already have one, switch to sign in and continue the invite with the same email."
-                inviteMessage="Welcome aboard."
-                requestedAccess="Operator"
+                title={labT("Join Acme Robotics")}
+                description={labT("Create your Paperclip account first. If you already have one, switch to sign in and continue the invite with the same email.")}
+                inviteMessage={labT("Welcome aboard.")}
+                requestedAccess={labT("Operator")}
               />
             }
             right={<InlineAuthPreview mode="sign_up" />}
@@ -827,10 +828,10 @@ export function InviteUxLab() {
           <InviteLandingShell
             left={
               <InviteSummaryPanel
-                title="Join Acme Robotics"
-                description="Create your Paperclip account first. If you already have one, switch to sign in and continue the invite with the same email."
-                inviteMessage="Welcome aboard."
-                requestedAccess="Operator"
+                title={labT("Join Acme Robotics")}
+                description={labT("Create your Paperclip account first. If you already have one, switch to sign in and continue the invite with the same email.")}
+                inviteMessage={labT("Welcome aboard.")}
+                requestedAccess={labT("Operator")}
               />
             }
             right={
@@ -838,7 +839,7 @@ export function InviteUxLab() {
                 mode="sign_in"
                 feedback={{
                   tone: "info",
-                  text: "An account already exists for jane@example.com. Sign in below to continue with this invite.",
+                  text: labT("An account already exists for jane@example.com. Sign in below to continue with this invite."),
                 }}
               />
             }
@@ -847,11 +848,11 @@ export function InviteUxLab() {
           <InviteLandingShell
             left={
               <InviteSummaryPanel
-                title="Join Acme Robotics"
-                description="Your account is ready. Review the invite details, then accept it to continue."
-                inviteMessage="Welcome aboard."
-                requestedAccess="Operator"
-                signedInLabel="Jane Example"
+                title={labT("Join Acme Robotics")}
+                description={labT("Your account is ready. Review the invite details, then accept it to continue.")}
+                inviteMessage={labT("Welcome aboard.")}
+                requestedAccess={labT("Operator")}
+                signedInLabel={labT("Jane Example")}
               />
             }
             right={<AcceptInvitePreview autoAccept />}
@@ -860,9 +861,9 @@ export function InviteUxLab() {
           <InviteLandingShell
             left={
               <InviteSummaryPanel
-                title="Join Acme Robotics"
-                description="Review the invite details, then submit the agent information below to start the join request."
-                requestedAccess="Agent join request"
+                title={labT("Join Acme Robotics")}
+                description={labT("Review the invite details, then submit the agent information below to start the join request.")}
+                requestedAccess={labT("Agent join request")}
               />
             }
             right={<AgentRequestPreview />}
@@ -871,58 +872,58 @@ export function InviteUxLab() {
           <InviteLandingShell
             left={
               <InviteSummaryPanel
-                title="Join Acme Robotics"
-                description="Your account is ready. Review the invite details, then accept it to continue."
-                requestedAccess="Operator"
-                signedInLabel="Jane Example"
+                title={labT("Join Acme Robotics")}
+                description={labT("Your account is ready. Review the invite details, then accept it to continue.")}
+                requestedAccess={labT("Operator")}
+                signedInLabel={labT("Jane Example")}
               />
             }
-            right={<AcceptInvitePreview error="This account already belongs to the company." isCurrentMember />}
+            right={<AcceptInvitePreview error={labT("This account already belongs to the company.")} isCurrentMember />}
           />
         </div>
       </LabSection>
 
       <LabSection
-        eyebrow="Result states"
-        title="Approval and completion screens"
-        description="These are the post-submit states returned from invite acceptance, including optional claim and onboarding metadata."
+        eyebrow={labT("Result states")}
+        title={labT("Approval and completion screens")}
+        description={labT("These are the post-submit states returned from invite acceptance, including optional claim and onboarding metadata.")}
         accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.06),transparent_30%),var(--background)]"
       >
         <div className="grid gap-5 xl:grid-cols-3">
           <InviteResultPreview
-            title="Request to join Acme Robotics"
-            description="Board User must approve your request to join."
+            title={labT("Request to join Acme Robotics")}
+            description={labT("Board User must approve your request to join.")}
             claimSecret="pcp_claim_secret_demo"
             onboardingTextUrl="/api/invites/pcp_invite_test/onboarding.txt"
           />
           <InviteResultPreview
-            title="You joined the company"
-            description="Your account already matched the approved invite, so the board can be opened immediately."
+            title={labT("You joined the company")}
+            description={labT("Your account already matched the approved invite, so the board can be opened immediately.")}
             joinedNow
           />
           <InviteResultPreview
-            title="Request to join Acme Robotics"
-            description="Ask them to visit Company Settings → Members to approve your request."
+            title={labT("Request to join Acme Robotics")}
+            description={labT("Ask them to visit Company Settings → Members to approve your request.")}
           />
         </div>
       </LabSection>
 
       <LabSection
-        eyebrow="Standalone auth"
-        title="Auth page states"
-        description="The general `/auth` page uses a different composition from invite landing. These previews keep both sign-in and sign-up variants visible."
+        eyebrow={labT("Standalone auth")}
+        title={labT("Auth page states")}
+        description={labT("The general `/auth` page uses a different composition from invite landing. These previews keep both sign-in and sign-up variants visible.")}
         accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.06),transparent_28%),var(--background)]"
       >
         <div className="space-y-5">
-          <AuthScreenPreview mode="sign_in" error="Invalid email or password" />
+          <AuthScreenPreview mode="sign_in" error={labT("Invalid email or password")} />
           <AuthScreenPreview mode="sign_up" />
         </div>
       </LabSection>
 
       <LabSection
-        eyebrow="Company settings"
-        title="Company invite management"
-        description="This section captures the board-side invite creation flow, copied-link state, audit table, and the edge states that are otherwise tedious to stage."
+        eyebrow={labT("Company settings")}
+        title={labT("Company invite management")}
+        description={labT("This section captures the board-side invite creation flow, copied-link state, audit table, and the edge states that are otherwise tedious to stage.")}
         accentClassName="bg-[linear-gradient(180deg,rgba(244,114,182,0.06),transparent_28%),var(--background)]"
       >
         <CompanyInvitesPreview />

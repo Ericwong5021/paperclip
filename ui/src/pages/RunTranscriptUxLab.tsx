@@ -11,35 +11,36 @@ import { StatusBadge } from "../components/StatusBadge";
 import { RunTranscriptView, type TranscriptDensity, type TranscriptMode } from "../components/transcript/RunTranscriptView";
 import { runTranscriptFixtureEntries, runTranscriptFixtureMeta } from "../fixtures/runTranscriptFixtures";
 import { ExternalLink, FlaskConical, LayoutPanelLeft, MonitorCog, PanelsTopLeft, RadioTower } from "lucide-react";
+import { useTranslation } from "../i18n";
 
 type SurfaceId = "detail" | "live" | "dashboard";
 
 const surfaceOptions: Array<{
   id: SurfaceId;
-  label: string;
-  eyebrow: string;
-  description: string;
+  labelKey: "runDetail" | "issueWidget" | "dashboardCard";
+  eyebrowKey: "fullTranscript" | "liveStream" | "denseCard";
+  descriptionKey: "runDetailDescription" | "issueWidgetDescription" | "dashboardCardDescription";
   icon: typeof LayoutPanelLeft;
 }> = [
   {
     id: "detail",
-    label: "Run Detail",
-    eyebrow: "Full transcript",
-    description: "The long-form run page with the `Nice | Raw` toggle and the most inspectable transcript view.",
+    labelKey: "runDetail",
+    eyebrowKey: "fullTranscript",
+    descriptionKey: "runDetailDescription",
     icon: MonitorCog,
   },
   {
     id: "live",
-    label: "Issue Widget",
-    eyebrow: "Live stream",
-    description: "The issue-detail live run widget, optimized for following an active run without leaving the task page.",
+    labelKey: "issueWidget",
+    eyebrowKey: "liveStream",
+    descriptionKey: "issueWidgetDescription",
     icon: RadioTower,
   },
   {
     id: "dashboard",
-    label: "Dashboard Card",
-    eyebrow: "Dense card",
-    description: "The active-agents dashboard card, tuned for compact scanning while keeping the same transcript language.",
+    labelKey: "dashboardCard",
+    eyebrowKey: "denseCard",
+    descriptionKey: "dashboardCardDescription",
     icon: PanelsTopLeft,
   },
 ];
@@ -63,12 +64,14 @@ function RunDetailPreview({
   streaming: boolean;
   density: TranscriptDensity;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="overflow-hidden rounded-xl border border-border/70 bg-background/80 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
       <div className="border-b border-border/60 bg-background/90 px-5 py-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="uppercase tracking-(--tracking-caps) text-(length:--text-nano)">
-            Run Detail
+            {t("runTranscriptLab.runDetail")}
           </Badge>
           <StatusBadge status={streaming ? "running" : "succeeded"} />
           <span className="text-xs text-muted-foreground">
@@ -100,14 +103,16 @@ function LiveWidgetPreview({
   mode: TranscriptMode;
   density: TranscriptDensity;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="overflow-hidden rounded-xl border border-cyan-500/25 bg-background/85 shadow-[0_20px_50px_rgba(6,182,212,0.10)]">
       <div className="border-b border-border/60 bg-cyan-500/[0.05] px-5 py-4">
         <div className="text-xs font-semibold uppercase tracking-(--tracking-caps) text-cyan-700 dark:text-cyan-300">
-          Live Runs
+          {t("runTranscriptLab.liveRuns")}
         </div>
         <div className="mt-1 text-xs text-muted-foreground">
-          Compact live transcript stream for the issue detail page.
+          {t("runTranscriptLab.compactLiveTranscript")}
         </div>
       </div>
       <div className="px-5 py-4">
@@ -123,7 +128,7 @@ function LiveWidgetPreview({
             </div>
           </div>
           <Badge variant="outline" className="border-border/70 bg-background/70 px-2.5 py-1 text-(length:--text-micro) text-muted-foreground">
-            Open run
+            {t("runTranscriptLab.openRun")}
             <ExternalLink className="h-3 w-3" />
           </Badge>
         </div>
@@ -150,6 +155,8 @@ function DashboardPreview({
   mode: TranscriptMode;
   density: TranscriptDensity;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="max-w-md">
       <div className={cn(
@@ -169,7 +176,7 @@ function DashboardPreview({
                 <Identity name={runTranscriptFixtureMeta.agentName} size="sm" />
               </div>
               <div className="mt-2 text-(length:--text-micro) text-muted-foreground">
-                {streaming ? "Live now" : "Finished 2m ago"}
+                {streaming ? t("runTranscriptLab.liveNow") : t("runTranscriptLab.finishedAgo")}
               </div>
             </div>
             <Badge variant="outline" className="[&>svg]:size-2.5 border-border/70 bg-background/70 py-1 text-(length:--text-nano) text-muted-foreground">
@@ -195,6 +202,7 @@ function DashboardPreview({
 }
 
 export function RunTranscriptUxLab() {
+  const { t } = useTranslation();
   const [selectedSurface, setSelectedSurface] = useState<SurfaceId>("detail");
   const [detailMode, setDetailMode] = useState<TranscriptMode>("nice");
   const [streaming, setStreaming] = useState(true);
@@ -210,11 +218,11 @@ export function RunTranscriptUxLab() {
             <div className="mb-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/[0.08] px-3 py-1 text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-caps) text-cyan-700 dark:text-cyan-300">
                 <FlaskConical className="h-3.5 w-3.5" />
-                UX Lab
+                {t("runTranscriptLab.uxLab")}
               </div>
-              <h1 className="mt-4 text-2xl font-semibold tracking-tight">Run Transcript Fixtures</h1>
+              <h1 className="mt-4 text-2xl font-semibold tracking-tight">{t("runTranscriptLab.title")}</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Built from a real Paperclip development run, then sanitized so no secrets, local paths, or environment details survive into the fixture.
+                {t("runTranscriptLab.description")}
               </p>
             </div>
 
@@ -226,6 +234,8 @@ export function RunTranscriptUxLab() {
                     key={option.id}
                     type="button"
                     onClick={() => setSelectedSurface(option.id)}
+                    aria-label={t("runTranscriptLab.selectSurface", { surface: t(`runTranscriptLab.${option.labelKey}`) })}
+                    aria-pressed={selectedSurface === option.id}
                     className={cn(
                       "w-full rounded-xl border px-4 py-3 text-left transition-all",
                       selectedSurface === option.id
@@ -239,11 +249,11 @@ export function RunTranscriptUxLab() {
                       </span>
                       <span className="min-w-0">
                         <span className="block text-(length:--text-nano) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
-                          {option.eyebrow}
+                          {t(`runTranscriptLab.${option.eyebrowKey}`)}
                         </span>
-                        <span className="mt-1 block text-sm font-medium">{option.label}</span>
+                        <span className="mt-1 block text-sm font-medium">{t(`runTranscriptLab.${option.labelKey}`)}</span>
                         <span className="mt-1 block text-xs text-muted-foreground">
-                          {option.description}
+                          {t(`runTranscriptLab.${option.descriptionKey}`)}
                         </span>
                       </span>
                     </div>
@@ -257,17 +267,17 @@ export function RunTranscriptUxLab() {
             <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div>
                 <div className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
-                  {selected.eyebrow}
+                  {t(`runTranscriptLab.${selected.eyebrowKey}`)}
                 </div>
-                <h2 className="mt-1 text-2xl font-semibold">{selected.label}</h2>
+                <h2 className="mt-1 text-2xl font-semibold">{t(`runTranscriptLab.${selected.labelKey}`)}</h2>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                  {selected.description}
+                  {t(`runTranscriptLab.${selected.descriptionKey}`)}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="rounded-full px-3 py-1 text-(length:--text-nano) uppercase tracking-(--tracking-caps)">
-                  Source run {runTranscriptFixtureMeta.sourceRunId.slice(0, 8)}
+                  {t("runTranscriptLab.sourceRun")} {runTranscriptFixtureMeta.sourceRunId.slice(0, 8)}
                 </Badge>
                 <Badge variant="outline" className="rounded-full px-3 py-1 text-(length:--text-nano) uppercase tracking-(--tracking-caps)">
                   {runTranscriptFixtureMeta.issueIdentifier}
@@ -277,7 +287,7 @@ export function RunTranscriptUxLab() {
 
             <div className="mb-5 flex flex-wrap items-center gap-2">
               <span className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
-                Controls
+                {t("runTranscriptLab.controls")}
               </span>
               <div className="inline-flex rounded-full border border-border/70 bg-background/80 p-1">
                 {(["nice", "raw"] as const).map((mode) => (
@@ -289,8 +299,10 @@ export function RunTranscriptUxLab() {
                       detailMode === mode ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
                     )}
                     onClick={() => setDetailMode(mode)}
+                    aria-label={t("runTranscriptLab.selectMode", { mode: t(`runTranscriptLab.${mode}`) })}
+                    aria-pressed={detailMode === mode}
                   >
-                    {mode}
+                    {t(`runTranscriptLab.${mode}`)}
                   </button>
                 ))}
               </div>
@@ -304,8 +316,10 @@ export function RunTranscriptUxLab() {
                       density === nextDensity ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
                     )}
                     onClick={() => setDensity(nextDensity)}
+                    aria-label={t("runTranscriptLab.selectDensity", { density: t(`runTranscriptLab.${nextDensity}`) })}
+                    aria-pressed={density === nextDensity}
                   >
-                    {nextDensity}
+                    {t(`runTranscriptLab.${nextDensity}`)}
                   </button>
                 ))}
               </div>
@@ -314,8 +328,9 @@ export function RunTranscriptUxLab() {
                 size="sm"
                 className="rounded-full"
                 onClick={() => setStreaming((value) => !value)}
+                aria-label={t("runTranscriptLab.toggleStreaming")}
               >
-                {streaming ? "Show settled state" : "Show streaming state"}
+                {streaming ? t("runTranscriptLab.showSettledState") : t("runTranscriptLab.showStreamingState")}
               </Button>
             </div>
 

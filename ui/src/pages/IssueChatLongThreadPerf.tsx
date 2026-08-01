@@ -2,6 +2,7 @@ import { Profiler, useEffect, useLayoutEffect, useMemo, useRef, useState, type P
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IssueChatThread } from "../components/IssueChatThread";
+import { useTranslation } from "../i18n";
 import {
   issueChatLongThreadAgentMap,
   issueChatLongThreadComments,
@@ -33,8 +34,8 @@ const initialMetrics: RenderMetrics = {
   totalActualDuration: 0,
 };
 
-function formatMs(value: number | null) {
-  if (value === null || !Number.isFinite(value)) return "pending";
+function formatMs(value: number | null, pendingLabel: string) {
+  if (value === null || !Number.isFinite(value)) return pendingLabel;
   return `${value.toFixed(1)} ms`;
 }
 
@@ -52,6 +53,7 @@ function MetricTile({ label, value, testId }: { label: string; value: string; te
 }
 
 export function IssueChatLongThreadPerf() {
+  const { t } = useTranslation();
   const [metrics, setMetrics] = useState<RenderMetrics>(initialMetrics);
   const metricsRef = useRef<RenderMetrics>(initialMetrics);
   const renderStartedAtRef = useRef(performance.now());
@@ -112,19 +114,17 @@ export function IssueChatLongThreadPerf() {
             <Badge variant="outline" className="font-mono text-(length:--text-micro)">
               {fixture.issue.identifier}
             </Badge>
-            <Badge variant="secondary">{fixture.issue.status.replace(/_/g, " ")}</Badge>
+            <Badge variant="secondary">{t(`issueChatLab.longThread.status.${fixture.issue.status}`, { defaultValue: fixture.issue.status.replace(/_/g, " ") })}</Badge>
             <Badge variant="outline">{fixture.issue.projectName}</Badge>
           </div>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight">{fixture.issue.title}</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Deterministic local fixture for measuring the current direct-render issue chat path with
-            hundreds of merged thread rows, markdown-heavy assistant bodies, linked runs, documents,
-            sub-issues, and sidebar context.
+            {t("issueChatLab.longThread.description")}
           </p>
         </div>
         <div className="grid min-w-(--sz-280px) grid-cols-2 gap-2">
-          <MetricTile label="Fixture rows" value={String(rowTarget)} testId="perf-fixture-row-target" />
-          <MetricTile label="Markdown rows" value={String(LONG_THREAD_MARKDOWN_COMMENT_COUNT)} testId="perf-fixture-markdown-rows" />
+          <MetricTile label={t("issueChatLab.longThread.fixtureRows")} value={String(rowTarget)} testId="perf-fixture-row-target" />
+          <MetricTile label={t("issueChatLab.longThread.markdownRows")} value={String(LONG_THREAD_MARKDOWN_COMMENT_COUNT)} testId="perf-fixture-markdown-rows" />
         </div>
       </div>
 
@@ -132,7 +132,7 @@ export function IssueChatLongThreadPerf() {
         <main className="min-w-0 space-y-4">
           <Card className="border-border/70">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Issue documents</CardTitle>
+              <CardTitle className="text-base">{t("issueChatLab.longThread.issueDocuments")}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-2 sm:grid-cols-2">
               {fixture.documents.map((document) => (
@@ -145,7 +145,7 @@ export function IssueChatLongThreadPerf() {
 
           <Card className="border-border/70">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Sub-issues</CardTitle>
+              <CardTitle className="text-base">{t("issueChatLab.longThread.subIssues")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {fixture.subIssues.map((subIssue, index) => (
@@ -179,25 +179,25 @@ export function IssueChatLongThreadPerf() {
         <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
           <Card className="border-border/70">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Baseline metrics</CardTitle>
+              <CardTitle className="text-base">{t("issueChatLab.longThread.baselineMetrics")}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-2">
-              <MetricTile label="Profiler commits" value={String(metrics.commitCount)} testId="perf-commit-count" />
-              <MetricTile label="Mount duration" value={formatMs(metrics.mountActualDuration)} testId="perf-mount-duration" />
-              <MetricTile label="Latest duration" value={formatMs(metrics.latestActualDuration)} testId="perf-latest-duration" />
-              <MetricTile label="Max duration" value={formatMs(metrics.maxActualDuration)} testId="perf-max-duration" />
-              <MetricTile label="Total duration" value={formatMs(metrics.totalActualDuration)} testId="perf-total-duration" />
+              <MetricTile label={t("issueChatLab.longThread.profilerCommits")} value={String(metrics.commitCount)} testId="perf-commit-count" />
+              <MetricTile label={t("issueChatLab.longThread.mountDuration")} value={formatMs(metrics.mountActualDuration, t("issueChatLab.longThread.pending"))} testId="perf-mount-duration" />
+              <MetricTile label={t("issueChatLab.longThread.latestDuration")} value={formatMs(metrics.latestActualDuration, t("issueChatLab.longThread.pending"))} testId="perf-latest-duration" />
+              <MetricTile label={t("issueChatLab.longThread.maxDuration")} value={formatMs(metrics.maxActualDuration, t("issueChatLab.longThread.pending"))} testId="perf-max-duration" />
+              <MetricTile label={t("issueChatLab.longThread.totalDuration")} value={formatMs(metrics.totalActualDuration, t("issueChatLab.longThread.pending"))} testId="perf-total-duration" />
             </CardContent>
           </Card>
 
           <Card className="border-border/70">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Fixture shape</CardTitle>
+              <CardTitle className="text-base">{t("issueChatLab.longThread.fixtureShape")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {fixture.sidebarStats.map(([label, value]) => (
                 <div key={label} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-muted-foreground">{label}</span>
+                  <span className="text-muted-foreground">{t(`issueChatLab.longThread.sidebarStats.${label === "Markdown bodies" ? "markdownBodies" : label === "Timeline events" ? "timelineEvents" : label === "Linked runs" ? "linkedRuns" : "comments"}`)}</span>
                   <span className="font-mono">{value}</span>
                 </div>
               ))}

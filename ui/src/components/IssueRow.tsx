@@ -18,6 +18,7 @@ import { productivityReviewTriggerLabel } from "./ProductivityReviewBadge";
 import { hasAssignedBacklogBlocker } from "../lib/issue-blockers";
 import { ExternalObjectStatusSummary } from "./ExternalObjectStatusSummary";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/i18n";
 
 type UnreadState = "hidden" | "visible" | "fading";
 
@@ -88,6 +89,7 @@ export function IssueRow({
   chevronInGuide = false,
   hideDivider = false,
 }: IssueRowProps) {
+  const { t } = useTranslation();
   const issuePathId = issue.identifier ?? issue.id;
   const identifier = issue.identifier ?? issue.id.slice(0, 8);
   // A row participates in the unread system whenever `unreadState` is supplied
@@ -116,7 +118,7 @@ export function IssueRow({
         "inline-flex h-4 w-4 items-center justify-center rounded-full transition-colors",
         selected ? "hover:bg-muted/80" : "hover:bg-blue-500/20",
       )}
-      aria-label="Mark as read"
+      aria-label={t("inboxPage.markRead")}
     >
       <span
         className={cn(
@@ -302,10 +304,10 @@ export function IssueRow({
               }}
               disabled={archiveDisabled}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none disabled:opacity-30"
-              aria-label="Archive"
+              aria-label={t("common.archive")}
             >
               <Archive className="h-3.5 w-3.5" />
-              Archive
+              {t("common.archive")}
             </button>
           ) : null}
           {externalObjectSummary ? (

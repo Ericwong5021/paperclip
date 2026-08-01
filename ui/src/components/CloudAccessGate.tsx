@@ -8,18 +8,20 @@ import { queryKeys } from "@/lib/queryKeys";
 import { BootstrapPendingPage } from "@/components/BootstrapPendingPage";
 import { PaperclipLoading } from "@/components/AnimatedPaperclipIcon";
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 function NoBoardAccessPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="mx-auto max-w-xl py-10">
       <Card className="block p-6">
-        <h1 className="text-xl font-semibold">No company access</h1>
+        <h1 className="text-xl font-semibold">{t("onboarding.noCompanyAccess")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This account is signed in, but it does not have an active company membership or instance-admin access on
-          this Paperclip instance.
+          {t("onboarding.noCompanyAccessDescription")}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Use a company invite or sign in with an account that already belongs to this org.
+          {t("onboarding.inviteAccessHint")}
         </p>
       </Card>
     </div>
@@ -27,6 +29,7 @@ function NoBoardAccessPage() {
 }
 
 export function CloudAccessGate() {
+  const { t } = useTranslation();
   const location = useLocation();
   const queryClient = useQueryClient();
   const healthQuery = useQuery({
@@ -85,7 +88,7 @@ export function CloudAccessGate() {
           ? healthQuery.error.message
           : boardAccessQuery.error instanceof Error
             ? boardAccessQuery.error.message
-            : "Failed to load app state"}
+            : t("onboarding.failedLoadAppState")}
       </div>
     );
   }

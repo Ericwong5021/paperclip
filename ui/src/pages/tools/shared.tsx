@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ApiError } from "@/api/client";
+import { t } from "@/i18n";
 
 /** Risk classification badge for a catalog tool. */
 export function RiskBadge({ risk }: { risk: ToolRiskLevel | null | undefined }) {
-  if (!risk) return <Badge variant="outline">unknown</Badge>;
+  if (!risk) return <Badge variant="outline">{t("appsTools.unknown")}</Badge>;
   const variant =
     risk === "high" || risk === "critical"
       ? "destructive"
@@ -34,9 +35,9 @@ export function CapabilityBadges({
 }) {
   return (
     <span className="inline-flex flex-wrap gap-1">
-      {isReadOnly ? <Badge variant="outline">read-only</Badge> : null}
-      {isWrite ? <Badge variant="secondary">write</Badge> : null}
-      {isDestructive ? <Badge variant="destructive">destructive</Badge> : null}
+      {isReadOnly ? <Badge variant="outline">{t("appsTools.readOnly", { defaultValue: "只读" })}</Badge> : null}
+      {isWrite ? <Badge variant="secondary">{t("appsTools.write", { defaultValue: "写入" })}</Badge> : null}
+      {isDestructive ? <Badge variant="destructive">{t("appsTools.destructive", { defaultValue: "破坏性" })}</Badge> : null}
     </span>
   );
 }
@@ -83,25 +84,25 @@ function decisionToStatusKey(decision: string): { key: string; label: string } {
   switch (decision) {
     case "allow":
     case "allowed":
-      return { key: "allowed", label: "allowed" };
+      return { key: "allowed", label: t("appsTools.allowed", { defaultValue: "允许" }) };
     case "deny":
     case "denied":
-      return { key: "denied", label: "denied" };
+      return { key: "denied", label: t("appsTools.denied", { defaultValue: "拒绝" }) };
     case "block":
-      return { key: "block", label: "block" };
+      return { key: "block", label: t("appsTools.block", { defaultValue: "阻止" }) };
     case "require_approval":
     case "requires_approval":
-      return { key: "require-approval", label: "require approval" };
+      return { key: "require-approval", label: t("appsTools.requireApproval", { defaultValue: "需要审批" }) };
     case "redact":
     case "redacted":
-      return { key: "redacted", label: "redacted" };
+      return { key: "redacted", label: t("appsTools.redacted", { defaultValue: "已隐藏" }) };
     case "rate_limited":
-      return { key: "rate-limit", label: "rate limited" };
+      return { key: "rate-limit", label: t("appsTools.rateLimited", { defaultValue: "已限流" }) };
     case "defer":
     case "deferred":
-      return { key: "deferred", label: "deferred" };
+      return { key: "deferred", label: t("appsTools.deferred", { defaultValue: "已延后" }) };
     case "hidden":
-      return { key: "hidden", label: "hidden" };
+      return { key: "hidden", label: t("appsTools.hidden", { defaultValue: "已隐藏" }) };
     default:
       return { key: decision, label: decision };
   }
@@ -116,7 +117,7 @@ export function DecisionBadge({ decision }: { decision: ToolPolicyDecision | str
 
 /** Compact relative time, falling back to absolute. */
 export function RelativeTime({ value }: { value: Date | string | null | undefined }) {
-  if (!value) return <span className="text-muted-foreground">never</span>;
+  if (!value) return <span className="text-muted-foreground">{t("appsTools.never", { defaultValue: "从未" })}</span>;
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return <span className="text-muted-foreground">—</span>;
   const diffMs = Date.now() - date.getTime();
@@ -124,11 +125,11 @@ export function RelativeTime({ value }: { value: Date | string | null | undefine
   const mins = Math.round(abs / 60000);
   const isFuture = diffMs < 0;
   let text: string;
-  if (mins < 1) text = "just now";
+  if (mins < 1) text = t("appsTools.justNow", { defaultValue: "刚刚" });
   else {
     const value =
       mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.round(mins / 60)}h` : `${Math.round(mins / 1440)}d`;
-    text = isFuture ? `in ${value}` : `${value} ago`;
+    text = isFuture ? t("appsTools.inTime", { defaultValue: "{{value}} 后", value }) : t("appsTools.timeAgo", { defaultValue: "{{value}} 前", value });
   }
   return (
     <span title={date.toLocaleString()} className="text-muted-foreground">
@@ -157,7 +158,7 @@ export function ToolsPageHeader({
   );
 }
 
-export function LoadingState({ label = "Loading…" }: { label?: string }) {
+export function LoadingState({ label = t("appsTools.loading") }: { label?: string }) {
   return (
     <div className="flex items-center gap-2 py-10 text-sm text-muted-foreground">
       <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
@@ -171,17 +172,17 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   let message: string;
   if (error instanceof ApiError) {
     if (error.status === 403) {
-      message = "You do not have permission to view this. Tools & Access requires board/admin access.";
+      message = t("appsTools.toolsAccessForbidden", { defaultValue: "你没有查看权限，工具与访问需要 Board 或管理员权限。" });
     } else if (error.status === 404 || /route not found/i.test(error.message)) {
       // Snapshot-skew window: the route exists in this build but not on the live server snapshot yet.
-      message = "Tools & Access isn't available on this server yet — try refreshing after the next deployment.";
+      message = t("appsTools.toolsAccessUnavailable", { defaultValue: "此服务器暂不支持工具与访问，请在下次部署后刷新。" });
     } else {
       message = error.message;
     }
   } else if (error instanceof Error) {
     message = error.message;
   } else {
-    message = "Something went wrong.";
+    message = t("appsTools.somethingWrong", { defaultValue: "发生错误。" });
   }
   return (
     <Card className="border-destructive/40">
@@ -189,7 +190,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
         <div className="flex items-start gap-2 text-sm text-destructive">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
-            <p className="font-medium">Could not load this view</p>
+            <p className="font-medium">{t("appsTools.couldNotLoadView", { defaultValue: "无法加载此视图" })}</p>
             <p className="text-destructive/80">{message}</p>
           </div>
         </div>
@@ -199,7 +200,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
             onClick={onRetry}
             className="self-start rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
           >
-            Retry
+            {t("appsTools.retry")}
           </button>
         ) : null}
       </CardContent>
@@ -231,7 +232,7 @@ export function PendingBackendNotice({
         <p className="max-w-2xl text-sm text-muted-foreground">{body}</p>
         {issue ? (
           <a href={issue.href} className="text-sm font-medium text-primary hover:underline">
-            Tracked in {issue.identifier} →
+            {t("appsTools.trackedIn", { defaultValue: "跟踪事项：{{id}}", id: issue.identifier })} →
           </a>
         ) : null}
       </CardContent>

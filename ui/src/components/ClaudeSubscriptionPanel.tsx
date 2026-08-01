@@ -1,5 +1,6 @@
 import type { QuotaWindow } from "@paperclipai/shared";
 import { cn, quotaSourceDisplayName } from "@/lib/utils";
+import { useTranslation } from "@/i18n";
 
 interface ClaudeSubscriptionPanelProps {
   windows: QuotaWindow[];
@@ -21,7 +22,7 @@ function normalizeLabel(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
-function detailText(window: QuotaWindow): string | null {
+function detailText(window: QuotaWindow, translate: (key: string, options?: Record<string, unknown>) => string): string | null {
   if (typeof window.detail === "string" && window.detail.trim().length > 0) return window.detail.trim();
   if (window.resetsAt) {
     const formatted = new Date(window.resetsAt).toLocaleString(undefined, {
@@ -31,7 +32,7 @@ function detailText(window: QuotaWindow): string | null {
       minute: "2-digit",
       timeZoneName: "short",
     });
-    return `Resets ${formatted}`;
+    return translate("costsResidual.provider.resets", { date: formatted });
   }
   return null;
 }
@@ -56,6 +57,7 @@ export function ClaudeSubscriptionPanel({
   source = null,
   error = null,
 }: ClaudeSubscriptionPanelProps) {
+  const { t } = useTranslation();
   const ordered = orderedWindows(windows);
 
   return (
@@ -63,10 +65,10 @@ export function ClaudeSubscriptionPanel({
       <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
         <div className="min-w-0">
           <div className="text-(length:--text-micro) font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
-            Anthropic subscription
+            {t("costsResidual.provider.anthropicSubscription")}
           </div>
           <div className="mt-1 text-sm text-muted-foreground">
-            Live Claude quota windows.
+            {t("costsResidual.provider.liveClaudeQuotaWindows")}
           </div>
         </div>
         {source ? (
@@ -85,7 +87,7 @@ export function ClaudeSubscriptionPanel({
       <div className="mt-4 space-y-4">
         {ordered.map((window) => {
           const normalized = normalizeLabel(window.label);
-          const detail = detailText(window);
+          const detail = detailText(window, t);
           if (normalized === "extrausage") {
             return (
               <div
@@ -120,7 +122,7 @@ export function ClaudeSubscriptionPanel({
                 </div>
                 {window.usedPercent != null ? (
                   <div className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
-                    {window.usedPercent}% used
+                    {window.usedPercent}% {t("costsResidual.provider.used")}
                   </div>
                 ) : null}
               </div>

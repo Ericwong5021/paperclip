@@ -9,6 +9,7 @@ import { Link } from "@/lib/router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/timeAgo";
+import { t } from "@/i18n";
 import { appTabHref } from "../app-tabs";
 import type { ActivityPanelProps } from "./types";
 
@@ -76,7 +77,7 @@ function RecentActivity({
   return (
     <section className="space-y-2">
       <div>
-        <h2 className="text-sm font-bold text-foreground">Recent activity</h2>
+        <h2 className="text-sm font-bold text-foreground">{t("appsTools.recentActivity", { defaultValue: "最近活动" })}</h2>
       </div>
       {loading ? (
         <div className="space-y-2 py-4">
@@ -84,7 +85,7 @@ function RecentActivity({
           <Skeleton className="h-4 w-2/3" />
         </div>
       ) : rows.length === 0 ? (
-        <p className="py-5 text-sm text-muted-foreground">No activity yet.</p>
+        <p className="py-5 text-sm text-muted-foreground">{t("appsTools.noActivity", { defaultValue: "暂无活动。" })}</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((row) => (

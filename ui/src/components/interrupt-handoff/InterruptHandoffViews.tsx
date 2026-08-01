@@ -1,4 +1,5 @@
 import { AlertTriangle, Info, PauseCircle, User, X } from "lucide-react";
+import { t } from "@/i18n";
 import { cn } from "../../lib/utils";
 import { AgentIcon } from "../AgentIconPicker";
 import {
@@ -38,8 +39,62 @@ function agentIcon(agentId: string, resolvers: HandoffChipResolvers): string | n
 
 function userLabel(userId: string, resolvers: HandoffChipResolvers): string {
   const label = resolvers.resolveUserLabel?.(userId) ?? null;
-  const base = label ?? "Board";
-  return resolvers.currentUserId && resolvers.currentUserId === userId ? `${base} (you)` : base;
+  const base = label ?? t("taskDetail.board");
+  return resolvers.currentUserId && resolvers.currentUserId === userId ? `${base} (${t("taskDetail.you")})` : base;
+}
+
+function localizedRunStatus(status: string, operatorInterrupted: boolean): string {
+  if (operatorInterrupted) return t("interactions.handoffInterrupted");
+  const keyByStatus: Record<string, string> = {
+    queued: "interactions.interactionStatusQueued",
+    running: "interactions.interactionStatusRunning",
+    succeeded: "interactions.interactionStatusSucceeded",
+    failed: "interactions.interactionStatusFailed",
+    timed_out: "interactions.interactionStatusTimedOut",
+    pending: "interactions.interactionStatusPending",
+    error: "interactions.interactionStatusError",
+  };
+  const key = keyByStatus[status];
+  return key ? t(key) : status.replace(/_/g, " ");
+}
+
+function localizedWakeText(wakeText: string, kind: string): string {
+  if (kind === "agent_wake") {
+    const match = wakeText.match(/^queued for (.*?)( \(interrupted run attached\))?$/);
+    if (match) {
+      return t("interactions.handoffQueuedFor", {
+        name: match[1],
+        suffix: match[2] ? t("interactions.handoffInterruptedRunAttached") : "",
+      });
+    }
+  }
+  if (kind === "user_handoff") return t("interactions.handoffNotCreatedUser");
+  return t("interactions.handoffNotCreatedAgent");
+}
+
+function localizedPreviewText(preview: ComposerHandoffPreview): string {
+  switch (preview.kind) {
+    case "interrupt_handoff_agent":
+      return t("interactions.handoffInterruptCurrent");
+    case "wake_agent":
+      return t("interactions.handoffWake");
+    case "user_handoff":
+      return t("interactions.handoffTo");
+    case "clear_assignee":
+      return t("interactions.handoffClearResponsible");
+    case "notify_agent":
+      return t("interactions.handoffNotify");
+    case "plain_text_only":
+      return t("interactions.handoffNoAgentNotify");
+    default:
+      return preview.text;
+  }
+}
+
+function localizedPreviewSuffix(preview: ComposerHandoffPreview): string | undefined {
+  if (preview.kind === "user_handoff") return t("interactions.handoffNoAgentNotified");
+  if (preview.kind === "notify_agent" && preview.suffix) return t("interactions.handoffMentionedAgent");
+  return undefined;
 }
 
 const CHIP_CLASS =
@@ -59,7 +114,7 @@ export function AssigneeChip({
   if (assignee.agentId) {
     return (
       <span className={cn(CHIP_CLASS, className)} data-testid="handoff-assignee-chip" data-kind="agent">
-        <span className="sr-only">Agent </span>
+        <span className="sr-only">{t("interactions.handoffAgentPrefix")}</span>
         <AgentIcon icon={agentIcon(assignee.agentId, resolvers)} className="h-3 w-3 shrink-0 text-muted-foreground" />
         <span className="max-w-(--sz-12rem) truncate">{agentName(assignee.agentId, resolvers)}</span>
       </span>
@@ -68,7 +123,7 @@ export function AssigneeChip({
   if (assignee.userId) {
     return (
       <span className={cn(CHIP_CLASS, className)} data-testid="handoff-assignee-chip" data-kind="user">
-        <span className="sr-only">User </span>
+        <span className="sr-only">{t("interactions.handoffUserPrefix")}</span>
         <User className="h-3 w-3 shrink-0 text-muted-foreground" />
         <span className="max-w-(--sz-12rem) truncate">{userLabel(assignee.userId, resolvers)}</span>
       </span>
@@ -80,8 +135,8 @@ export function AssigneeChip({
       data-testid="handoff-assignee-chip"
       data-kind="unassigned"
     >
-      <span className="sr-only">No responsible — </span>
-      Unassigned
+      <span className="sr-only">{t("interactions.handoffNoResponsible")}</span>
+      {t("interactions.handoffUnassigned")}
     </span>
   );
 }
@@ -107,9 +162,9 @@ export function HandoffWakeRow({
       data-testid="handoff-wake-row"
       data-kind={info.kind}
     >
-      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Wake</span>
+      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("interactions.handoffWake")}</span>
       <span className={cn(info.kind === "agent_wake" ? "text-foreground" : "text-muted-foreground")}>
-        {info.wakeText}
+        {localizedWakeText(info.wakeText, info.kind)}
       </span>
     </div>
   );
@@ -133,8 +188,8 @@ export function RunStatusBadge({
       data-testid="run-status-badge"
       data-interrupted={operatorInterrupted ? "true" : "false"}
     >
-      {p.label}
-      {p.srHint ? <span className="sr-only"> — {p.srHint}</span> : null}
+      {localizedRunStatus(status, operatorInterrupted)}
+      {p.srHint ? <span className="sr-only"> · {t("interactions.handoffInterruptedByBoard")}</span> : null}
     </span>
   );
 }
@@ -174,9 +229,9 @@ export function ComposerHandoffPreviewRow({
       role="status"
       aria-live="polite"
     >
-      <span>{preview.text}</span>
+      <span>{localizedPreviewText(preview)}</span>
       {preview.chip ? <PreviewChip chip={preview.chip} resolvers={resolvers} /> : null}
-      {preview.suffix ? <span>{preview.suffix}</span> : null}
+      {preview.suffix ? <span>{localizedPreviewSuffix(preview) ?? preview.suffix}</span> : null}
     </div>
   );
 }
@@ -203,22 +258,21 @@ export function ComposerMentionCoach({
     >
       <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />
       <span className="min-w-0 flex-1">
-        Did you mean <span className="font-medium">@{candidate.matchedText}</span>? Plain text won't
-        notify or assign an agent.
+        {t("interactions.handoffDidYouMean")} <span className="font-medium">@{candidate.matchedText}</span>？{t("interactions.handoffPlainTextWarning")}
       </span>
       <button
         type="button"
         onClick={onInsert}
         className="shrink-0 rounded border border-amber-400/50 px-1.5 py-0.5 font-medium hover:bg-amber-100/60 dark:hover:bg-amber-500/20"
-        aria-label={`Insert mention for ${agentDisplayName} into your comment`}
+        aria-label={t("interactions.handoffInsertMentionFor", { name: agentDisplayName })}
       >
-        Insert mention
+        {t("interactions.handoffInsertMention")}
       </button>
       <button
         type="button"
         onClick={onDismiss}
         className="shrink-0 rounded p-0.5 hover:bg-amber-100/60 dark:hover:bg-amber-500/20"
-        aria-label="Dismiss suggestion"
+        aria-label={t("interactions.handoffDismissSuggestion")}
       >
         <X className="h-3.5 w-3.5" aria-hidden />
       </button>
@@ -246,7 +300,11 @@ export function AssigneeRunningBanner({
       )}
     >
       <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-      <span className="min-w-0 flex-1">{copy.banner}</span>
+      <span className="min-w-0 flex-1">
+        {t("interactions.handoffRunningBanner", {
+          name: copy.banner.replace(/ is running .*$/, ""),
+        })}
+      </span>
     </div>
   );
 }
@@ -275,9 +333,9 @@ export function InterruptAssignConfirm({
       <div className="flex items-start gap-1.5">
         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <div className="min-w-0 flex-1 space-y-1">
-          <p className="font-medium">{copy.confirmTitle}</p>
+          <p className="font-medium">{t("interactions.handoffConfirmTitle")}</p>
           <p className="flex flex-wrap items-center gap-1 text-amber-700/90 dark:text-amber-300/90">
-            <span>Hand off to</span>
+            <span>{t("interactions.handoffTo")}</span>
             <AssigneeChip assignee={to} resolvers={resolvers} />
           </p>
         </div>
@@ -288,7 +346,7 @@ export function InterruptAssignConfirm({
           onClick={onCancel}
           className="rounded border border-amber-400/50 px-2 py-0.5 font-medium hover:bg-amber-100/60 dark:hover:bg-amber-500/20"
         >
-          {copy.cancelAction}
+          {t("interactions.handoffCancel")}
         </button>
         <button
           type="button"
@@ -296,7 +354,7 @@ export function InterruptAssignConfirm({
           data-testid="interrupt-assign-confirm-action"
           className="rounded bg-amber-600 px-2 py-0.5 font-medium text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-400"
         >
-          {copy.confirmAction}
+          {t("interactions.handoffConfirmAction")}
         </button>
       </div>
     </div>
@@ -319,12 +377,11 @@ export function PauseAffectsSummaryView({
     >
       <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         <PauseCircle className="h-3.5 w-3.5" aria-hidden />
-        What this affects
+          {t("interactions.handoffWhatAffects")}
       </div>
       {summary.nothingLive ? (
         <p role="status" className="text-xs text-muted-foreground" data-testid="pause-nothing-live">
-          Nothing live to pause — no agent run is in flight or queued. This records a hold so new work
-          won't start until you resume.
+          {t("interactions.handoffNothingLive")}
         </p>
       ) : null}
       {visibleBuckets.length > 0 ? (
@@ -335,14 +392,16 @@ export function PauseAffectsSummaryView({
               data-bucket={bucket.key}
               className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-xs"
             >
-              <span className="font-medium text-foreground">{bucket.label}:</span>
+              <span className="font-medium text-foreground">
+                {t(`interactions.handoffBucket${bucket.key === "live_runs" ? "LiveRuns" : bucket.key === "queued_wakes" ? "QueuedWakes" : bucket.key === "agent_owned" ? "AgentOwned" : bucket.key === "human_owned" ? "HumanOwned" : "Static"}`)}:
+              </span>
               <span className="tabular-nums text-foreground">{bucket.count}</span>
-              <span className="text-muted-foreground">— {bucket.detail}</span>
+              <span className="text-muted-foreground">· {t(`interactions.handoffBucket${bucket.key === "live_runs" ? "LiveDetail" : bucket.key === "queued_wakes" ? "QueuedDetail" : bucket.key === "agent_owned" ? "AgentDetail" : bucket.key === "human_owned" ? "HumanDetail" : "StaticDetail"}`)}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-muted-foreground">No tasks are affected.</p>
+        <p className="text-xs text-muted-foreground">{t("interactions.handoffNoTasksAffected")}</p>
       )}
     </div>
   );

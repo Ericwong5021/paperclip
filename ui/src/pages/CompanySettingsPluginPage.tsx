@@ -4,8 +4,10 @@ import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
 import { PluginSlotMount, usePluginSlots } from "@/plugins/slots";
 import { NotFoundPage } from "./NotFound";
+import { t, useTranslation } from "@/i18n";
 
 export function CompanySettingsPluginPage() {
+  useTranslation();
   const params = useParams<{
     companyPrefix?: string;
     settingsRoutePath?: string;
@@ -41,7 +43,7 @@ export function CompanySettingsPluginPage() {
   useEffect(() => {
     if (!pageSlot) return;
     setBreadcrumbs([
-      { label: "Settings", href: "/company/settings" },
+      { label: t("admin.plugins.companySettings"), href: "/company/settings" },
       { label: pageSlot.displayName },
     ]);
   }, [pageSlot, setBreadcrumbs]);
@@ -50,17 +52,17 @@ export function CompanySettingsPluginPage() {
     if (hasInvalidCompanyPrefix) {
       return <NotFoundPage scope="invalid_company_prefix" requestedPrefix={routeCompanyPrefix} />;
     }
-    return <div className="text-sm text-muted-foreground">Select a company to view this page.</div>;
+    return <div className="text-sm text-muted-foreground">{t("admin.plugins.selectCompany")}</div>;
   }
 
   if (!settingsRoutePath || isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading...</div>;
+    return <div className="text-sm text-muted-foreground">{t("admin.plugins.loadingExtension")}</div>;
   }
 
   if (errorMessage) {
     return (
       <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-        Plugin extensions unavailable: {errorMessage}
+        {t("admin.plugins.extensionsUnavailable", { message: errorMessage })}
       </div>
     );
   }
@@ -68,7 +70,7 @@ export function CompanySettingsPluginPage() {
   if (pageSlots.length > 1) {
     return (
       <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-        Multiple plugins declare the company settings route <code>{settingsRoutePath}</code>. Disable one plugin or change its route.
+        {t("admin.plugins.duplicateRoute", { path: settingsRoutePath })}
       </div>
     );
   }

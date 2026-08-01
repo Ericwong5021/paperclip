@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "../i18n";
+import type { TFunction } from "i18next";
 
 interface ArtifactsPanelProps {
   taskId: string;
@@ -37,12 +39,7 @@ interface ArtifactsPanelProps {
 
 type FilterValue = "all" | "in_progress" | "for_review" | "completed";
 
-const FILTERS: Array<{ label: string; value: FilterValue }> = [
-  { label: "All", value: "all" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "For Review", value: "for_review" },
-  { label: "Completed", value: "completed" },
-];
+const FILTERS: FilterValue[] = ["all", "in_progress", "for_review", "completed"];
 
 function matchesFilter(wp: IssueWorkProduct, filter: FilterValue): boolean {
   if (filter === "all") return true;
@@ -65,26 +62,41 @@ function typeIcon(type: string) {
   }
 }
 
-function statusBadge(status: string) {
+function artifactTypeLabel(type: string, t: TFunction) {
+  const keyByType: Record<string, string> = {
+    document: "document",
+    pull_request: "pullRequest",
+    branch: "branch",
+    commit: "commit",
+    preview_url: "previewUrl",
+    runtime_service: "runtimeService",
+    artifact: "artifact",
+  };
+  const key = keyByType[type];
+  return key ? t(`commonResidual.artifacts.types.${key}`) : type.replace(/_/g, " ");
+}
+
+function statusBadge(status: string, t: TFunction) {
   switch (status) {
     case "active":
     case "draft":
-      return { label: "In Progress", className: "bg-blue-500/10 text-blue-600 dark:text-blue-400" };
+      return { label: t("commonResidual.artifacts.statuses.inProgress"), className: "bg-blue-500/10 text-blue-600 dark:text-blue-400" };
     case "ready_for_review":
-      return { label: "For Review", className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" };
+      return { label: t("commonResidual.artifacts.statuses.forReview"), className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" };
     case "approved":
     case "merged":
-      return { label: "Completed", className: "bg-green-500/10 text-green-600 dark:text-green-400" };
+      return { label: t("commonResidual.artifacts.statuses.completed"), className: "bg-green-500/10 text-green-600 dark:text-green-400" };
     case "changes_requested":
-      return { label: "Changes Requested", className: "bg-orange-500/10 text-orange-600 dark:text-orange-400" };
+      return { label: t("commonResidual.artifacts.statuses.changesRequested"), className: "bg-orange-500/10 text-orange-600 dark:text-orange-400" };
     case "failed":
-      return { label: "Failed", className: "bg-red-500/10 text-red-600 dark:text-red-400" };
+      return { label: t("commonResidual.artifacts.statuses.failed"), className: "bg-red-500/10 text-red-600 dark:text-red-400" };
     default:
       return { label: status, className: "bg-muted text-muted-foreground" };
   }
 }
 
 export function ArtifactsPanel({ taskId, isAgentWorking, openDocKey, openDocTitle, onClearOpenDoc, onApprove, onReject }: ArtifactsPanelProps) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<FilterValue>("all");
   const [viewingDoc, setViewingDoc] = useState<{ key: string; title: string } | null>(null);
 
@@ -96,7 +108,7 @@ export function ArtifactsPanel({ taskId, isAgentWorking, openDocKey, openDocTitl
 
   // Open doc from parent (e.g. clicking plan link in chat)
   const effectiveViewingDoc = openDocKey
-    ? { key: openDocKey, title: openDocTitle ?? "Document" }
+    ? { key: openDocKey, title: openDocTitle ?? t("commonResidual.artifacts.types.document") }
     : viewingDoc;
 
   const handleBack = () => {
@@ -131,23 +143,23 @@ export function ArtifactsPanel({ taskId, isAgentWorking, openDocKey, openDocTitl
     <div className="flex flex-col h-full" data-artifacts-panel>
       <div className="px-4 py-3 border-b border-border flex items-center gap-2">
         <Package className="h-4 w-4 text-muted-foreground shrink-0" />
-        <h3 className="text-sm font-semibold">Artifacts</h3>
+        <h3 className="text-sm font-semibold">{t("commonResidual.artifacts.title")}</h3>
       </div>
 
       {/* Filter chips */}
       <div className="px-4 py-2 flex flex-wrap gap-1 border-b border-border">
-        {FILTERS.map((f) => (
+        {FILTERS.map((filterValue) => (
           <button
-            key={f.value}
+            key={filterValue}
             className={cn(
               "rounded-full px-2.5 py-0.5 text-(length:--text-micro) font-medium transition-colors",
-              filter === f.value
+              filter === filterValue
                 ? "bg-foreground text-background"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
             )}
-            onClick={() => setFilter(f.value)}
+            onClick={() => setFilter(filterValue)}
           >
-            {f.label}
+            {t(`commonResidual.artifacts.filters.${filterValue === "in_progress" ? "inProgress" : filterValue === "for_review" ? "forReview" : filterValue}`)}
           </button>
         ))}
       </div>
@@ -157,22 +169,22 @@ export function ArtifactsPanel({ taskId, isAgentWorking, openDocKey, openDocTitl
         {isLoading ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Loading...
+            {t("commonResidual.artifacts.loading")}
           </div>
         ) : filtered.length === 0 ? (
           <div className="px-4 py-8 text-center">
             <Package className="h-8 w-8 mx-auto text-muted-foreground/40 mb-3" />
             <p className="text-sm text-muted-foreground">
               {workProducts?.length === 0
-                ? "Your team's deliverables and plans will appear here as they're produced."
-                : "No artifacts match this filter."}
+                ? t("commonResidual.artifacts.empty")
+                : t("commonResidual.artifacts.noMatch")}
             </p>
           </div>
         ) : (
           <div className="divide-y divide-border">
             {filtered.map((wp) => {
               const Icon = typeIcon(wp.type);
-              const badge = statusBadge(wp.status);
+              const badge = statusBadge(wp.status, t);
               const isDraft = wp.status === "draft" || wp.status === "active";
               const showGenerating = isDraft && isAgentWorking;
               return (
@@ -210,12 +222,12 @@ export function ArtifactsPanel({ taskId, isAgentWorking, openDocKey, openDocTitl
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-(length:--text-nano) text-muted-foreground capitalize">
-                          {wp.type.replace(/_/g, " ")}
+                          {artifactTypeLabel(wp.type, t)}
                         </span>
                         {showGenerating ? (
                           <Badge variant="ghost" className="[&>svg]:size-2.5 text-(length:--text-nano) px-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400">
                             <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                            Generating...
+                            {t("commonResidual.artifacts.generating")}
                           </Badge>
                         ) : (
                           <Badge variant="ghost" className={cn("text-(length:--text-nano) px-1.5", badge.className)}>
@@ -259,6 +271,7 @@ function DocumentViewer({
   onApprove?: () => void;
   onReject?: () => void;
 }) {
+  const { t } = useTranslation();
   const { data: doc, isLoading, error } = useQuery({
     queryKey: queryKeys.issues.documents(taskId),
     queryFn: () => issuesApi.getDocument(taskId, docKey),
@@ -283,32 +296,32 @@ function DocumentViewer({
         {isLoading ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Loading document...
+            {t("commonResidual.artifacts.loadingDocument")}
           </div>
         ) : error ? (
-          <p className="text-sm text-muted-foreground">Document not available yet.</p>
+          <p className="text-sm text-muted-foreground">{t("commonResidual.artifacts.documentUnavailable")}</p>
         ) : doc?.body ? (
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <MarkdownBody>{doc.body}</MarkdownBody>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Document is empty.</p>
+          <p className="text-sm text-muted-foreground">{t("commonResidual.artifacts.documentEmpty")}</p>
         )}
       </div>
 
       {/* Sticky action footer */}
       {needsAction && (
         <div className="border-t border-border px-4 py-3 bg-background shrink-0">
-          <p className="text-(length:--text-micro) text-muted-foreground mb-2">This document needs your review.</p>
+          <p className="text-(length:--text-micro) text-muted-foreground mb-2">{t("commonResidual.artifacts.reviewNeeded")}</p>
           <div className="flex items-center gap-3">
             <Button size="lg" className="h-11 px-8 text-base font-semibold flex-1 rounded-lg bg-green-700 hover:bg-green-800 text-white border-0" onClick={onApprove}>
-              Approve
+              {t("commonResidual.artifacts.approve")}
             </Button>
             <Button size="lg" className="h-11 px-8 text-base font-semibold flex-1 rounded-lg bg-red-900 hover:bg-red-950 text-white border-0" onClick={() => {
               onReject?.();
               onBack();
             }}>
-              Reject
+              {t("commonResidual.artifacts.reject")}
             </Button>
           </div>
         </div>
@@ -318,7 +331,7 @@ function DocumentViewer({
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-green-500" />
             <p className="text-(length:--text-compact) font-medium text-green-700 dark:text-green-400">
-              Approved — hire tasks created
+              {t("commonResidual.artifacts.approved")}
             </p>
           </div>
         </div>
@@ -328,7 +341,7 @@ function DocumentViewer({
           <div className="flex items-center gap-2">
             <XCircle className="h-4 w-4 text-orange-500" />
             <p className="text-(length:--text-compact) font-medium text-orange-700 dark:text-orange-400">
-              Changes requested — CEO is revising
+              {t("commonResidual.artifacts.changesRequested")}
             </p>
           </div>
         </div>

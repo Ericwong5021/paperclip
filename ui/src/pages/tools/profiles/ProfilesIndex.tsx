@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/context/ToastContext";
+import { t } from "@/i18n";
 import { EffectiveAgentPanel } from "../ProfilesTab";
 import { ErrorState, LoadingState, RelativeTime, ToolsPageHeader } from "../shared";
 import { ProfileActionDialog, type ProfileActionDialogKind } from "./ProfileActionDialog";
@@ -81,55 +82,55 @@ export function ProfilesIndex({
     mutationFn: (profile: ToolProfileWithDetails) =>
       toolsApi.duplicateProfile(profile.id, { name: `${profile.name} (copy)` }),
     onSuccess: () => {
-      pushToast({ title: "Profile duplicated", body: "The copy is not assigned to anyone yet.", tone: "success" });
+      pushToast({ title: t("appsTools.profileDuplicated", { defaultValue: "配置档案已复制" }), body: t("appsTools.profileCopyUnassigned", { defaultValue: "副本尚未分配给任何人。" }), tone: "success" });
       invalidate();
     },
     onError: (error: unknown) =>
-      pushToast({ title: "Could not duplicate", body: errorBody(error), tone: "error" }),
+      pushToast({ title: t("appsTools.couldNotDuplicate", { defaultValue: "无法复制配置档案" }), body: errorBody(error), tone: "error" }),
   });
 
   const archive = useMutation({
     mutationFn: (profile: ToolProfileWithDetails) =>
       toolsApi.updateProfile(profile.id, { status: "archived" }),
     onSuccess: () => {
-      pushToast({ title: "Profile archived", tone: "success" });
+      pushToast({ title: t("appsTools.profileArchived", { defaultValue: "配置档案已归档" }), tone: "success" });
       invalidate();
     },
-    onError: (error: unknown) => pushToast({ title: "Could not archive", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("appsTools.couldNotArchive", { defaultValue: "无法归档配置档案" }), body: errorBody(error), tone: "error" }),
   });
 
   const restore = useMutation({
     mutationFn: (profile: ToolProfileWithDetails) =>
       toolsApi.updateProfile(profile.id, { status: "active" }),
     onSuccess: () => {
-      pushToast({ title: "Profile restored", tone: "success" });
+      pushToast({ title: t("appsTools.profileRestored", { defaultValue: "配置档案已恢复" }), tone: "success" });
       invalidate();
     },
-    onError: (error: unknown) => pushToast({ title: "Could not restore", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("appsTools.couldNotRestore", { defaultValue: "无法恢复配置档案" }), body: errorBody(error), tone: "error" }),
   });
 
   const remove = useMutation({
     mutationFn: (profile: ToolProfileWithDetails) => toolsApi.deleteProfile(profile.id),
     onSuccess: () => {
-      pushToast({ title: "Profile deleted", tone: "success" });
+      pushToast({ title: t("appsTools.profileDeleted", { defaultValue: "配置档案已删除" }), tone: "success" });
       invalidate();
     },
-    onError: (error: unknown) => pushToast({ title: "Could not delete", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("appsTools.couldNotDelete", { defaultValue: "无法删除配置档案" }), body: errorBody(error), tone: "error" }),
   });
 
   const header = (
     <ToolsPageHeader
-      title="Access profiles"
-      description="Decide which tools your agents can use. Build a profile once, then assign it to the agents that need it."
+      title={t("appsTools.accessProfiles", { defaultValue: "访问配置档案" })}
+      description={t("appsTools.accessProfilesDescription", { defaultValue: "决定 Agent 可以使用哪些工具。创建一次配置档案，再分配给需要它的 Agent。" })}
       actions={
         <>
           <Button variant="outline" onClick={() => setResolverOpen(true)}>
             <ShieldCheck className="mr-1.5 h-4 w-4" />
-            Check an agent's access
+            {t("appsTools.checkAgentAccess", { defaultValue: "检查 Agent 访问权限" })}
           </Button>
           <Button onClick={() => navigate(newProfileHref())}>
             <Plus className="mr-1.5 h-4 w-4" />
-            New profile
+            {t("appsTools.newProfile", { defaultValue: "新建配置档案" })}
           </Button>
         </>
       }
@@ -140,9 +141,9 @@ export function ProfilesIndex({
     <Sheet open={resolverOpen} onOpenChange={setResolverOpen}>
       <SheetContent className="w-full gap-0 p-0 sm:max-w-xl">
         <SheetHeader className="border-b border-border">
-          <SheetTitle>Check an agent's access</SheetTitle>
+          <SheetTitle>{t("appsTools.checkAgentAccess", { defaultValue: "检查 Agent 访问权限" })}</SheetTitle>
           <SheetDescription>
-            See exactly which tools an agent can use right now, and which profile allows each one.
+            {t("appsTools.checkAgentAccessHint", { defaultValue: "查看 Agent 当前可以使用哪些工具，以及每项工具由哪个配置档案允许。" })}
           </SheetDescription>
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col p-4">
@@ -156,7 +157,7 @@ export function ProfilesIndex({
     return (
       <div className="space-y-5">
         {header}
-        <LoadingState label="Loading profiles…" />
+        <LoadingState label={t("appsTools.loadingProfiles", { defaultValue: "正在加载配置档案…" })} />
       </div>
     );
   }
@@ -187,7 +188,7 @@ export function ProfilesIndex({
               statusFilter === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {key === "active" ? "Active" : "Archived"}
+            {key === "active" ? t("appsTools.active", { defaultValue: "启用" }) : t("appsTools.archived", { defaultValue: "已归档" })}
           </button>
         ))}
       </div>
@@ -195,7 +196,7 @@ export function ProfilesIndex({
       {rows.length === 0 ? (
         statusFilter === "archived" ? (
           <div className="rounded-lg border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
-            No archived profiles.
+            {t("appsTools.noArchivedProfiles", { defaultValue: "没有已归档的配置档案。" })}
           </div>
         ) : (
           <EmptyTemplatePicker onPick={(key) => navigate(newProfileHref(key))} />
@@ -213,11 +214,11 @@ export function ProfilesIndex({
             </colgroup>
             <thead>
               <tr className="border-b border-border bg-muted/40 text-left text-xs font-medium text-muted-foreground">
-                <th className="px-3 py-2 font-medium">Profile</th>
-                <th className="px-3 py-2 font-medium">Allows</th>
-                <th className="px-3 py-2 font-medium">Assigned to</th>
-                <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 font-medium">Updated</th>
+                <th className="px-3 py-2 font-medium">{t("appsTools.profile", { defaultValue: "配置档案" })}</th>
+                <th className="px-3 py-2 font-medium">{t("appsTools.allows", { defaultValue: "允许" })}</th>
+                <th className="px-3 py-2 font-medium">{t("appsTools.assignedTo", { defaultValue: "分配给" })}</th>
+                <th className="px-3 py-2 font-medium">{t("appsTools.status", { defaultValue: "状态" })}</th>
+                <th className="px-3 py-2 font-medium">{t("appsTools.updated", { defaultValue: "已更新" })}</th>
                 <th className="w-10 px-3 py-2" />
               </tr>
             </thead>
@@ -341,26 +342,26 @@ function RowMenu({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Profile actions"
+          aria-label={t("appsTools.profileActions", { defaultValue: "配置档案操作" })}
           className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent group-hover:opacity-100 data-[state=open]:opacity-100"
         >
           <MoreHorizontal className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={onEdit}>Edit</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onEdit}>{t("appsTools.edit", { defaultValue: "编辑" })}</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onDuplicate}>{t("appsTools.duplicate", { defaultValue: "复制" })}</DropdownMenuItem>
         {onRestore ? (
           <DropdownMenuItem onSelect={onRestore}>
             <ArchiveRestore className="mr-1.5 h-4 w-4" />
-            Restore
+            {t("appsTools.restore", { defaultValue: "恢复" })}
           </DropdownMenuItem>
         ) : (
-          <DropdownMenuItem onSelect={onArchive}>Archive</DropdownMenuItem>
+          <DropdownMenuItem onSelect={onArchive}>{t("appsTools.archive", { defaultValue: "归档" })}</DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive">
-          Delete
+          {t("appsTools.delete", { defaultValue: "删除" })}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -372,9 +373,9 @@ function EmptyTemplatePicker({ onPick }: { onPick: (key: TemplateKey) => void })
   return (
     <div className="rounded-lg border border-dashed border-border p-6">
       <div className="mb-4 max-w-2xl">
-        <h3 className="text-base font-semibold text-foreground">Create your first access profile</h3>
+        <h3 className="text-base font-semibold text-foreground">{t("appsTools.createFirstProfile", { defaultValue: "创建第一个访问配置档案" })}</h3>
         <p className="text-sm text-muted-foreground">
-          Pick a starting point. You can fine-tune exactly which tools it allows in the next step.
+          {t("appsTools.createFirstProfileHint", { defaultValue: "选择一个起点，下一步可以精细调整它允许使用的工具。" })}
         </p>
       </div>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

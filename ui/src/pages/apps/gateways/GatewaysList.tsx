@@ -18,6 +18,7 @@ import { ErrorState, RelativeTime } from "@/pages/tools/shared";
 import { AppsSubNav } from "./AppsSubNav";
 import { NewGatewayDialog, gatewaysQueryKey } from "./NewGatewayDialog";
 import { gatewayTabHref } from "./gateway-tabs";
+import { t } from "@/i18n";
 import {
   activeTokenCount,
   allowedToolsLabel,
@@ -39,9 +40,9 @@ export function GatewaysList() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Apps", href: "/apps" },
-      { label: "Gateways" },
+      { label: selectedCompany?.name ?? t("core.company", { defaultValue: "Company" }), href: "/dashboard" },
+      { label: t("appsTools.apps"), href: "/apps" },
+      { label: t("appsTools.gateways") },
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs, selectedCompany?.name]);
@@ -97,25 +98,25 @@ export function GatewaysList() {
       }),
     onSuccess: async (gateway) => {
       pushToast({
-        title: gateway.status === "active" ? "Gateway on" : "Gateway off",
+        title: gateway.status === "active" ? t("appsToolsResidual.gatewayOn") : t("appsToolsResidual.gatewayOff"),
         body:
           gateway.status === "active"
-            ? `${gateway.name} is exposing its tools again.`
-            : `${gateway.name} is off — every client goes silent.`,
+            ? t("appsToolsResidual.gatewayOnBody", { gateway: gateway.name })
+            : t("appsToolsResidual.gatewayOffBody", { gateway: gateway.name }),
         tone: "success",
       });
       await queryClient.invalidateQueries({ queryKey: gatewaysQueryKey(selectedCompanyId!) });
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't update the gateway",
+        title: t("appsTools.couldntUpdateGateway", { defaultValue: "无法更新网关" }),
         body: error instanceof Error ? error.message : String(error),
         tone: "error",
       }),
   });
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company to manage gateways.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("appsTools.selectCompanyGateways", { defaultValue: "请选择公司以管理网关。" })}</div>;
   }
 
   const gateways = gatewaysQuery.data?.gateways ?? [];
@@ -134,10 +135,9 @@ export function GatewaysList() {
   return (
     <div className="max-w-5xl space-y-5">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Apps</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("appsTools.gateways")}</h1>
         <p className="text-sm text-muted-foreground">
-          A gateway is one safe MCP endpoint that exposes only the apps you assign. Hand it to a client
-          like Cursor or Claude Desktop.
+          {t("appsTools.gatewayDescription", { defaultValue: "网关是一个安全的 MCP 端点，只暴露你分配的应用，可交给 Cursor 或 Claude Desktop 等客户端使用。" })}
         </p>
       </header>
 
@@ -160,14 +160,14 @@ export function GatewaysList() {
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name, app, or owner"
+                placeholder={t("appsTools.searchGateway", { defaultValue: "按名称、应用或所有者搜索" })}
                 className="pl-9"
-                aria-label="Search gateways"
+                aria-label={t("appsTools.searchGateway", { defaultValue: "搜索网关" })}
               />
             </div>
             <Button onClick={() => setCreating(true)}>
               <Plus className="mr-1.5 h-4 w-4" />
-              New gateway
+              {t("appsTools.newGateway", { defaultValue: "新建网关" })}
             </Button>
           </div>
 
@@ -198,12 +198,12 @@ export function GatewaysList() {
                 disabled={toggleMutation.isPending}
                 onClick={(event) => event.stopPropagation()}
                 onCheckedChange={() => toggleMutation.mutate({ gateway })}
-                aria-label={`Turn ${gateway.name} ${isGatewayOn(gateway) ? "off" : "on"}`}
+                aria-label={`${isGatewayOn(gateway) ? t("appsTools.disable", { defaultValue: "禁用" }) : t("appsTools.enable", { defaultValue: "启用" })} ${gateway.name}`}
               />
             );
             const empty = (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                No gateways match “{search.trim()}”.
+                {t("appsTools.noGatewayMatch", { defaultValue: "没有匹配“{{query}}”的网关。", query: search.trim() })}
               </div>
             );
             return (
@@ -213,12 +213,12 @@ export function GatewaysList() {
                   <table className="w-full min-w-(--sz-40rem) text-sm">
                     <thead>
                       <tr className="border-b border-border bg-muted/40 text-left text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-                        <th className="px-4 py-2.5">Gateway</th>
-                        <th className="px-4 py-2.5">Scope</th>
-                        <th className="px-4 py-2.5">Apps</th>
-                        <th className="px-4 py-2.5">Tokens</th>
-                        <th className="px-4 py-2.5">Last used</th>
-                        <th className="px-4 py-2.5 text-right">On</th>
+                        <th className="px-4 py-2.5">{t("appsTools.gateway")}</th>
+                        <th className="px-4 py-2.5">{t("appsTools.scope", { defaultValue: "范围" })}</th>
+                        <th className="px-4 py-2.5">{t("appsTools.apps")}</th>
+                        <th className="px-4 py-2.5">{t("appsTools.tokens")}</th>
+                        <th className="px-4 py-2.5">{t("appsTools.lastUsed")}</th>
+                        <th className="px-4 py-2.5 text-right">{t("appsTools.enabled")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -237,7 +237,7 @@ export function GatewaysList() {
                           <td className="px-4 py-3 text-muted-foreground">{scope}</td>
                           <td className="px-4 py-3 text-muted-foreground">{appsLabel}</td>
                           <td className="px-4 py-3 text-muted-foreground">
-                            {active} active{expiring > 0 ? ` · ${expiring} expiring` : ""}
+                            {active} {t("appsTools.active", { defaultValue: "活动中" })}{expiring > 0 ? ` · ${expiring} ${t("appsTools.expiring", { defaultValue: "即将到期" })}` : ""}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
                             {lastUsed ? <RelativeTime value={lastUsed} /> : "—"}
@@ -274,14 +274,14 @@ export function GatewaysList() {
                         <div className="shrink-0">{toggle(gateway)}</div>
                       </div>
                       <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                        <MobileField label="Scope" value={scope} />
-                        <MobileField label="Apps" value={appsLabel} />
+                        <MobileField label={t("appsTools.scope", { defaultValue: "范围" })} value={scope} />
+                        <MobileField label={t("appsTools.apps")} value={appsLabel} />
                         <MobileField
-                          label="Tokens"
-                          value={`${active} active${expiring > 0 ? ` · ${expiring} expiring` : ""}`}
+                          label={t("appsTools.tokens")}
+                          value={`${active} ${t("appsTools.active", { defaultValue: "活动中" })}${expiring > 0 ? ` · ${expiring} ${t("appsTools.expiring", { defaultValue: "即将到期" })}` : ""}`}
                         />
                         <MobileField
-                          label="Last used"
+                          label={t("appsTools.lastUsed")}
                           value={lastUsed ? <RelativeTime value={lastUsed} /> : "—"}
                         />
                       </dl>
@@ -296,10 +296,9 @@ export function GatewaysList() {
           })()}
 
           <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-            <div className="text-sm font-semibold text-foreground">Why a gateway?</div>
+            <div className="text-sm font-semibold text-foreground">{t("appsTools.whyGateway", { defaultValue: "为什么使用网关？" })}</div>
             <p className="mt-1 text-sm text-muted-foreground">
-              You pick which apps go through it, who can use it, and how. Revoke the token, the whole
-              gateway goes silent — no app-by-app cleanup.
+              {t("appsTools.gatewayWhyDescription", { defaultValue: "你可以选择哪些应用通过网关、谁可以使用以及使用方式。撤销令牌后整个网关都会停止工作，无需逐个清理应用。" })}
             </p>
           </div>
         </div>
@@ -341,14 +340,13 @@ function MobileField({ label, value }: { label: string; value: ReactNode }) {
 function EmptyGateways({ onCreate }: { onCreate: () => void }) {
   return (
     <div className="rounded-2xl border border-dashed border-border p-12 text-center">
-      <h2 className="text-lg font-semibold text-foreground">No gateways yet</h2>
+      <h2 className="text-lg font-semibold text-foreground">{t("appsTools.noGateways")}</h2>
       <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-        Group your connected apps into one safe endpoint you can hand to a client, then revoke it in one
-        move.
+        {t("appsTools.noGatewaysHint", { defaultValue: "将已连接的应用组合成一个安全端点交给客户端，需要时可以一键撤销。" })}
       </p>
       <Button className="mt-5" onClick={onCreate}>
         <Plus className="mr-1.5 h-4 w-4" />
-        New gateway
+        {t("appsTools.newGateway", { defaultValue: "新建网关" })}
       </Button>
     </div>
   );

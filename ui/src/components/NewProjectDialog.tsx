@@ -37,18 +37,20 @@ import { cn } from "../lib/utils";
 import { MarkdownEditor, type MarkdownEditorRef, type MentionOption } from "./MarkdownEditor";
 import { StatusBadge } from "./StatusBadge";
 import { ChoosePathButton } from "./PathInstructionsModal";
+import { useTranslation } from "@/i18n";
 
 const projectStatuses = [
-  { value: "backlog", label: "Backlog" },
-  { value: "planned", label: "Planned" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "backlog", labelKey: "projectStatusBacklog" },
+  { value: "planned", labelKey: "projectStatusPlanned" },
+  { value: "in_progress", labelKey: "projectStatusInProgress" },
+  { value: "completed", labelKey: "projectStatusCompleted" },
+  { value: "cancelled", labelKey: "projectStatusCancelled" },
 ];
 
 export function NewProjectDialog() {
   const { newProjectOpen, closeNewProject } = useDialog();
   const { selectedCompanyId, selectedCompany } = useCompany();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -96,7 +98,7 @@ export function NewProjectDialog() {
 
   const uploadDescriptionImage = useMutation({
     mutationFn: async (file: File) => {
-      if (!selectedCompanyId) throw new Error("No company selected");
+      if (!selectedCompanyId) throw new Error(t("projectWorkspace.noCompanySelected"));
       return assetsApi.uploadImage(selectedCompanyId, file, "projects/drafts");
     },
   });
@@ -129,7 +131,7 @@ export function NewProjectDialog() {
   const deriveWorkspaceNameFromPath = (value: string) => {
     const normalized = value.trim().replace(/[\\/]+$/, "");
     const segments = normalized.split(/[\\/]/).filter(Boolean);
-    return segments[segments.length - 1] ?? "Local folder";
+    return segments[segments.length - 1] ?? t("projectWorkspace.localFolder");
   };
 
   const deriveWorkspaceNameFromRepo = (value: string) => {
@@ -137,9 +139,9 @@ export function NewProjectDialog() {
       const parsed = new URL(value);
       const segments = parsed.pathname.split("/").filter(Boolean);
       const repo = segments[segments.length - 1]?.replace(/\.git$/i, "") ?? "";
-      return repo || "GitHub repo";
+      return repo || t("projectWorkspace.gitHubRepo");
     } catch {
-      return "GitHub repo";
+      return t("projectWorkspace.gitHubRepo");
     }
   };
 
@@ -149,11 +151,11 @@ export function NewProjectDialog() {
     const repoUrl = workspaceRepoUrl.trim();
 
     if (localPath && !isAbsolutePath(localPath)) {
-      setWorkspaceError("Local folder must be a full absolute path.");
+      setWorkspaceError(t("projectWorkspace.localFolderAbsolutePath"));
       return;
     }
     if (repoUrl && !looksLikeRepoUrl(repoUrl)) {
-      setWorkspaceError("Repo must use a valid GitHub or GitHub Enterprise repo URL.");
+      setWorkspaceError(t("projectWorkspace.validGithubRepoUrl"));
       return;
     }
 
@@ -223,7 +225,7 @@ export function NewProjectDialog() {
               </span>
             )}
             <span className="text-muted-foreground/60">&rsaquo;</span>
-            <span>New project</span>
+            <span>{t("projectWorkspace.newProject")}</span>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -249,7 +251,7 @@ export function NewProjectDialog() {
         <div className="px-4 pt-4 pb-2 shrink-0">
           <input
             className="w-full text-lg font-semibold bg-transparent outline-none placeholder:text-muted-foreground/50"
-            placeholder="Project name"
+            placeholder={t("projectWorkspace.projectName")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
@@ -268,7 +270,7 @@ export function NewProjectDialog() {
             ref={descriptionEditorRef}
             value={description}
             onChange={setDescription}
-            placeholder="Add description..."
+            placeholder={t("projectWorkspace.addDescription")}
             bordered={false}
             mentions={mentionOptions}
             contentClassName={cn("text-sm text-muted-foreground", expanded ? "min-h-(--sz-220px)" : "min-h-(--sz-120px)")}
@@ -282,14 +284,14 @@ export function NewProjectDialog() {
         <div className="px-4 pt-3 pb-3 space-y-3 border-t border-border">
           <div>
             <div className="mb-1 flex items-center gap-1.5">
-              <label className="block text-xs text-muted-foreground">Repo URL</label>
-              <span className="text-xs text-muted-foreground/50">optional</span>
+              <label className="block text-xs text-muted-foreground">{t("projectWorkspace.repoUrl")}</label>
+              <span className="text-xs text-muted-foreground/50">{t("projectWorkspace.optional")}</span>
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
                   <HelpCircle className="h-3 w-3 text-muted-foreground/50 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-(--sz-240px) text-xs">
-                  Link a GitHub repository so agents can clone, read, and push code for this project.
+                  {t("projectWorkspace.repoHelp")}
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -303,14 +305,14 @@ export function NewProjectDialog() {
 
           <div>
             <div className="mb-1 flex items-center gap-1.5">
-              <label className="block text-xs text-muted-foreground">Local folder</label>
-              <span className="text-xs text-muted-foreground/50">optional</span>
+              <label className="block text-xs text-muted-foreground">{t("projectWorkspace.localFolder")}</label>
+              <span className="text-xs text-muted-foreground/50">{t("projectWorkspace.optional")}</span>
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
                   <HelpCircle className="h-3 w-3 text-muted-foreground/50 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-(--sz-240px) text-xs">
-                  Set an absolute path on this machine where local agents will read and write files for this project.
+                  {t("projectWorkspace.localFolderHelp")}
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -349,7 +351,7 @@ export function NewProjectDialog() {
                   )}
                   onClick={() => { setStatus(s.value); setStatusOpen(false); }}
                 >
-                  {s.label}
+                  {t(`projectWorkspace.${s.labelKey}`)}
                 </button>
               ))}
             </PopoverContent>
@@ -365,7 +367,7 @@ export function NewProjectDialog() {
               <button
                 className="text-muted-foreground hover:text-foreground"
                 onClick={() => setGoalIds((prev) => prev.filter((id) => id !== goal.id))}
-                aria-label={`Remove goal ${goal.title}`}
+                aria-label={t("projectWorkspace.removeGoal", { title: goal.title })}
                 type="button"
               >
                 <X className="h-3 w-3" />
@@ -380,7 +382,7 @@ export function NewProjectDialog() {
                 disabled={selectedGoals.length > 0 && availableGoals.length === 0}
               >
                 {selectedGoals.length > 0 ? <Plus className="h-3 w-3 text-muted-foreground" /> : <Target className="h-3 w-3 text-muted-foreground" />}
-                {selectedGoals.length > 0 ? "+ Goal" : "Goal"}
+                {selectedGoals.length > 0 ? t("projectWorkspace.plusGoal") : t("projectWorkspace.goal")}
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-56 p-1" align="start">
@@ -389,7 +391,7 @@ export function NewProjectDialog() {
                   className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground"
                   onClick={() => setGoalOpen(false)}
                 >
-                  No goal
+                  {t("projectWorkspace.noGoal")}
                 </button>
               )}
               {availableGoals.map((g) => (
@@ -406,7 +408,7 @@ export function NewProjectDialog() {
               ))}
               {selectedGoals.length > 0 && availableGoals.length === 0 && (
                 <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                  All goals already selected.
+                  {t("projectWorkspace.allGoalsSelected")}
                 </div>
               )}
             </PopoverContent>
@@ -420,7 +422,7 @@ export function NewProjectDialog() {
               className="bg-transparent outline-none text-xs w-24"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
-              placeholder="Target date"
+              placeholder={t("projectWorkspace.targetDate")}
             />
           </div>
         </div>
@@ -428,7 +430,7 @@ export function NewProjectDialog() {
         {/* Footer */}
         <div className="flex items-center justify-between px-4 py-2.5 border-t border-border">
           {createProject.isError ? (
-            <p className="text-xs text-destructive">Failed to create project.</p>
+            <p className="text-xs text-destructive">{t("projectWorkspace.failedCreateProject")}</p>
           ) : (
             <span />
           )}
@@ -437,7 +439,7 @@ export function NewProjectDialog() {
             disabled={!name.trim() || createProject.isPending}
             onClick={handleSubmit}
           >
-            {createProject.isPending ? "Creating…" : "Create project"}
+            {createProject.isPending ? t("projectWorkspace.creatingProject") : t("projectWorkspace.createProject")}
           </Button>
         </div>
       </DialogContent>

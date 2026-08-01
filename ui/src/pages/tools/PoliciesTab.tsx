@@ -64,6 +64,7 @@ import {
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { useToast } from "@/context/ToastContext";
 import { EmptyState } from "@/components/EmptyState";
+import { t } from "@/i18n";
 import {
   ToolsPageHeader,
   LoadingState,
@@ -442,15 +443,15 @@ function PolicySimulator({
             <FlaskConical className="h-4 w-4" />
             Test a rule
           </SheetTitle>
-          <SheetDescription>Pick an agent and an action to see what Paperclip would do.</SheetDescription>
+          <SheetDescription>{t("appsTools.policyTestHint", { defaultValue: "选择 Agent 和操作，查看 Paperclip 将如何处理。" })}</SheetDescription>
         </SheetHeader>
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Agent</Label>
+              <Label>{t("appsTools.agent", { defaultValue: "Agent" })}</Label>
               <Select value={agentId} onValueChange={setAgentId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select an agent" />
+                  <SelectValue placeholder={t("appsTools.selectAgent", { defaultValue: "选择 Agent" })} />
                 </SelectTrigger>
                 <SelectContent>
                   {agents.map((a) => (
@@ -462,12 +463,12 @@ function PolicySimulator({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="test-action">Action</Label>
+              <Label htmlFor="test-action">{t("appsTools.action", { defaultValue: "操作" })}</Label>
               <Input
                 id="test-action"
                 value={toolName}
                 onChange={(e) => setToolName(e.target.value)}
-                placeholder="e.g. gmail.send_email"
+                placeholder={t("appsTools.actionExample", { defaultValue: "例如 gmail.send_email" })}
               />
             </div>
           </div>
@@ -492,18 +493,18 @@ function PolicySimulator({
                 )}
               </div>
               <details className="text-xs text-muted-foreground">
-                <summary className="cursor-pointer text-foreground">Details</summary>
+                    <summary className="cursor-pointer text-foreground">{t("appsTools.details", { defaultValue: "详情" })}</summary>
                 <div className="mt-2 space-y-1 font-mono">
-                  <div>reason: {result.reasonCode}</div>
-                  <div>matched rule ids: {result.matchedPolicyIds.length ? result.matchedPolicyIds.join(", ") : "none"}</div>
-                  <div>effective profiles: {result.effectiveProfileIds.length ? result.effectiveProfileIds.join(", ") : "none"}</div>
+                  <div>{t("appsTools.reason", { defaultValue: "原因" })}：{result.reasonCode}</div>
+                  <div>{t("appsTools.matchedRuleIds", { defaultValue: "匹配规则 ID" })}：{result.matchedPolicyIds.length ? result.matchedPolicyIds.join(", ") : t("appsTools.none", { defaultValue: "无" })}</div>
+                  <div>{t("appsTools.effectiveProfiles", { defaultValue: "生效配置档案" })}：{result.effectiveProfileIds.length ? result.effectiveProfileIds.join(", ") : t("appsTools.none", { defaultValue: "无" })}</div>
                 </div>
               </details>
             </div>
           ) : null}
         </div>
         <SheetFooter className="border-t border-border">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("appsTools.close", { defaultValue: "关闭" })}</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
@@ -564,7 +565,7 @@ function RuleBuilder({
           <h2 className="text-lg font-semibold text-foreground">{form.id ? "Edit rule" : "New rule"}</h2>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" size="sm" onClick={onCancel}>{t("appsTools.cancel", { defaultValue: "取消" })}</Button>
           <Button size="sm" onClick={onSave} disabled={saving}>
             {saving ? "Saving..." : "Save rule"}
           </Button>
@@ -577,7 +578,7 @@ function RuleBuilder({
 
       <div className="grid gap-4 lg:grid-cols-(--gtc-61)">
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">When</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("appsTools.when", { defaultValue: "当" })}</h3>
           <div className="grid gap-2">
             {[
               ["everyone", "Everyone"],
@@ -597,18 +598,18 @@ function RuleBuilder({
           </div>
           {form.whenMode === "agent" ? (
             <Select value={form.agentId} onValueChange={(agentId) => setForm({ ...form, agentId })}>
-              <SelectTrigger><SelectValue placeholder="Choose agent" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("appsTools.chooseAgent", { defaultValue: "选择 Agent" })} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={ANY_VALUE}>Choose agent</SelectItem>
+                <SelectItem value={ANY_VALUE}>{t("appsTools.chooseAgent", { defaultValue: "选择 Agent" })}</SelectItem>
                 {agents.map((agent) => <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>)}
               </SelectContent>
             </Select>
           ) : null}
           {form.whenMode === "project" ? (
             <Select value={form.projectId} onValueChange={(projectId) => setForm({ ...form, projectId })}>
-              <SelectTrigger><SelectValue placeholder="Choose project" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("appsTools.chooseProject", { defaultValue: "选择项目" })} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={ANY_VALUE}>Choose project</SelectItem>
+                <SelectItem value={ANY_VALUE}>{t("appsTools.chooseProject", { defaultValue: "选择项目" })}</SelectItem>
                 {projects.map((project) => <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -616,7 +617,7 @@ function RuleBuilder({
         </section>
 
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Uses</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("appsTools.uses", { defaultValue: "使用" })}</h3>
           <div className="grid gap-2">
             {[
               ["anything", "Anything"],
@@ -637,18 +638,18 @@ function RuleBuilder({
           </div>
           {form.usesMode === "app" ? (
             <Select value={form.applicationId} onValueChange={(applicationId) => setForm({ ...form, applicationId })}>
-              <SelectTrigger><SelectValue placeholder="Choose app" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("appsTools.chooseApp", { defaultValue: "选择应用" })} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={ANY_VALUE}>Choose app</SelectItem>
+                <SelectItem value={ANY_VALUE}>{t("appsTools.chooseApp", { defaultValue: "选择应用" })}</SelectItem>
                 {applications.map((app) => <SelectItem key={app.id} value={app.id}>{app.name}</SelectItem>)}
               </SelectContent>
             </Select>
           ) : null}
           {form.usesMode === "capability" ? (
             <Select value={form.riskLevel} onValueChange={(riskLevel) => setForm({ ...form, riskLevel })}>
-              <SelectTrigger><SelectValue placeholder="Choose capability" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("appsTools.chooseCapability", { defaultValue: "选择能力" })} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={ANY_VALUE}>Choose capability</SelectItem>
+                <SelectItem value={ANY_VALUE}>{t("appsTools.chooseCapability", { defaultValue: "选择能力" })}</SelectItem>
                 {CAPABILITY_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                 ))}
@@ -658,7 +659,7 @@ function RuleBuilder({
           {form.usesMode === "actions" ? (
             <div className="max-h-80 overflow-y-auto rounded-md border border-border">
               {appGroups.length === 0 ? (
-                <div className="p-3 text-sm text-muted-foreground">No app actions discovered yet.</div>
+                <div className="p-3 text-sm text-muted-foreground">{t("appsTools.noAppActions", { defaultValue: "尚未发现应用操作。" })}</div>
               ) : (
                 appGroups.map((group) => {
                   const selectedCount = group.tools.filter((tool) => selectedTools.has(tool.toolName)).length;
@@ -689,7 +690,7 @@ function RuleBuilder({
         </section>
 
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Then</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("appsTools.then", { defaultValue: "然后" })}</h3>
           <div className="grid gap-2">
             {OUTCOMES.map((outcome) => (
               <Button
@@ -706,17 +707,17 @@ function RuleBuilder({
           {form.policyType === "rate_limit" ? (
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
-                <Label htmlFor="limit-count">Times</Label>
+                <Label htmlFor="limit-count">{t("appsTools.times", { defaultValue: "次数" })}</Label>
                 <Input id="limit-count" inputMode="numeric" value={form.rateLimitLimit} onChange={(e) => setForm({ ...form, rateLimitLimit: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Per</Label>
+                <Label>{t("appsTools.per", { defaultValue: "每" })}</Label>
                 <Select value={form.rateLimitWindowSeconds} onValueChange={(rateLimitWindowSeconds) => setForm({ ...form, rateLimitWindowSeconds })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="3600">Hour</SelectItem>
-                    <SelectItem value="86400">Day</SelectItem>
-                    <SelectItem value="60">Minute</SelectItem>
+                    <SelectItem value="3600">{t("appsTools.hour", { defaultValue: "小时" })}</SelectItem>
+                    <SelectItem value="86400">{t("appsTools.day", { defaultValue: "天" })}</SelectItem>
+                    <SelectItem value="60">{t("appsTools.minute", { defaultValue: "分钟" })}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -732,27 +733,27 @@ function RuleBuilder({
         </summary>
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="rule-name">Rule name</Label>
+            <Label htmlFor="rule-name">{t("appsTools.ruleName", { defaultValue: "规则名称" })}</Label>
             <Input id="rule-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={sentenceText(sentence)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="rule-priority">Priority</Label>
+            <Label htmlFor="rule-priority">{t("appsTools.priority", { defaultValue: "优先级" })}</Label>
             <Input id="rule-priority" inputMode="numeric" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} />
           </div>
           <div className="space-y-1.5">
-            <Label>Raw connection</Label>
+            <Label>{t("appsTools.rawConnection", { defaultValue: "原始连接" })}</Label>
             <Select value={form.connectionId} onValueChange={(connectionId) => setForm({ ...form, connectionId })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={ANY_VALUE}>Any connection</SelectItem>
+                <SelectItem value={ANY_VALUE}>{t("appsTools.anyConnection", { defaultValue: "任意连接" })}</SelectItem>
                 {[...maps.connection.entries()].map(([id, name]) => <SelectItem key={id} value={id}>{name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 lg:col-span-2">
             <div>
-              <p className="text-sm font-medium text-foreground">On</p>
-              <p className="text-xs text-muted-foreground">Turn this off to keep the rule saved without matching.</p>
+              <p className="text-sm font-medium text-foreground">{t("appsTools.on", { defaultValue: "开启" })}</p>
+              <p className="text-xs text-muted-foreground">{t("appsTools.ruleOffHint", { defaultValue: "关闭后规则仍会保存，但不会匹配。" })}</p>
             </div>
             <ToggleSwitch checked={form.enabled} onCheckedChange={(enabled) => setForm({ ...form, enabled })} />
           </div>
@@ -982,17 +983,17 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-5">
       <ToolsPageHeader
-        title="Rules"
-        description="Rules are checked top to bottom — the first one that matches decides."
+        title={t("appsTools.rules", { defaultValue: "规则" })}
+        description={t("appsTools.rulesDescription", { defaultValue: "规则会从上到下检查，第一条匹配的规则决定结果。" })}
         actions={
           <>
             <Button size="sm" variant="outline" onClick={() => setTestOpen(true)}>
               <FlaskConical className="mr-1 h-4 w-4" />
-              Test a rule
+              {t("appsTools.testRule", { defaultValue: "测试规则" })}
             </Button>
             <Button size="sm" onClick={() => setForm(emptyPolicyForm())}>
               <Plus className="mr-1 h-4 w-4" />
-              New rule
+              {t("appsTools.newRule", { defaultValue: "新建规则" })}
             </Button>
           </>
         }
@@ -1007,9 +1008,9 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
           <div className="space-y-3">
             <EmptyState
               icon={Shield}
-              message="No rules yet"
-              description="Start with a template or create a rule from scratch."
-              action="New rule"
+              message={t("appsTools.noRulesYet", { defaultValue: "还没有规则" })}
+              description={t("appsTools.startRuleHint", { defaultValue: "从模板开始，或从零创建规则。" })}
+              action={t("appsTools.newRule", { defaultValue: "新建规则" })}
               onAction={() => setForm(emptyPolicyForm())}
             />
             <StarterCards onStart={setForm} />
@@ -1021,10 +1022,10 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                 <thead>
                   <tr className="border-b border-border text-left text-xs text-muted-foreground">
                     <th className="w-8 px-2 py-2.5 font-medium" />
-                    <th className="px-2 py-2.5 font-medium">Rule</th>
-                    <th className="px-2 py-2.5 font-medium">Outcome</th>
-                    <th className="px-2 py-2.5 text-right font-medium">Last 24h</th>
-                    <th className="px-2 py-2.5 text-center font-medium">On</th>
+                    <th className="px-2 py-2.5 font-medium">{t("appsTools.rule", { defaultValue: "规则" })}</th>
+                    <th className="px-2 py-2.5 font-medium">{t("appsTools.outcome", { defaultValue: "结果" })}</th>
+                    <th className="px-2 py-2.5 text-right font-medium">{t("appsTools.last24h", { defaultValue: "最近 24 小时" })}</th>
+                    <th className="px-2 py-2.5 text-center font-medium">{t("appsTools.on", { defaultValue: "开启" })}</th>
                     <th className="w-10 px-2 py-2.5 text-right font-medium" />
                   </tr>
                 </thead>
@@ -1060,7 +1061,7 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                           ) : null}
                         </td>
                         <td className="px-2 py-2"><OutcomeChip type={policy.policyType} config={policy.config} /></td>
-                        <td className="px-2 py-2 text-right text-xs text-muted-foreground">{hits} {hits === 1 ? "time" : "times"}</td>
+                        <td className="px-2 py-2 text-right text-xs text-muted-foreground">{hits} {t("appsTools.timesUsed", { defaultValue: "次" })}</td>
                         <td className="px-2 py-2 text-center">
                           <ToggleSwitch
                             checked={policy.enabled}
@@ -1071,22 +1072,22 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                         <td className="px-2 py-2 text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button size="icon" variant="ghost" aria-label="Rule actions">
+                              <Button size="icon" variant="ghost" aria-label={t("appsTools.ruleActions", { defaultValue: "规则操作" })}>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onSelect={() => setForm(policyToForm(policy))}>
                                 <Pencil className="mr-2 h-4 w-4" />
-                                Edit
+                                {t("appsTools.edit", { defaultValue: "编辑" })}
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => duplicate.mutate(policy)}>
                                 <Copy className="mr-2 h-4 w-4" />
-                                Duplicate
+                                {t("appsTools.duplicate", { defaultValue: "复制" })}
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => updatePolicy.mutate({ policyId: policy.id, body: { enabled: false } })}>
                                 <RotateCcw className="mr-2 h-4 w-4" />
-                                Turn off
+                                {t("appsTools.turnOff", { defaultValue: "关闭" })}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -1094,7 +1095,7 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                                 onSelect={() => setConfirm({ kind: "delete-rule", policy, hits })}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
+                                {t("appsTools.delete", { defaultValue: "删除" })}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -1110,15 +1111,15 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
       </div>
 
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-foreground">Remembered approvals</h3>
-        <p className="text-sm text-muted-foreground">When you approve an Ask-first request, Paperclip can remember the decision.</p>
+        <h3 className="text-sm font-semibold text-foreground">{t("appsTools.rememberedApprovals", { defaultValue: "已记住的审批" })}</h3>
+        <p className="text-sm text-muted-foreground">{t("appsTools.rememberedApprovalsHint", { defaultValue: "批准“先询问”请求后，Paperclip 可以记住这个决定。" })}</p>
         {trustRules.isLoading ? (
           <LoadingState />
         ) : trustRules.error ? (
           <ErrorState error={trustRules.error} onRetry={() => trustRules.refetch()} />
         ) : (trustRules.data?.trustRules ?? []).length === 0 ? (
           <div className="rounded-md border border-border px-4 py-6 text-sm text-muted-foreground">
-            No remembered approvals yet.
+            {t("appsTools.noRememberedApprovals", { defaultValue: "还没有已记住的审批。" })}
           </div>
         ) : (
           <div className="divide-y divide-border rounded-md border border-border">
@@ -1129,7 +1130,7 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                     <RuleSentence sentence={policySentence(rule, maps, catalogByToolName)} />
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Remembered <RelativeTime value={rule.updatedAt} />
+                    {t("appsTools.remembered", { defaultValue: "已记住" })} <RelativeTime value={rule.updatedAt} />
                   </div>
                 </div>
                 <Button
@@ -1138,7 +1139,7 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                   disabled={!rule.enabled || revoke.isPending}
                   onClick={() => setConfirm({ kind: "forget-approval", policy: rule })}
                 >
-                  Forget
+                  {t("appsTools.forget", { defaultValue: "忘记" })}
                 </Button>
               </div>
             ))}
@@ -1164,15 +1165,15 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
         {confirm ? (
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{confirm.kind === "delete-rule" ? "Delete rule?" : "Forget remembered approval?"}</DialogTitle>
+              <DialogTitle>{confirm.kind === "delete-rule" ? t("appsTools.deleteRuleConfirm", { defaultValue: "删除规则？" }) : t("appsTools.forgetApprovalConfirm", { defaultValue: "忘记已记住的审批？" })}</DialogTitle>
               <DialogDescription>
                 {confirm.kind === "delete-rule"
-                  ? `This rule matched ${confirm.hits} ${confirm.hits === 1 ? "time" : "times"} in the last 24 hours. Deleting it may change what agents can do.`
-                  : "Paperclip will ask again the next time this action needs approval."}
+                  ? t("appsTools.deleteRuleHint", { defaultValue: "这条规则在过去 24 小时匹配了 {{count}} 次。删除它可能会改变 Agent 可以执行的操作。", count: confirm.hits })
+                  : t("appsTools.forgetApprovalHint", { defaultValue: "下次此操作需要审批时，Paperclip 会再次询问。" })}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirm(null)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setConfirm(null)}>{t("appsTools.cancel", { defaultValue: "取消" })}</Button>
               <Button
                 variant="destructive"
                 disabled={deletePolicy.isPending || revoke.isPending}
@@ -1181,7 +1182,7 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                   else revoke.mutate(confirm.policy.id);
                 }}
               >
-                {confirm.kind === "delete-rule" ? "Delete" : "Forget"}
+                {confirm.kind === "delete-rule" ? t("appsTools.delete", { defaultValue: "删除" }) : t("appsTools.forget", { defaultValue: "忘记" })}
               </Button>
             </DialogFooter>
           </DialogContent>

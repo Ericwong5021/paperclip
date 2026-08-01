@@ -20,6 +20,7 @@ import { useToastActions } from "../context/ToastContext";
 import { queryKeys } from "../lib/queryKeys";
 import { codeResolutionLabel, decisionTrainingHref, trainingTargetForItem } from "../lib/decisionTraining";
 import { relativeTime } from "../lib/utils";
+import { t, useTranslation } from "@/i18n";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import {
@@ -40,9 +41,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
-
-const NOTES_PLACEHOLDER =
-  "How you thought about it, what signals mattered, what you decided and why…";
 
 interface DecisionTrainingDrawerProps {
   open: boolean;
@@ -67,6 +65,7 @@ export function DecisionTrainingDrawer({
   item,
   currentUserId,
 }: DecisionTrainingDrawerProps) {
+  useTranslation();
   const [createdExample, setCreatedExample] = useState<{
     itemId: string;
     exampleId: string;
@@ -87,18 +86,18 @@ export function DecisionTrainingDrawer({
         <SheetHeader className="border-b border-border">
           <SheetTitle className="flex items-center gap-2">
             <GraduationCap className="size-4 text-muted-foreground" />
-            {savedExampleId ? "Training example" : "Train this decision"}
+            {savedExampleId ? t("workflow.drawer.trainingExample") : t("workflow.drawer.trainDecision")}
           </SheetTitle>
           <SheetDescription>
             {savedExampleId
-              ? "The frozen state is read-only; your notes stay editable."
-              : "Freeze this decision's state and record how you'd want it decided."}
+              ? t("workflow.drawer.readOnlyDescription")
+              : t("workflow.drawer.freezeDescription")}
           </SheetDescription>
         </SheetHeader>
 
         {!item || !target ? (
           <div className="p-4 text-sm text-muted-foreground">
-            This decision can't be trained — it isn't anchored to an issue.
+            {t("workflow.drawer.trainFailed")}
           </div>
         ) : savedExampleId ? (
           <SavedState
@@ -152,13 +151,13 @@ function CreateState({
     onSuccess: (example) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.attention(companyId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.decisionTraining.list(companyId) });
-      pushToast({ title: "Decision trained", tone: "success" });
+      pushToast({ title: t("workflow.drawer.trained"), tone: "success" });
       onCreated(example);
     },
     onError: (error) => {
       pushToast({
-        title: "Could not train this decision",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("workflow.drawer.trainFailed"),
+        body: error instanceof Error ? error.message : t("workflow.drawer.tryAgain"),
         tone: "error",
       });
     },
@@ -171,19 +170,19 @@ function CreateState({
 
         <section className="space-y-2">
           <label htmlFor="training-notes" className="text-sm font-medium text-foreground">
-            Your notes
+            {t("workflow.drawer.notes")}
           </label>
           <Textarea
             id="training-notes"
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            placeholder={NOTES_PLACEHOLDER}
+            placeholder={t("workflow.drawer.notesPlaceholder")}
             className="min-h-40 text-sm"
           />
         </section>
 
         <SnapshotPreview
-          heading="State frozen with this example"
+          heading={t("workflow.drawer.frozenState")}
           snapshot={preview.data?.snapshot ?? null}
           cutoffAt={preview.data?.cutoffAt ?? null}
           loading={preview.isLoading}
@@ -193,11 +192,11 @@ function CreateState({
 
       <div className="flex items-center justify-end gap-2 border-t border-border p-4">
         <Button variant="ghost" onClick={onCancel} disabled={create.isPending}>
-          Cancel
+          {t("workflow.drawer.cancel")}
         </Button>
         <Button onClick={() => create.mutate()} disabled={create.isPending || preview.isError}>
           {create.isPending && <Loader2 className="size-4 animate-spin" />}
-          Save example
+          {t("workflow.drawer.trainingExample")}
         </Button>
       </div>
     </div>
@@ -230,13 +229,13 @@ function SavedState({
     onSuccess: (updated) => {
       queryClient.setQueryData(queryKeys.decisionTraining.detail(exampleId), updated);
       queryClient.invalidateQueries({ queryKey: queryKeys.decisionTraining.list(companyId) });
-      pushToast({ title: "Notes updated", tone: "success" });
+      pushToast({ title: t("workflow.drawer.notesUpdated"), tone: "success" });
       setEditing(false);
     },
     onError: (error) => {
       pushToast({
-        title: "Could not update notes",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("workflow.drawer.notesFailed"),
+        body: error instanceof Error ? error.message : t("workflow.drawer.tryAgain"),
         tone: "error",
       });
     },
@@ -247,13 +246,13 @@ function SavedState({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.attention(companyId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.decisionTraining.list(companyId) });
-      pushToast({ title: "Training example deleted", tone: "info" });
+      pushToast({ title: t("workflow.drawer.deleted"), tone: "info" });
       onDeleted();
     },
     onError: (error) => {
       pushToast({
-        title: "Could not delete example",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("workflow.drawer.deleteFailed"),
+        body: error instanceof Error ? error.message : t("workflow.drawer.tryAgain"),
         tone: "error",
       });
     },
@@ -262,14 +261,14 @@ function SavedState({
   if (example.isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center p-4 text-sm text-muted-foreground">
-        <Loader2 className="mr-2 size-4 animate-spin" /> Loading example…
+        <Loader2 className="mr-2 size-4 animate-spin" /> {t("workflow.common.loading")}
       </div>
     );
   }
   if (example.isError || !example.data) {
     return (
       <div className="p-4 text-sm text-destructive">
-        {example.isError ? (example.error as Error).message : "Example not found."}
+        {example.isError ? (example.error as Error).message : t("workflow.drawer.exampleNotFound")}
       </div>
     );
   }
@@ -277,8 +276,8 @@ function SavedState({
   const record = example.data;
   const edited = record.updatedAt !== record.createdAt;
   const authorLabel = currentUserId && record.createdByUserId === currentUserId
-    ? "You"
-    : `User ${record.createdByUserId.slice(0, 8)}`;
+    ? t("workflow.drawer.you")
+    : t("workflow.drawer.userPrefix", { id: record.createdByUserId.slice(0, 8) });
 
   const startEditing = () => {
     setDraftNotes(record.notes);
@@ -296,13 +295,13 @@ function SavedState({
           <span className="font-medium text-foreground">{authorLabel}</span>
           <span>·</span>
           <span title={new Date(record.createdAt).toLocaleString()}>
-            Created {relativeTime(record.createdAt)}
+            {t("workflow.training.created")} {relativeTime(record.createdAt)}
           </span>
           {edited && (
             <>
               <span>·</span>
               <span title={new Date(record.updatedAt).toLocaleString()}>
-                Edited {relativeTime(record.updatedAt)}
+                {t("workflow.training.edited")} {relativeTime(record.updatedAt)}
               </span>
             </>
           )}
@@ -311,10 +310,10 @@ function SavedState({
         {/* Notes — the one editable surface */}
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-foreground">Notes</span>
+            <span className="text-sm font-medium text-foreground">{t("workflow.drawer.notes")}</span>
             {!editing && (
               <Button variant="ghost" size="xs" onClick={startEditing}>
-                <Pencil className="size-3.5" /> Edit
+                <Pencil className="size-3.5" /> {t("workflow.common.edit")}
               </Button>
             )}
           </div>
@@ -323,33 +322,33 @@ function SavedState({
               <Textarea
                 value={draftNotes}
                 onChange={(event) => setDraftNotes(event.target.value)}
-                placeholder={NOTES_PLACEHOLDER}
+                placeholder={t("workflow.drawer.notesPlaceholder")}
                 className="min-h-40 text-sm"
               />
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" size="sm" onClick={() => setEditing(false)} disabled={saveNotes.isPending}>
-                  Cancel
+                  {t("workflow.drawer.cancel")}
                 </Button>
                 <Button size="sm" onClick={() => saveNotes.mutate()} disabled={saveNotes.isPending}>
                   {saveNotes.isPending && <Loader2 className="size-4 animate-spin" />}
-                  Save notes
+                  {t("workflow.training.saveNotes")}
                 </Button>
               </div>
             </div>
           ) : record.notes ? (
             <p className="whitespace-pre-wrap text-sm text-foreground">{record.notes}</p>
           ) : (
-            <p className="text-sm italic text-muted-foreground">No notes yet.</p>
+            <p className="text-sm italic text-muted-foreground">{t("workflow.drawer.noneBeforeCutoff")}</p>
           )}
           {record.notesHistory.length > 0 && (
             <p className="text-(length:--text-nano) text-muted-foreground">
-              {record.notesHistory.length} previous {record.notesHistory.length === 1 ? "revision" : "revisions"}
+              {record.notesHistory.length} {t("workflow.drawer.revision")}
             </p>
           )}
         </section>
 
         <SnapshotPreview
-          heading="Frozen state"
+          heading={t("workflow.drawer.frozenState")}
           snapshot={record.snapshot}
           cutoffAt={record.cutoffAt}
           readOnly
@@ -362,23 +361,23 @@ function SavedState({
           <AlertDialogTrigger asChild>
             <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={remove.isPending}>
               {remove.isPending ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              Delete
+              {t("workflow.drawer.delete")}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete this training example?</AlertDialogTitle>
+              <AlertDialogTitle>{t("workflow.drawer.deleteConfirm")}</AlertDialogTitle>
               <AlertDialogDescription>
-                This removes the frozen snapshot and your notes. This can't be undone.
+                {t("workflow.pipelineCasesTraining.deleteTrainingDescription")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t("workflow.drawer.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={() => remove.mutate()}
               >
-                Delete
+                {t("workflow.drawer.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -386,7 +385,7 @@ function SavedState({
 
         <Button asChild variant="outline" size="sm">
           <Link to={decisionTrainingHref(record.id)}>
-            Open full record
+            {t("workflow.common.open")} {t("workflow.training.examples")}
             <ExternalLink className="size-3.5" />
           </Link>
         </Button>
@@ -400,11 +399,11 @@ function DecisionContext({ item, outcome }: { item: AttentionItem; outcome: stri
   return (
     <section className="space-y-1 rounded-md border border-border bg-muted/30 px-3 py-2" data-testid="training-context">
       <p className="text-(length:--text-nano) font-medium uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-        Decision
+        {t("workflow.drawer.context")}
       </p>
-      <p className="line-clamp-2 text-sm font-medium text-foreground">{item.subject.title ?? "Decision"}</p>
+      <p className="line-clamp-2 text-sm font-medium text-foreground">{item.subject.title ?? t("workflow.training.decision")}</p>
       <p className="text-xs text-muted-foreground">
-        {outcome ? `Resolved · ${outcome}` : "Decision pending — cutoff will be now"}
+        {outcome ? `${t("workflow.common.done")} · ${outcome}` : t("workflow.drawer.cutoffNow")}
       </p>
     </section>
   );
@@ -438,14 +437,14 @@ function SnapshotPreview({
         <span className="text-sm font-medium text-foreground">{heading}</span>
         {readOnly && (
           <span className="inline-flex items-center gap-1 text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-            <Lock className="size-3" /> Read-only
+            <Lock className="size-3" /> {t("workflow.training.readOnly")}
           </span>
         )}
       </div>
 
       {loading && (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> Capturing current state…
+          <Loader2 className="size-4 animate-spin" /> {t("workflow.common.loading")}
         </p>
       )}
       {error && <p className="text-sm text-destructive">{error}</p>}
@@ -454,29 +453,29 @@ function SnapshotPreview({
         <div className="divide-y divide-border rounded-md border border-border">
           <SnapshotRow
             icon={<Clock className="size-4" />}
-            label="Cutoff"
-            value={cutoffAt ? new Date(cutoffAt).toLocaleString() : "now"}
+            label={t("workflow.drawer.cutoffNow")}
+            value={cutoffAt ? new Date(cutoffAt).toLocaleString() : t("workflow.common.unknown")}
             href={exampleId ? decisionTrainingHref(exampleId) : undefined}
           />
           <SnapshotRow
             icon={<MessageSquare className="size-4" />}
-            label="Comments"
+            label={t("workflow.drawer.comments")}
             value={
               snapshot.cutoff.commentCount === 0
-                ? "None before cutoff"
-                : `${snapshot.cutoff.commentCount} · last ${snapshot.cutoff.lastCommentId?.slice(0, 8) ?? "—"}`
+                ? t("workflow.drawer.noneBeforeCutoff")
+                : `${snapshot.cutoff.commentCount} · ${t("workflow.common.lastComment", { id: snapshot.cutoff.lastCommentId?.slice(0, 8) ?? "—" })}`
             }
             href={exampleId ? decisionTrainingHref(exampleId) : undefined}
           />
           <SnapshotRow
             icon={<Play className="size-4" />}
-            label="Runs"
-            value={snapshot.runs.length === 0 ? "None before cutoff" : `${snapshot.runs.length} before cutoff`}
+            label={t("workflow.training.runs")}
+            value={snapshot.runs.length === 0 ? t("workflow.drawer.noneBeforeCutoff") : `${snapshot.runs.length} ${t("workflow.training.runs")}`}
             href={exampleId ? decisionTrainingHref(exampleId) : undefined}
           />
           <SnapshotRow
             icon={<GitCommitHorizontal className="size-4" />}
-            label="Commit"
+            label={t("workflow.drawer.commit")}
             value={
               snapshot.code.commitSha
                 ? `${snapshot.code.commitSha.slice(0, 10)} · ${codeResolutionLabel(snapshot.code.resolution)}`
@@ -513,7 +512,7 @@ function SnapshotRow({
           to={href}
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
-          <FileText className="size-3.5" /> View
+          <FileText className="size-3.5" /> {t("workflow.drawer.view")}
         </Link>
       )}
     </div>

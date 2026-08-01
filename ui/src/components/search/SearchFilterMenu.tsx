@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 export interface FilterMenuOption {
@@ -62,12 +63,15 @@ export function SearchFilterMenu(props: SearchFilterMenuProps) {
     options,
     selected,
     searchable = false,
-    searchPlaceholder = "Search…",
-    emptyMessage = "No options",
+    searchPlaceholder,
+    emptyMessage,
     triggerClassName,
     contentClassName,
     align = "start",
   } = props;
+  const { t } = useTranslation();
+  const resolvedSearchPlaceholder = searchPlaceholder ?? t("search.filters.search");
+  const resolvedEmptyMessage = emptyMessage ?? t("search.filters.noOptions");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -102,7 +106,7 @@ export function SearchFilterMenu(props: SearchFilterMenuProps) {
             active && "border-primary/60 text-foreground",
             triggerClassName,
           )}
-          aria-label={`Filter by ${label}`}
+          aria-label={t("search.filters.filterBy", { label })}
         >
           <span className="truncate">{summarizeTrigger(label, selected, options)}</span>
           {active ? (
@@ -123,7 +127,7 @@ export function SearchFilterMenu(props: SearchFilterMenuProps) {
               className="text-xs text-muted-foreground hover:text-foreground"
               onClick={() => props.onClear()}
             >
-              Clear
+              {t("search.filters.clear")}
             </button>
           ) : null}
         </div>
@@ -167,7 +171,7 @@ export function SearchFilterMenu(props: SearchFilterMenuProps) {
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder={searchPlaceholder}
+                placeholder={resolvedSearchPlaceholder}
                 className="h-8 pl-7 text-xs"
               />
             </div>
@@ -176,7 +180,7 @@ export function SearchFilterMenu(props: SearchFilterMenuProps) {
 
         <div className="max-h-72 overflow-y-auto overscroll-contain border-t border-border py-1">
           {visibleOptions.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-muted-foreground">{emptyMessage}</div>
+            <div className="px-3 py-2 text-xs text-muted-foreground">{resolvedEmptyMessage}</div>
           ) : (
             visibleOptions.map((option) => {
               const isSelected = selected.includes(option.value);

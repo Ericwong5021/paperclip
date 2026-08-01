@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { AppLogo } from "./AppLogo";
 import { parseGoogleSheetIds } from "./google-sheets";
 import { autoExtendNotice, INSTALL_ALL_WARNING, installInfoNotice, installPayload } from "@/lib/tool-installs";
+import { t } from "@/i18n";
 
 type Step = "gallery" | "key" | "actions" | "who" | "install" | "success";
 
@@ -62,7 +63,7 @@ type AppAccessSelection = "all_agents" | { agentIds: string[] };
 type InstallMode = "none" | "specific" | "all";
 const LINK_CREDENTIAL_CONFIG_PATH = "credentials.authorization";
 
-const STEP_LABELS = ["Pick app", "Add your key", "Choose actions", "Choose access", "Install tools"];
+const STEP_LABELS = ["appsTools.pickApp", "appsTools.addKey", "appsTools.chooseActions", "appsTools.chooseAccess", "appsTools.installTools"];
 const STEP_INDEX: Record<Exclude<Step, "success">, number> = {
   gallery: 0,
   key: 1,
@@ -76,7 +77,7 @@ const ZAPIER_STEP_INDEX: Record<Exclude<Step, "gallery" | "success">, number> = 
   who: 2,
   install: 3,
 };
-const ZAPIER_STEP_LABELS = ["Add MCP URL", "Choose actions", "Choose access", "Install tools"];
+const ZAPIER_STEP_LABELS = ["appsTools.addMcpUrl", "appsTools.chooseActions", "appsTools.chooseAccess", "appsTools.installTools"];
 
 function askFirstLevelsFrom(result: ConnectToolAppResult): string[] {
   const raw = (result.suggestedDefaults as { askFirstRiskLevels?: unknown })?.askFirstRiskLevels;
@@ -144,9 +145,9 @@ export function AppsConnect() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Apps", href: "/apps" },
-      { label: "Connect an app" },
+      { label: selectedCompany?.name ?? t("core.company", { defaultValue: "Company" }), href: "/dashboard" },
+      { label: t("appsTools.apps"), href: "/apps" },
+      { label: t("appsTools.connectApp") },
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs, selectedCompany?.name]);
@@ -228,12 +229,12 @@ export function AppsConnect() {
         : null;
       const oauthRequired = details?.code === "oauth_challenge";
       pushToast({
-        title: oauthRequired ? "Sign-in required" : "Couldn’t connect",
+        title: oauthRequired ? t("appsTools.signInRequired", { defaultValue: "需要登录" }) : t("appsTools.couldntConnect", { defaultValue: "无法连接" }),
         body: oauthRequired
-          ? "This app needs you to sign in - coming soon."
+          ? t("appsTools.signInComingSoon", { defaultValue: "此应用需要登录，登录功能即将推出。" })
           : error instanceof Error
             ? error.message
-            : "Please check your key and try again.",
+            : t("appsTools.checkKeyRetry", { defaultValue: "请检查密钥后重试。" }),
         tone: "error",
       });
     },
@@ -268,15 +269,15 @@ export function AppsConnect() {
     onSuccess: () => setAppStep("success"),
     onError: (error) => {
       pushToast({
-        title: "Couldn’t finish setup",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("appsTools.couldntFinishSetup", { defaultValue: "无法完成设置" }),
+        body: error instanceof Error ? error.message : t("appsTools.pleaseTryAgain"),
         tone: "error",
       });
     },
   });
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company to connect apps.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("appsTools.selectCompanyConnect", { defaultValue: "请选择公司以连接应用。" })}</div>;
   }
 
   const appName =
@@ -289,7 +290,7 @@ export function AppsConnect() {
   const stepLabels = zapierSource
     ? ZAPIER_STEP_LABELS
     : isGoogleSheetsEntry(entry)
-      ? ["Pick app", "Share sheet", "Choose actions", "Choose access", "Install tools"]
+      ? ["appsTools.pickApp", "appsTools.shareSheet", "appsTools.chooseActions", "appsTools.chooseAccess", "appsTools.installTools"]
       : STEP_LABELS;
   const stepIndex = zapierSource && step !== "gallery" && step !== "success"
     ? ZAPIER_STEP_INDEX[step]
@@ -303,8 +304,8 @@ export function AppsConnect() {
         <StepHeader
           subtitle={
             step === "gallery"
-              ? "Pick the app you want your agents to use."
-              : `Step ${stepIndex + 1} of ${stepLabels.length}`
+              ? t("appsTools.pickAppDescription", { defaultValue: "选择 Agent 要使用的应用。" })
+              : t("appsTools.stepOf", { defaultValue: "第 {{current}} 步，共 {{total}} 步", current: stepIndex + 1, total: stepLabels.length })
           }
           step={step}
           activeIndex={stepIndex}
@@ -506,13 +507,13 @@ function StepHeader({
           ) : null}
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              {appIdentity ? `Connect ${appIdentity.name}` : "Connect an app"}
+              {appIdentity ? `${t("appsTools.connect")} ${appIdentity.name}` : t("appsTools.connectApp")}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={onCancel}>
-          Cancel
+          {t("appsTools.cancel")}
         </Button>
       </div>
       {step !== "gallery" && (
@@ -525,7 +526,7 @@ function StepHeader({
               />
             ))}
           </div>
-          <div className="mt-2 text-xs text-muted-foreground">{labels.join("   ·   ")}</div>
+          <div className="mt-2 text-xs text-muted-foreground">{labels.map((label) => t(label)).join("   ·   ")}</div>
         </div>
       )}
     </div>
@@ -556,15 +557,15 @@ function ZapierConnectStep({
           <Link2 className="h-5 w-5 text-muted-foreground" />
         </span>
         <div className="min-w-0">
-          <h2 className="text-xl font-bold tracking-tight">Connect Zapier</h2>
+          <h2 className="text-xl font-bold tracking-tight">{t("appsTools.connect")} Zapier</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Paste the complete MCP URL Zapier gives you, including its token.
+            {t("appsToolsResidual.zapierUrlHint")}
           </p>
         </div>
       </div>
 
       <div className="mt-8">
-        <label className="text-sm font-medium text-foreground">Zapier MCP URL</label>
+          <label className="text-sm font-medium text-foreground">{t("appsToolsResidual.zapierMcpUrl")}</label>
         <Input
           value={link}
           onChange={(event) => onLinkChange(event.target.value)}
@@ -579,17 +580,17 @@ function ZapierConnectStep({
           The token is part of the URL. Paperclip stores it securely and checks the connection before enabling actions.
         </p>
         {link.trim() && !isZapierLink && (
-          <p className="mt-2 text-xs text-destructive">Paste a valid Zapier URL to continue.</p>
+          <p className="mt-2 text-xs text-destructive">{t("appsTools.invalidZapierUrl", { defaultValue: "请粘贴有效的 Zapier URL 后继续。" })}</p>
         )}
       </div>
 
       <div className="mt-8 flex items-center justify-between">
         <Button variant="ghost" onClick={onBack} disabled={submitting}>
-          Back
+          {t("appsTools.back")}
         </Button>
         <Button onClick={onConnect} disabled={submitting || !isZapierLink}>
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {submitting ? "Checking…" : "Check link"}
+          {submitting ? t("appsTools.checking", { defaultValue: "检查中…" }) : t("appsToolsResidual.checkLink")}
         </Button>
       </div>
     </div>
@@ -665,7 +666,7 @@ function GalleryStep({
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search apps…"
+          placeholder={t("appsTools.searchApps")}
           className="h-11 pl-9"
         />
       </div>
@@ -696,11 +697,11 @@ function GalleryStep({
               <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{copy.tagline}</div>
               <div className="mt-3 text-xs font-semibold text-foreground">
                 {unavailable ? (
-                  <span className="text-muted-foreground">Not available on this instance - ask your admin.</span>
+                  <span className="text-muted-foreground">{t("appsTools.notAvailableInstance", { defaultValue: "此实例不可用，请联系管理员。" })}</span>
                 ) : oauth ? (
-                  <span className="text-muted-foreground">Sign-in coming soon</span>
+                  <span className="text-muted-foreground">{t("appsTools.signInComingSoon", { defaultValue: "登录功能即将推出" })}</span>
                 ) : (
-                  <span>Connect →</span>
+                  <span>{t("appsTools.connectArrow")}</span>
                 )}
               </div>
             </button>
@@ -709,7 +710,7 @@ function GalleryStep({
       </div>
 
       {filtered.length === 0 && (
-        <div className="py-10 text-center text-sm text-muted-foreground">No apps match “{search}”.</div>
+        <div className="py-10 text-center text-sm text-muted-foreground">{t("appsToolsResidual.noAppsMatch", { query: search })}</div>
       )}
 
       <div
@@ -722,14 +723,14 @@ function GalleryStep({
         <div>
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <Link2 className="h-4 w-4 text-muted-foreground" />
-            {zapierSource ? "Connect Zapier" : byo ? "Connect your own MCP server" : "Connect with a link"}
+            {zapierSource ? `${t("appsTools.connect")} Zapier` : byo ? t("appsTools.connectOwnMcp", { defaultValue: "连接自己的 MCP 服务器" }) : t("appsTools.connectWithLink", { defaultValue: "通过链接连接" })}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             {zapierSource
-              ? "Paste the complete MCP URL Zapier gives you, including its token."
+              ? t("appsToolsResidual.zapierUrlHint")
               : byo
-              ? "Paste your MCP server’s URL and we’ll walk you through permissions and review."
-              : "Paste a setup link from an app that is not listed here."}
+              ? t("appsToolsResidual.byoUrlHint")
+              : t("appsToolsResidual.unlistedAppLinkHint")}
           </p>
           {!zapierSource && (
             <p className="mt-1 text-xs text-muted-foreground">
@@ -741,7 +742,7 @@ function GalleryStep({
             <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2">
               <div className="flex min-w-0 items-center gap-2 text-sm">
                 <AppLogo name={matchedEntry.name} logoUrl={matchedEntry.branding.logoUrl} size={24} />
-                <span className="truncate">This looks like {matchedEntry.name}.</span>
+                <span className="truncate">{t("appsTools.looksLike", { defaultValue: "这看起来像 {{name}}。", name: matchedEntry.name })}</span>
               </div>
               <Button
                 type="button"
@@ -758,10 +759,10 @@ function GalleryStep({
                 }}
               >
                 {matchedEntry.availability?.available === false
-                  ? "Not available"
+                  ? t("appsTools.notAvailable", { defaultValue: "不可用" })
                   : matchedEntry.slug === "zapier"
-                    ? "Continue"
-                    : `Use ${matchedEntry.name}`}
+                    ? t("appsTools.continue")
+                    : t("appsTools.useApp", { defaultValue: "使用 {{name}}", name: matchedEntry.name })}
               </Button>
             </div>
           )}
@@ -782,7 +783,7 @@ function GalleryStep({
               className="h-10"
             />
             <Button type="button" variant="outline" onClick={continueWithLink}>
-              Continue
+              {t("appsTools.continue")}
             </Button>
           </div>
           {linkError && <div className="text-xs text-destructive">{linkError}</div>}
@@ -790,9 +791,9 @@ function GalleryStep({
       </div>
 
       <div className="border-t border-border pt-5">
-        <div className="text-sm font-semibold text-foreground">More ways to connect</div>
+        <div className="text-sm font-semibold text-foreground">{t("appsTools.moreWays", { defaultValue: "更多连接方式" })}</div>
         <p className="mt-1 text-xs text-muted-foreground">
-          For tools that aren’t in the gallery. You’ll need details from the tool’s docs.
+          {t("appsTools.moreWaysHint", { defaultValue: "适用于应用库中没有的工具，你需要准备工具文档中的连接信息。" })}
         </p>
         <div className="mt-3 flex flex-col gap-2">
           <ConnectMethodRow
@@ -890,50 +891,50 @@ function LinkConnectStep({
           <Link2 className="h-5 w-5 text-muted-foreground" />
         </span>
         <div className="min-w-0">
-          <h2 className="text-xl font-bold tracking-tight">Connect with a link</h2>
+          <h2 className="text-xl font-bold tracking-tight">{t("appsTools.connectWithLink", { defaultValue: "通过链接连接" })}</h2>
           <p className="mt-1 truncate text-sm text-muted-foreground">{link}</p>
         </div>
       </div>
 
       <div className="mt-8 space-y-6">
         <div>
-          <label className="text-sm font-medium text-foreground">Name</label>
+          <label className="text-sm font-medium text-foreground">{t("appsTools.name")}</label>
           <Input
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
-            placeholder="My app"
+            placeholder={t("appsToolsResidual.myApp")}
             className="mt-2 h-11"
           />
           <p className="mt-2 text-xs text-muted-foreground">
-            We filled this in from the link. Change it if you’d like.
+            {t("appsToolsResidual.nameFromLinkHint")}
           </p>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-foreground">Does it need a key?</label>
+          <label className="text-sm font-medium text-foreground">{t("appsTools.needsKey", { defaultValue: "需要密钥吗？" })}</label>
           <div className="mt-2 inline-flex rounded-lg border border-border bg-muted/50 p-1">
             <SegmentedOption
-              label="No"
+              label={t("appsToolsResidual.no")}
               selected={!needsKey}
               onClick={() => onNeedsKeyChange(false)}
             />
             <SegmentedOption
-              label="Yes"
+              label={t("appsToolsResidual.yes")}
               selected={needsKey}
               onClick={() => onNeedsKeyChange(true)}
             />
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
             {needsKey
-              ? "Paste the key this app gave you."
-              : "Most apps just work from the link — pick Yes only if the app gave you a key."}
+              ? t("appsToolsResidual.pasteAppKeyHint")
+              : t("appsToolsResidual.linkUsuallyWorksHint")}
           </p>
         </div>
 
         {needsKey && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-foreground">App key</label>
+              <label className="text-sm font-medium text-foreground">{t("appsTools.appKey", { defaultValue: "应用密钥" })}</label>
               <Input
                 type="password"
                 autoComplete="off"
@@ -947,9 +948,9 @@ function LinkConnectStep({
             <div className="flex items-start gap-3 rounded-lg bg-muted/50 p-4">
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div>
-                <div className="text-sm font-medium text-foreground">Your key is stored securely.</div>
+                <div className="text-sm font-medium text-foreground">{t("appsTools.keyStoredSecurely", { defaultValue: "你的密钥会被安全存储。" })}</div>
                 <div className="text-xs text-muted-foreground">
-                  You can replace it anytime from this app’s page.
+                  {t("appsToolsResidual.replaceKeyAnytime")}
                 </div>
               </div>
             </div>
@@ -959,15 +960,15 @@ function LinkConnectStep({
 
       <div className="mt-8 flex items-center justify-between">
         <Button variant="ghost" onClick={onBack} disabled={submitting}>
-          Back
+          {t("appsTools.back")}
         </Button>
         <div className="flex items-center gap-3">
           <span className="hidden text-xs text-muted-foreground sm:inline">
-            We’ll check the link before turning anything on.
+            {t("appsToolsResidual.checkBeforeEnableLink")}
           </span>
           <Button onClick={onConnect} disabled={submitting || (needsKey && keyValue.trim().length === 0)}>
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {submitting ? "Checking…" : "Check link"}
+            {submitting ? t("appsTools.checking", { defaultValue: "检查中…" }) : t("appsToolsResidual.checkLink")}
           </Button>
         </div>
       </div>
@@ -1010,15 +1011,15 @@ function ConnectionNameField({
 }) {
   return (
     <div>
-      <label className="text-sm font-medium text-foreground">Name</label>
+      <label className="text-sm font-medium text-foreground">{t("appsTools.name")}</label>
       <Input
         value={name}
         onChange={(e) => onNameChange(e.target.value)}
-        placeholder="My app"
+        placeholder={t("appsToolsResidual.myApp")}
         className="mt-2 h-11"
       />
       <p className="mt-2 text-xs text-muted-foreground">
-        We filled this in from the app. Change it to tell connections apart.
+        {t("appsToolsResidual.nameFromAppHint")}
       </p>
     </div>
   );
@@ -1070,7 +1071,7 @@ function KeyStep({
         <div className="flex items-center gap-3">
           <AppLogo name={entry.name} logoUrl={entry.branding.logoUrl} size={48} />
           <div>
-            <h2 className="text-lg font-bold tracking-tight sm:text-xl">Connect Google Sheets</h2>
+            <h2 className="text-lg font-bold tracking-tight sm:text-xl">{t("appsTools.connect")} Google Sheets</h2>
             <p className="text-sm text-muted-foreground">{copy.short}</p>
           </div>
         </div>
@@ -1080,7 +1081,7 @@ function KeyStep({
 
           {robotEmail ? (
             <div>
-              <label className="text-sm font-medium text-foreground">Share each sheet with this email</label>
+              <label className="text-sm font-medium text-foreground">{t("appsTools.shareSheetEmail", { defaultValue: "将每个表格共享给此邮箱" })}</label>
               <div className="mt-2 flex min-w-0 flex-col gap-2 sm:flex-row">
                 <div
                   title={robotEmail}
@@ -1109,7 +1110,7 @@ function KeyStep({
           )}
 
           <div>
-            <label className="text-sm font-medium text-foreground">Paste links to the sheets you shared</label>
+            <label className="text-sm font-medium text-foreground">{t("appsTools.pasteSheetLinks", { defaultValue: "粘贴你共享的表格链接" })}</label>
             <Textarea
               value={googleSheetsLinks}
               onChange={(e) => onGoogleSheetsLinksChange(e.target.value)}
@@ -1131,7 +1132,7 @@ function KeyStep({
           </Button>
           <Button onClick={onConnect} disabled={submitting || !canConnect}>
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {submitting ? "Checking…" : "Connect"}
+            {submitting ? t("appsTools.checking", { defaultValue: "检查中…" }) : t("appsTools.connect")}
           </Button>
         </div>
       </div>
@@ -1143,7 +1144,7 @@ function KeyStep({
       <div className="flex items-center gap-3">
         <AppLogo name={entry.name} logoUrl={entry.branding.logoUrl} size={48} />
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Connect {entry.name}</h2>
+          <h2 className="text-xl font-bold tracking-tight">{t("appsToolsResidual.connectApp", { app: entry.name })}</h2>
           <p className="text-sm text-muted-foreground">{copy.short}</p>
         </div>
       </div>
@@ -1153,7 +1154,7 @@ function KeyStep({
 
         {fields.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            This app doesn’t need a key. Just connect to continue.
+            {t("appsToolsResidual.noKeyNeeded")}
           </p>
         ) : (
           fields.map((field) => (
@@ -1176,7 +1177,7 @@ function KeyStep({
                   rel="noreferrer"
                   className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-foreground underline underline-offset-2"
                 >
-                  Where do I find this?
+                  {t("appsToolsResidual.whereFindThis")}
                   <ArrowUpRight className="h-3 w-3" />
                 </a>
               )}
@@ -1187,9 +1188,9 @@ function KeyStep({
         <div className="flex items-start gap-3 rounded-lg bg-muted/50 p-4">
           <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div>
-            <div className="text-sm font-medium text-foreground">Your key is stored securely.</div>
+            <div className="text-sm font-medium text-foreground">{t("appsTools.keyStoredSecurely", { defaultValue: "你的密钥会被安全存储。" })}</div>
             <div className="text-xs text-muted-foreground">
-              You can replace it anytime from this app’s page.
+              {t("appsToolsResidual.replaceKeyAnytime")}
             </div>
           </div>
         </div>
@@ -1197,15 +1198,15 @@ function KeyStep({
 
       <div className="mt-8 flex items-center justify-between">
         <Button variant="ghost" onClick={onBack} disabled={submitting}>
-          Back
+          {t("appsTools.back")}
         </Button>
         <div className="flex items-center gap-3">
           <span className="hidden text-xs text-muted-foreground sm:inline">
-            We’ll check the key before turning anything on.
+            {t("appsToolsResidual.checkBeforeEnableKey")}
           </span>
           <Button onClick={onConnect} disabled={submitting || !allFilled}>
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {submitting ? "Checking…" : "Connect"}
+            {submitting ? t("appsTools.checking", { defaultValue: "检查中…" }) : t("appsTools.connect")}
           </Button>
         </div>
       </div>
@@ -1306,46 +1307,46 @@ function ActionsStep({
         </span>
         <div>
           <div className="text-lg font-bold text-foreground">
-            Connected to {appName} — it offers {total} {total === 1 ? "action" : "actions"}.
+            {t("appsToolsResidual.connectedOffers", { app: appName, count: total })}
           </div>
           <div className="text-sm text-muted-foreground">
-            Read-only actions are on. Anything that can change something starts off — turn on the ones you want.
+            {t("appsToolsResidual.readOnlyOnHint")}
           </div>
         </div>
       </div>
 
       <ActionGroup
-        title="Read only"
-        hint="these can look but not change anything"
+        title={t("appsToolsResidual.readOnly")}
+        hint={t("appsToolsResidual.readOnlyHint")}
         actions={readOnly}
         enabled={enabled}
         onToggle={onToggle}
-        bulkLabel="Turn all off"
+        bulkLabel={t("appsToolsResidual.turnAllOff")}
         onBulk={() => onBulk(readOnly.map((a) => a.catalogEntryId), false)}
         askFirstLevels={askFirstLevels}
       />
 
       <ActionGroup
-        title="Can make changes"
-        hint="these change something in another app"
+        title={t("appsToolsResidual.canMakeChanges")}
+        hint={t("appsToolsResidual.canMakeChangesHint")}
         actions={canMakeChanges}
         enabled={enabled}
         onToggle={onToggle}
-        bulkLabel="Turn all on"
+        bulkLabel={t("appsToolsResidual.turnAllOn")}
         onBulk={() => onBulk(canMakeChanges.map((a) => a.catalogEntryId), true)}
         askFirstLevels={askFirstLevels}
       />
 
       <div className="flex items-center justify-between pt-1">
         <Button variant="ghost" onClick={onBack}>
-          Back
+            {t("appsTools.back")}
         </Button>
         <div className="flex items-center gap-3">
           <span className="hidden text-xs text-muted-foreground sm:inline">
-            If {appName} adds new actions later, they start off until you review them.
+            {t("appsTools.newActionsStartOff", { defaultValue: "如果 {{name}} 之后增加新操作，它们会先保持关闭，等待你审核。", name: appName })}
           </span>
           <Button onClick={onContinue} disabled={enabledCount === 0}>
-            Continue with {enabledCount} {enabledCount === 1 ? "action" : "actions"} on
+            {t("appsTools.continueWithActions", { defaultValue: "继续，启用 {{count}} 个操作", count: enabledCount })}
           </Button>
         </div>
       </div>
@@ -1383,8 +1384,8 @@ function WhoStep({
   return (
     <div className="mx-auto max-w-xl">
       <div className="rounded-2xl border border-border bg-card p-8">
-        <h2 className="text-xl font-bold tracking-tight">Who can use {appName}?</h2>
-        <p className="mt-1 text-sm text-muted-foreground">You can change this later from the app’s page.</p>
+        <h2 className="text-xl font-bold tracking-tight">{t("appsToolsResidual.whoCanUse", { app: appName })}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("appsTools.changeLater", { defaultValue: "之后可以在应用页面修改。" })}</p>
 
         <div className="mt-6 space-y-3">
           <button
@@ -1398,13 +1399,13 @@ function WhoStep({
             <Radio selected={access === "all"} />
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-foreground">All agents</span>
+                <span className="font-bold text-foreground">{t("appsTools.allowAllAgents")}</span>
                 <span className="rounded-full bg-foreground px-2 py-0.5 text-(length:--text-nano) font-bold text-background">
-                  Recommended
+                  {t("appsToolsResidual.recommended")}
                 </span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Anyone you’ve added to Paperclip can use {appName} in their tasks. This is what most teams want.
+                {t("appsToolsResidual.allAgentsUseHint", { app: appName })}
               </p>
             </div>
           </button>
@@ -1419,8 +1420,8 @@ function WhoStep({
           >
             <Radio selected={access === "specific"} />
             <div className="flex-1">
-              <span className="font-semibold text-foreground">Only specific agents</span>
-              <p className="mt-1 text-xs text-muted-foreground">Tick the agents who can use {appName}.</p>
+              <span className="font-semibold text-foreground">{t("appsTools.selectedAgents")}</span>
+              <p className="mt-1 text-xs text-muted-foreground">{t("appsToolsResidual.tickAgents", { app: appName })}</p>
             </div>
           </button>
 
@@ -1438,7 +1439,7 @@ function WhoStep({
 
       <div className="mt-6 flex items-center justify-between">
         <Button variant="ghost" onClick={onBack}>
-          Back
+          {t("appsTools.back")}
         </Button>
         <Button onClick={onContinue} disabled={!canFinish}>
           Continue to install
@@ -1495,9 +1496,9 @@ export function InstallStep({
   return (
     <div className="mx-auto max-w-xl">
       <div className="rounded-2xl border border-border bg-card p-8">
-        <h2 className="text-xl font-bold tracking-tight">Install {appName} tools?</h2>
+        <h2 className="text-xl font-bold tracking-tight">{t("appsToolsResidual.installTools", { app: appName })}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Access is permission. Install decides whose runs actually carry these tools.
+          {t("appsToolsResidual.installPermissionHint")}
         </p>
 
         <div className="mt-5">
@@ -1517,9 +1518,9 @@ export function InstallStep({
           >
             <Radio selected={installMode === "none"} />
             <div>
-              <span className="font-semibold text-foreground">Not yet</span>
+              <span className="font-semibold text-foreground">{t("appsTools.notYet", { defaultValue: "暂不安装" })}</span>
               <p className="mt-1 text-xs text-muted-foreground">
-                Keep {appName} permitted only. You can install it later from the app or agent page.
+                {t("appsToolsResidual.notYetInstallHint", { app: appName })}
               </p>
             </div>
           </button>
@@ -1534,8 +1535,8 @@ export function InstallStep({
           >
             <Radio selected={installMode === "specific"} />
             <div className="flex-1">
-              <span className="font-semibold text-foreground">Specific agents</span>
-              <p className="mt-1 text-xs text-muted-foreground">Tick the agents that should load {appName} every run.</p>
+              <span className="font-semibold text-foreground">{t("appsTools.selectedAgents")}</span>
+              <p className="mt-1 text-xs text-muted-foreground">{t("appsToolsResidual.tickInstallAgents", { app: appName })}</p>
             </div>
           </button>
 
@@ -1561,7 +1562,7 @@ export function InstallStep({
           >
             <Radio selected={installMode === "all"} />
             <div>
-              <span className="font-semibold text-foreground">All agents</span>
+              <span className="font-semibold text-foreground">{t("appsTools.allowAllAgents")}</span>
               <p className="mt-1 text-xs text-muted-foreground">{INSTALL_ALL_WARNING}</p>
             </div>
           </button>
@@ -1580,7 +1581,7 @@ export function InstallStep({
         </Button>
         <Button onClick={onFinish} disabled={submitting || !canFinish}>
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {submitting ? "Finishing..." : "Finish setup"}
+          {submitting ? t("appsTools.finishing", { defaultValue: "完成中…" }) : t("appsTools.finishSetup", { defaultValue: "完成设置" })}
         </Button>
       </div>
     </div>
@@ -1618,10 +1619,10 @@ function SuccessStep({
   onDone: () => void;
 }) {
   const installSummary = installMode === "all"
-    ? "Installed on all agents"
+    ? t("appsTools.installedAllAgents", { defaultValue: "已安装到所有 Agent" })
     : installMode === "specific"
-      ? `${installCount} ${installCount === 1 ? "agent" : "agents"} installed`
-      : "Permitted only";
+      ? t("appsTools.installedCount", { defaultValue: "已安装到 {{count}} 个 Agent", count: installCount })
+      : t("appsTools.permittedOnly", { defaultValue: "仅允许使用" });
   return (
     <div className="mx-auto max-w-md py-10 text-center">
       <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-emerald-500 bg-emerald-500/10">
@@ -1629,20 +1630,20 @@ function SuccessStep({
       </div>
       <div className="mt-6 flex items-center justify-center gap-2">
         <AppLogo name={appName} logoUrl={logoUrl} size={28} />
-        <h2 className="text-2xl font-bold tracking-tight">{appName} is ready.</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{appName} {t("appsTools.isReady", { defaultValue: "已准备就绪。" })}</h2>
       </div>
       <p className="mt-2 text-sm text-muted-foreground">
         {installMode === "none"
-          ? "Agents can use it after you install it on their Tools tab."
-          : "Installed agents will load it on their next run."}
+          ? t("appsTools.installOnToolsHint", { defaultValue: "在 Agent 的工具标签页安装后即可使用。" })
+          : t("appsTools.installedNextRun", { defaultValue: "已安装的 Agent 会在下次运行时加载。" })}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        {enabledCount} {enabledCount === 1 ? "action" : "actions"} on ·{" "}
-        {access === "all" ? "All agents can use it" : "Specific agents can use it"} · {installSummary}
+        {t("appsTools.actionsEnabledSummary", { defaultValue: "已启用 {{count}} 个操作", count: enabledCount })} ·{" "}
+        {access === "all" ? t("appsTools.allAgentsCanUse", { defaultValue: "所有 Agent 都可以使用" }) : t("appsTools.specificAgentsCanUse", { defaultValue: "指定 Agent 可以使用" })} · {installSummary}
       </p>
       <div className="mt-8">
         <Button size="lg" className="px-10" onClick={onDone}>
-          Done
+          {t("appsTools.done", { defaultValue: "完成" })}
         </Button>
       </div>
     </div>

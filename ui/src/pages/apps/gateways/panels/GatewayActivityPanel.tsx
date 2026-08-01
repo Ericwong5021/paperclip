@@ -5,13 +5,14 @@ import { toolsApi, type ToolAuditOutcome, type ToolGatewayActivityEvent } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState, RelativeTime } from "@/pages/tools/shared";
 import { cn } from "@/lib/utils";
+import { t } from "@/i18n";
 
 const OUTCOME_LABEL: Record<ToolAuditOutcome, string> = {
-  allowed: "Allowed",
-  blocked: "Blocked",
-  asked_first: "Ask first",
-  waiting: "Waiting",
-  failed: "Failed",
+  allowed: t("appsToolsResidual.allowed"),
+  blocked: t("appsToolsResidual.blockedAudit"),
+  asked_first: t("appsToolsResidual.askedFirst"),
+  waiting: t("appsToolsResidual.waitingAudit"),
+  failed: t("appsToolsResidual.failedAudit"),
   unknown: "—",
 };
 
@@ -66,11 +67,11 @@ export function GatewayActivityPanel({
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Every call through this gateway in the last 7 days, with why it was allowed, blocked, or paused.
+        {t("appsToolsResidual.gatewayActivityHint")}
       </p>
       {events.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No calls have gone through this gateway yet.
+          {t("appsToolsResidual.gatewayNoCalls")}
         </div>
       ) : (
         <ul className="divide-y divide-border rounded-lg border border-border">

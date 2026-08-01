@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { normalizeSearchText } from "@/lib/searchable-select";
 import { cn } from "@/lib/utils";
+import { t, useTranslation } from "@/i18n";
 
 interface SecretOption extends SearchableSelectOption {
   kind?: "secret" | "folder" | "back";
@@ -25,7 +26,7 @@ function statusBadge(status: SecretStatus | undefined) {
   if (!status || status === "active") return null;
   return (
     <Badge variant="outline" className="ml-auto text-(length:--text-nano) font-normal text-muted-foreground">
-      {status}
+      {t(`forms.environment.${status}`, { defaultValue: status })}
     </Badge>
   );
 }
@@ -107,7 +108,7 @@ function buildFolderGroup(
     options.push({
       key: `folder-up-${pathKey(currentPath)}`,
       value: folderValue(parentPath),
-      label: "Up one folder",
+      label: t("forms.environment.upOneFolder"),
       title: pathLabel(parentPath),
       searchText: pathLabel(parentPath),
       kind: "back",
@@ -119,7 +120,7 @@ function buildFolderGroup(
 
   return {
     id: "browse-secrets",
-    label: currentPath.length > 0 ? pathLabel(currentPath) : "Browse secrets",
+    label: currentPath.length > 0 ? pathLabel(currentPath) : t("forms.environment.browseSecrets"),
     options,
   };
 }
@@ -154,6 +155,7 @@ export function SecretPicker({
   triggerClassName,
   disablePortal,
 }: SecretPickerProps) {
+  useTranslation();
   const [currentPathKey, setCurrentPathKey] = useState("");
   const boundSecret = useMemo(
     () => secrets.find((secret) => secret.id === secretId) ?? null,
@@ -171,13 +173,13 @@ export function SecretPicker({
     if (boundMissing) {
       result.push({
         id: "current-missing",
-        label: "Current",
+        label: t("forms.environment.current"),
         options: [
           {
             key: `missing-${secretId}`,
             value: secretId,
-            label: `Missing secret (${secretId.slice(0, 8)}…)`,
-            title: `Missing secret (${secretId})`,
+            label: t("forms.environment.missingSecret", { id: secretId.slice(0, 8) }),
+            title: t("forms.environment.missingSecret", { id: secretId }),
             missing: true,
             disabled: true,
           },
@@ -191,7 +193,7 @@ export function SecretPicker({
     if (recent.length > 0) {
       result.push({
         id: "recently-used",
-        label: "Recently used",
+        label: t("forms.environment.recentlyUsed"),
         options: recent.map((secret) => ({
           key: `recent-${secret.id}`,
           value: secret.id,
@@ -207,7 +209,7 @@ export function SecretPicker({
 
     result.push({
       id: "all-secrets",
-      label: recent.length > 0 ? "All secrets" : undefined,
+      label: recent.length > 0 ? t("forms.environment.allSecrets") : undefined,
       options: secrets.map((secret) => ({
         key: `all-${secret.id}`,
         value: secret.id,
@@ -253,9 +255,9 @@ export function SecretPicker({
       deriveGroups={deriveGroups}
       disabled={disabled}
       disablePortal={disablePortal}
-      placeholder="Select secret…"
-      searchPlaceholder="Search secrets…"
-      emptyMessage="No matching secrets"
+      placeholder={t("forms.secret.selectSecret")}
+      searchPlaceholder={t("forms.secret.searchSecrets")}
+      emptyMessage={t("forms.secret.noMatching")}
       triggerClassName={cn(
         "h-(--sz-34px) min-h-(--sz-34px) font-mono text-sm",
         boundMissing && "border-destructive text-destructive",
@@ -264,7 +266,7 @@ export function SecretPicker({
       )}
       renderValue={(option) => {
         if (!option) {
-          return <span className="text-muted-foreground">Select secret…</span>;
+          return <span className="text-muted-foreground">{t("forms.secret.selectSecret")}</span>;
         }
         if (option.missing) {
           return (
@@ -326,7 +328,7 @@ export function SecretPicker({
                 Create secret <span className="font-mono">&ldquo;{query.trim()}&rdquo;</span>…
               </span>
             ) : (
-              <span>Create new secret…</span>
+              <span>{t("forms.secret.createTitle")}…</span>
             )}
           </span>
         ),

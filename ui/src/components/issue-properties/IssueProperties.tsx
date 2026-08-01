@@ -91,6 +91,7 @@ import { PropertyChip, PropertyRow, PropertySection } from "./primitives";
 import { IssueCasesPanel } from "../IssueCasesPanel";
 import { ExpandRelationListButton, RemovableIssueReferencePill } from "./relation-controls";
 import { Badge } from "@/components/ui/badge";
+import { t, useTranslation } from "@/i18n";
 
 function TruncatedCopyable({ value, icon: Icon }: { value: string; icon: ComponentType<{ className?: string }> }) {
   const [copied, setCopied] = useState(false);
@@ -161,6 +162,7 @@ export function IssueProperties({
   onCheckMonitorNow,
   checkingMonitorNow = false,
 }: IssuePropertiesProps) {
+  useTranslation();
   const { selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
   const companyId = issue.companyId ?? selectedCompanyId;
@@ -342,7 +344,7 @@ export function IssueProperties({
     onError: (error) => {
       setUnarchiveErrorMessage(error instanceof Error && error.message.trim().length > 0
         ? error.message
-        : "Failed to unarchive this issue. Please try again.");
+        : t("taskDetail.unarchiveFailed", { defaultValue: "Failed to unarchive this issue. Please try again." }));
     },
   });
 
@@ -361,7 +363,7 @@ export function IssueProperties({
   };
 
   const projectName = (id: string | null) => {
-    if (!id) return id?.slice(0, 8) ?? "None";
+    if (!id) return id?.slice(0, 8) ?? t("taskDetail.none");
     const project = orderedProjects.find((p) => p.id === id);
     return project?.name ?? id.slice(0, 8);
   };
@@ -393,7 +395,7 @@ export function IssueProperties({
   const controlWorkspaceRuntime = useMutation({
     mutationFn: (request: WorkspaceRuntimeControlRequest) => {
       const workspaceId = issue.currentExecutionWorkspace?.id ?? issue.executionWorkspaceId;
-      if (!workspaceId) throw new Error("This task is not attached to a workspace.");
+      if (!workspaceId) throw new Error(t("taskDetail.notAttachedWorkspace", { defaultValue: "This task is not attached to a workspace." }));
       return executionWorkspacesApi.controlRuntimeCommands(workspaceId, request.action, request);
     },
     onSuccess: (result, request) => {
@@ -409,17 +411,17 @@ export function IssueProperties({
       setRuntimeActionErrorMessage(null);
       setRuntimeActionMessage(
         request.action === "run"
-          ? "Workspace job completed."
+          ? t("taskDetail.workspaceJobCompleted", { defaultValue: "Workspace job completed." })
           : request.action === "stop"
-            ? "Workspace service stopped."
+            ? t("taskDetail.workspaceServiceStopped", { defaultValue: "Workspace service stopped." })
             : request.action === "restart"
-              ? "Workspace service restarted."
-              : "Workspace service started.",
+              ? t("taskDetail.workspaceServiceRestarted", { defaultValue: "Workspace service restarted." })
+              : t("taskDetail.workspaceServiceStarted", { defaultValue: "Workspace service started." }),
       );
     },
     onError: (error) => {
       setRuntimeActionMessage(null);
-      setRuntimeActionErrorMessage(error instanceof Error ? error.message : "Failed to control workspace commands.");
+      setRuntimeActionErrorMessage(error instanceof Error ? error.message : t("taskDetail.workspaceControlFailed", { defaultValue: "Failed to control workspace commands." }));
     },
   });
   const pendingWorkspaceRuntimeAction = controlWorkspaceRuntime.isPending ? controlWorkspaceRuntime.variables ?? null : null;
@@ -580,7 +582,7 @@ export function IssueProperties({
   };
   const assigneeOptionsTrigger = (() => {
     if (assigneeOverrideLane === "cheap") {
-      return <span className="text-sm">Cheap model</span>;
+      return <span className="text-sm">{t("agentDetail.cheapModel")}</span>;
     }
     if (assigneeOverrideLane === "custom") {
       const details = [
@@ -588,7 +590,7 @@ export function IssueProperties({
         assigneeOverrideThinkingEffort,
         assigneeOverrideChrome ? "Chrome" : "",
       ].filter(Boolean);
-      const summary = details.length > 0 ? `Override · ${details.join(" · ")}` : "Override · adapter options";
+      const summary = details.length > 0 ? `${t("taskDetail.override", { defaultValue: "Override" })} · ${details.join(" · ")}` : t("taskDetail.overrideAdapterOptions", { defaultValue: "Override · adapter options" });
       return (
         <span
           className="min-w-0 truncate text-sm"
@@ -598,13 +600,13 @@ export function IssueProperties({
         </span>
       );
     }
-    return <span className="text-sm text-muted-foreground">Primary model</span>;
+    return <span className="text-sm text-muted-foreground">{t("agentDetail.primaryModel")}</span>;
   })();
   const assigneeOptionsContent = supportsAssigneeOverrides ? (
     <div className="w-full space-y-3 p-2">
       <div className="space-y-1.5">
-        <div className="text-xs text-muted-foreground">Model lane</div>
-        <div className="flex w-full overflow-hidden rounded-md border border-border" role="radiogroup" aria-label="Model lane">
+        <div className="text-xs text-muted-foreground">{t("taskDetail.modelLane", { defaultValue: "Model lane" })}</div>
+        <div className="flex w-full overflow-hidden rounded-md border border-border" role="radiogroup" aria-label={t("taskDetail.modelLane", { defaultValue: "Model lane" })}>
           {(["primary", ...(assigneeSupportsCheapLane ? (["cheap"] as const) : ([] as const)), "custom"] as const).map((lane) => (
             <button
               key={lane}
@@ -617,43 +619,43 @@ export function IssueProperties({
               )}
               onClick={() => setAssigneeOverrideLane(lane)}
             >
-              {lane === "primary" ? "Primary" : lane === "cheap" ? "Cheap" : "Override"}
+              {lane === "primary" ? t("taskDetail.primary", { defaultValue: "Primary" }) : lane === "cheap" ? t("taskDetail.cheap", { defaultValue: "Cheap" }) : t("taskDetail.override", { defaultValue: "Override" })}
             </button>
           ))}
         </div>
         {assigneeOverrideLane === "cheap" ? (
           <p className="text-xs text-muted-foreground">
-            Sends <code>modelProfile: "cheap"</code>{" "}
+            {t("taskDetail.sendsProfile")} <code>modelProfile: "cheap"</code>{" "}
             {assigneeCheapProfile?.adapterConfig && typeof (assigneeCheapProfile.adapterConfig as Record<string, unknown>).model === "string"
-              ? <>· adapter default <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
+              ? <>· {t("agentDetail.adapterDefault")} <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
               : assigneeCheapProfile
-                ? <>· uses the agent&apos;s configured cheap profile</>
-                : <>· falls back to the primary model if no cheap profile is configured</>}
+                ? <>· {t("taskDetail.usesConfiguredCheap", { defaultValue: "uses the agent's configured cheap profile" })}</>
+                : <>· {t("taskDetail.fallsBackPrimary", { defaultValue: "falls back to the primary model if no cheap profile is configured" })}</>}
           </p>
         ) : null}
         {assigneeOverrideLane === "custom" ? (
           <p className="text-xs text-muted-foreground">
-            Task-level model override — replaces the agent&apos;s primary model for this issue.
+            {t("taskDetail.taskModelOverride", { defaultValue: "Task-level model override replaces the agent's primary model for this issue." })}
           </p>
         ) : null}
       </div>
       {assigneeOverrideLane === "custom" ? (
         <>
           <div className="space-y-1.5">
-            <div className="text-xs text-muted-foreground">Model</div>
+            <div className="text-xs text-muted-foreground">{t("agentDetail.model")}</div>
             <InlineEntitySelector
               value={assigneeOverrideModel}
               options={modelOverrideOptions}
-              placeholder="Default model"
+              placeholder={t("agentDetail.default") + " " + t("agentDetail.model")}
               disablePortal
-              noneLabel="Default model"
-              searchPlaceholder="Search models..."
-              emptyMessage="No models found."
+              noneLabel={`${t("agentDetail.default")} ${t("agentDetail.model")}`}
+              searchPlaceholder={t("agentDetail.searchModels")}
+              emptyMessage={t("agentDetail.noModelsFound")}
               onChange={(model) => updateAssigneeOverrideConfig({ model: model || undefined })}
             />
           </div>
           <div className="space-y-1.5">
-            <div className="text-xs text-muted-foreground">Thinking effort</div>
+            <div className="text-xs text-muted-foreground">{t("agentDetail.thinkingEffort")}</div>
             <div className="flex items-center gap-1.5 flex-wrap">
               {thinkingEffortOptionsFor(assigneeAdapterType).map((option) => (
                 <button
@@ -671,7 +673,7 @@ export function IssueProperties({
           </div>
           {assigneeAdapterType === "claude_local" ? (
             <div className="flex items-center justify-between rounded-md border border-border px-2 py-1.5">
-              <div className="text-xs text-muted-foreground">Enable Chrome (--chrome)</div>
+              <div className="text-xs text-muted-foreground">{t("taskDetail.enableChrome", { defaultValue: "Enable Chrome (--chrome)" })}</div>
               <ToggleSwitch
                 checked={assigneeOverrideChrome}
                 onCheckedChange={(next) => updateAssigneeOverrideConfig({ chrome: next ? true : undefined })}
@@ -685,15 +687,15 @@ export function IssueProperties({
     <div className="w-full space-y-2 p-2">
       <p className="text-xs text-muted-foreground">
         {assignee
-          ? "This assignee's adapter does not expose editable task overrides."
-          : "Select a compatible assignee agent to edit these overrides."}
+          ? t("taskDetail.noEditableOverrides", { defaultValue: "This assignee's adapter does not expose editable task overrides." })
+          : t("taskDetail.selectCompatibleAssignee", { defaultValue: "Select a compatible assignee agent to edit these overrides." })}
       </p>
       <button
         type="button"
         className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
         onClick={() => updateAssigneeAdapterOverrides(null)}
       >
-        Clear adapter options
+        {t("taskDetail.clearAdapterOptions", { defaultValue: "Clear adapter options" })}
       </button>
     </div>
   );
@@ -784,7 +786,7 @@ export function IssueProperties({
       return agentName(value.slice("agent:".length)) ?? value.slice("agent:".length, "agent:".length + 8);
     }
     if (value.startsWith("user:")) {
-      return userLabel(value.slice("user:".length)) ?? "User";
+      return userLabel(value.slice("user:".length)) ?? t("taskDetail.user", { defaultValue: "User" });
     }
     return value;
   };
@@ -792,10 +794,10 @@ export function IssueProperties({
   const approverLabel = approverValues.map((value) => executionParticipantLabel(value)).join(", ");
   const reviewerTrigger = reviewerValues.length > 0
     ? <span className="text-sm truncate min-w-0" title={reviewerLabel}>{reviewerLabel}</span>
-    : <span className="text-sm text-muted-foreground">None</span>;
+    : <span className="text-sm text-muted-foreground">{t("taskDetail.none")}</span>;
   const approverTrigger = approverValues.length > 0
     ? <span className="text-sm truncate min-w-0" title={approverLabel}>{approverLabel}</span>
-    : <span className="text-sm text-muted-foreground">None</span>;
+    : <span className="text-sm text-muted-foreground">{t("taskDetail.none")}</span>;
   const nextRunnableExecutionStage = (() => {
     if (issue.executionState?.status === "changes_requested" && issue.executionState.currentStageType) {
       return issue.executionState.currentStageType;
@@ -812,13 +814,13 @@ export function IssueProperties({
         className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
         onClick={() => onUpdate({ status: "in_review" })}
       >
-        {stageType === "review" ? "Run review now" : "Run approval now"}
+        {stageType === "review" ? t("taskDetail.runReviewNow", { defaultValue: "Run review now" }) : t("taskDetail.runApprovalNow", { defaultValue: "Run approval now" })}
       </button>
     </PropertyRow>
   );
   const currentExecutionLabel = (() => {
     if (!issue.executionState?.currentStageType) return null;
-    const stageLabel = issue.executionState.currentStageType === "review" ? "Review" : "Approval";
+    const stageLabel = issue.executionState.currentStageType === "review" ? t("taskDetail.review") : t("taskDetail.approval", { defaultValue: "Approval" });
     const participant = issue.executionState.currentParticipant;
     const participantLabel = participant
       ? (participant.type === "agent"
@@ -916,26 +918,26 @@ export function IssueProperties({
         </span>
       ) : null}
       {issue.watchdog.status === "disabled" ? (
-        <span className="shrink-0 text-xs text-muted-foreground">(disabled)</span>
+        <span className="shrink-0 text-xs text-muted-foreground">({t("taskDetail.disabled", { defaultValue: "disabled" })})</span>
       ) : null}
     </span>
   ) : (
-    <span className="text-sm text-muted-foreground">None</span>
+    <span className="text-sm text-muted-foreground">{t("taskDetail.none")}</span>
   );
   const watchdogContent = (
     <div className="space-y-3 p-2">
       <div className="space-y-1.5">
-        <div className="text-xs font-medium text-foreground">Watchdog agent</div>
+        <div className="text-xs font-medium text-foreground">{t("taskDetail.watchdogAgent", { defaultValue: "Watchdog agent" })}</div>
         <InlineEntitySelector
           value={watchdogAgentInput}
           options={watchdogAgentOptions}
-          placeholder="Select agent"
-          noneLabel="No watchdog agent"
-          searchPlaceholder="Search agents..."
-          emptyMessage="No agents found."
+          placeholder={t("taskDetail.selectAgent", { defaultValue: "Select agent" })}
+          noneLabel={t("taskDetail.noWatchdogAgent", { defaultValue: "No watchdog agent" })}
+          searchPlaceholder={t("taskDetail.searchAgents", { defaultValue: "Search agents..." })}
+          emptyMessage={t("taskDetail.noAgentsFound", { defaultValue: "No agents found." })}
           onChange={setWatchdogAgentInput}
           renderTriggerValue={(option) => {
-            if (!option) return <span className="text-muted-foreground">Select agent</span>;
+            if (!option) return <span className="text-muted-foreground">{t("taskDetail.selectAgent", { defaultValue: "Select agent" })}</span>;
             const agent = (agents ?? []).find((candidate) => candidate.id === option.id);
             return (
               <>
@@ -957,21 +959,21 @@ export function IssueProperties({
       </div>
       <div className="space-y-1.5">
         <div className="text-xs font-medium text-foreground">
-          Instructions <span className="font-normal text-muted-foreground">(optional)</span>
+          {t("taskDetail.instructions")} <span className="font-normal text-muted-foreground">（{t("taskDetail.optional", { defaultValue: "optional" })}）</span>
         </div>
         <Textarea
           value={watchdogInstructionsInput}
           onChange={(event) => setWatchdogInstructionsInput(event.target.value)}
-          placeholder="What should the watchdog watch for and how should it keep work moving?"
+          placeholder={t("taskDetail.watchdogInstructionsPlaceholder", { defaultValue: "What should the watchdog watch for and how should it keep work moving?" })}
           rows={4}
           className="text-xs"
         />
       </div>
       {watchdogIssueRef ? (
         <div className="text-xs text-muted-foreground">
-          Watchdog task:{" "}
+          {t("taskDetail.watchdogTaskLabel", { defaultValue: "Watchdog task" })}:{" "}
           <Link to={`/issues/${watchdogIssueRef.id}`} className="text-primary hover:underline">
-            {watchdogIssueRef.identifier ?? "View task"}
+            {watchdogIssueRef.identifier ?? t("taskDetail.viewTask", { defaultValue: "View task" })}
           </Link>
         </div>
       ) : null}
@@ -987,7 +989,7 @@ export function IssueProperties({
           disabled={deleteWatchdog.isPending || (!issue.watchdog && !watchdogAgentInput)}
           onClick={removeWatchdog}
         >
-          {deleteWatchdog.isPending ? "Removing…" : "Remove"}
+          {deleteWatchdog.isPending ? t("taskDetail.removing") : t("taskDetail.remove")}
         </button>
         <Button
           type="button"
@@ -996,7 +998,7 @@ export function IssueProperties({
           disabled={!watchdogAgentInput || upsertWatchdog.isPending}
           onClick={saveWatchdog}
         >
-          {upsertWatchdog.isPending ? "Saving…" : issue.watchdog ? "Update" : "Set watchdog"}
+          {upsertWatchdog.isPending ? t("taskDetail.saving") : issue.watchdog ? t("taskDetail.update") : t("taskDetail.setWatchdog")}
         </Button>
       </div>
     </div>
@@ -1057,16 +1059,16 @@ export function IssueProperties({
   const monitorPrimary = monitorNextCheckAt
     ? formatMonitorEtaLabel(monitorNextCheckAt, monitorNow)
     : monitorState?.status === "cleared"
-      ? "Cleared"
-      : "None";
+      ? t("taskDetail.cleared", { defaultValue: "Cleared" })
+      : t("taskDetail.none");
   const monitorSecondary = monitorNextCheckAt
     ? monitorIsDueNow
-      ? "checking momentarily…"
-      : `${formatMonitorAbsolute(monitorNextCheckAt, {}, monitorNow)}${monitorIsOverdue ? " · fires on next tick" : monitorAttemptCount > 0 ? ` · Attempt ${monitorAttemptCount}` : ""}`
+      ? t("taskDetail.checkingMomentarily", { defaultValue: "checking momentarily…" })
+      : `${formatMonitorAbsolute(monitorNextCheckAt, {}, monitorNow)}${monitorIsOverdue ? ` · ${t("taskDetail.firesNextTick", { defaultValue: "fires on next tick" })}` : monitorAttemptCount > 0 ? ` · ${t("taskDetail.attempt", { count: monitorAttemptCount, defaultValue: "Attempt {{count}}" })}` : ""}`
     : monitorState?.status === "cleared"
       ? [
-          monitorLastTriggeredAt ? `last checked ${timeAgo(monitorLastTriggeredAt)}` : null,
-          monitorAttemptCount > 0 ? `after attempt ${monitorAttemptCount}` : null,
+          monitorLastTriggeredAt ? `${t("taskDetail.lastChecked", { defaultValue: "last checked" })} ${timeAgo(monitorLastTriggeredAt)}` : null,
+          monitorAttemptCount > 0 ? t("taskDetail.afterAttempt", { count: monitorAttemptCount, defaultValue: "after attempt {{count}}" }) : null,
         ].filter(Boolean).join(" · ")
       : null;
   const monitorTrigger = (
@@ -1096,36 +1098,36 @@ export function IssueProperties({
           onPointerDown={(event) => event.stopPropagation()}
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <span className="text-sm font-semibold">Monitor</span>
-            {monitorAttemptCount > 0 ? <span className="text-xs text-muted-foreground">Attempt {monitorAttemptCount}</span> : null}
+            <span className="text-sm font-semibold">{t("taskDetail.monitor", { defaultValue: "Monitor" })}</span>
+            {monitorAttemptCount > 0 ? <span className="text-xs text-muted-foreground">{t("taskDetail.attempt", { count: monitorAttemptCount, defaultValue: "Attempt {{count}}" })}</span> : null}
           </div>
           <div className="space-y-3 px-4 py-3 text-left">
             <div>
-              <div className="text-xs text-muted-foreground">Next check</div>
+              <div className="text-xs text-muted-foreground">{t("taskDetail.nextCheck", { defaultValue: "Next check" })}</div>
               <div className="text-sm">{formatMonitorAbsoluteFull(monitorNextCheckAt)}</div>
               <div className="text-xs text-muted-foreground">{monitorRelative}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Watching</div>
+              <div className="text-xs text-muted-foreground">{t("taskDetail.watching", { defaultValue: "Watching" })}</div>
               <div className="text-sm">{monitorServiceName ?? "—"}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Notes</div>
+              <div className="text-xs text-muted-foreground">{t("taskDetail.notes", { defaultValue: "Notes" })}</div>
               <div className="whitespace-normal text-sm">{monitorNotes ?? "—"}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Last triggered</div>
-              <div className="text-sm">{monitorLastTriggeredAt ? formatMonitorAbsoluteFull(monitorLastTriggeredAt) : "— not yet triggered"}</div>
+              <div className="text-xs text-muted-foreground">{t("taskDetail.lastTriggered", { defaultValue: "Last triggered" })}</div>
+              <div className="text-sm">{monitorLastTriggeredAt ? formatMonitorAbsoluteFull(monitorLastTriggeredAt) : `— ${t("taskDetail.notYetTriggered", { defaultValue: "not yet triggered" })}`}</div>
             </div>
           </div>
           <div className="flex gap-2 border-t border-border px-4 py-3">
             {onCheckMonitorNow ? (
               <Button type="button" size="sm" variant="outline" disabled={checkingMonitorNow} onClick={() => { setMonitorDetailsOpen(false); onCheckMonitorNow(); }}>
-                {checkingMonitorNow ? "Checking…" : "Check now"}
+                {checkingMonitorNow ? t("taskDetail.checking") : t("taskDetail.checkNow")}
               </Button>
             ) : null}
-            <Button type="button" size="sm" variant="outline" onClick={() => { setMonitorDetailsOpen(false); setMonitorOpen(true); }}>Edit</Button>
-            <Button type="button" size="sm" variant="outline" onClick={() => { setMonitorDetailsOpen(false); clearMonitor(); }}>Clear</Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => { setMonitorDetailsOpen(false); setMonitorOpen(true); }}>{t("taskDetail.edit")}</Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => { setMonitorDetailsOpen(false); clearMonitor(); }}>{t("taskDetail.clear")}</Button>
           </div>
         </TooltipContent>
       ) : null}
@@ -1158,9 +1160,9 @@ export function IssueProperties({
   const scheduledRetryIsContinuation =
     scheduledRetry?.scheduledRetryReason === "max_turns_continuation";
   const scheduledRetryRelativeLabel = (() => {
-    if (!scheduledRetryRelative) return "Pending schedule";
-    const action = scheduledRetryIsContinuation ? "Continuation" : "Retry";
-    if (scheduledRetryRelative === "now") return `${action} due now`;
+    if (!scheduledRetryRelative) return t("taskDetail.pendingSchedule");
+    const action = scheduledRetryIsContinuation ? t("taskDetail.continuation") : t("taskDetail.retry");
+    if (scheduledRetryRelative === "now") return `${action} ${t("taskDetail.dueNow", { defaultValue: "due now" })}`;
     return `${action} ${scheduledRetryRelative}`;
   })();
   const scheduledRetryRetryNowSuccess = retryNow.isSuccess
@@ -1188,24 +1190,24 @@ export function IssueProperties({
     <div className="flex w-full flex-col gap-2 p-2 text-xs">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-foreground">
-          {scheduledRetryIsContinuation ? "Scheduled continuation" : "Scheduled retry"}
+          {scheduledRetryIsContinuation ? t("taskDetail.scheduledContinuation", { defaultValue: "Scheduled continuation" }) : t("taskDetail.scheduledRetry", { defaultValue: "Scheduled retry" })}
         </span>
         {scheduledRetryAttempt !== null ? (
           <span className="text-xs text-muted-foreground">
-            Attempt {scheduledRetryAttempt}
+            {t("taskDetail.attempt", { count: scheduledRetryAttempt, defaultValue: "Attempt {{count}}" })}
           </span>
         ) : null}
       </div>
       <dl className="grid grid-cols-(--gtc-15) gap-y-1">
         {scheduledRetryReasonLabel ? (
           <>
-            <dt className="text-muted-foreground">Reason</dt>
+            <dt className="text-muted-foreground">{t("taskDetail.reason")}</dt>
             <dd className="text-foreground">{scheduledRetryReasonLabel}</dd>
           </>
         ) : null}
         {scheduledRetryAbsolute ? (
           <>
-            <dt className="text-muted-foreground">Next attempt</dt>
+            <dt className="text-muted-foreground">{t("taskDetail.nextAttempt")}</dt>
             <dd className="text-foreground">
               {scheduledRetryAbsolute}
               {scheduledRetryRelative ? (
@@ -1216,7 +1218,7 @@ export function IssueProperties({
         ) : null}
         {scheduledRetry.retryOfRunId ? (
           <>
-            <dt className="text-muted-foreground">Replaces run</dt>
+            <dt className="text-muted-foreground">{t("taskDetail.replacesRun")}</dt>
             <dd className="text-foreground">
               <Link
                 to={`/agents/${scheduledRetry.agentId}/runs/${scheduledRetry.retryOfRunId}`}
@@ -1229,7 +1231,7 @@ export function IssueProperties({
         ) : null}
         {scheduledRetry.agentName ? (
           <>
-            <dt className="text-muted-foreground">Agent</dt>
+            <dt className="text-muted-foreground">{t("taskDetail.agent")}</dt>
             <dd className="text-foreground">
               <Link
                 to={`/agents/${scheduledRetry.agentId}`}
@@ -1242,7 +1244,7 @@ export function IssueProperties({
         ) : null}
         {scheduledRetry.error ? (
           <>
-            <dt className="text-muted-foreground">Last error</dt>
+            <dt className="text-muted-foreground">{t("taskDetail.lastError")}</dt>
             <dd className="text-foreground break-words">{scheduledRetry.error}</dd>
           </>
         ) : null}
@@ -1267,30 +1269,30 @@ export function IssueProperties({
           {retryNow.isPending ? (
             <span className="inline-flex items-center gap-1.5">
               <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-              Retrying…
+              {t("taskDetail.retrying")}
             </span>
           ) : scheduledRetryRetryNowSuccess ? (
             <span className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-              {retryNow.data?.outcome === "already_promoted" ? "Already promoted" : "Promoted"}
+              {retryNow.data?.outcome === "already_promoted" ? t("taskDetail.alreadyPromoted") : t("taskDetail.promoted")}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5">
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Retry now
+              {t("taskDetail.retryNow")}
             </span>
           )}
         </Button>
         <span className="text-right text-xs text-muted-foreground">
           {retryNow.isPending
-            ? "Promoting scheduled retry"
+            ? t("taskDetail.promotingScheduledRetry")
             : scheduledRetryRetryNowSuccess
               ? retryNow.data?.outcome === "already_promoted"
-                ? "Already promoted — run starting"
-                : "Promoted — run starting"
+                ? t("taskDetail.alreadyPromotedStarting")
+                : t("taskDetail.promotedStarting")
               : scheduledRetryIsContinuation
-                ? "Pulls continuation forward immediately"
-                : "Pulls retry forward immediately"}
+                ? t("taskDetail.pullContinuationForward")
+                : t("taskDetail.pullRetryForward")}
         </span>
       </div>
     </div>
@@ -1307,7 +1309,7 @@ export function IssueProperties({
         <input
           type="text"
           className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 text-xs"
-          placeholder="What should the agent re-check?"
+          placeholder={t("taskDetail.recheckPlaceholder", { defaultValue: "What should the agent re-check?" })}
           value={monitorNotesInput}
           onChange={(e) => setMonitorNotesInput(e.target.value)}
         />
@@ -1316,7 +1318,7 @@ export function IssueProperties({
         <input
           type="text"
           className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 text-xs"
-          placeholder="External service"
+          placeholder={t("taskDetail.externalService", { defaultValue: "External service" })}
           value={monitorServiceInput}
           onChange={(e) => setMonitorServiceInput(e.target.value)}
         />
@@ -1327,7 +1329,7 @@ export function IssueProperties({
             disabled={!monitorAtInput}
             onClick={saveMonitor}
           >
-            Schedule
+            {t("taskDetail.schedule")}
           </button>
           {issue.executionPolicy?.monitor ? (
             <button
@@ -1335,7 +1337,7 @@ export function IssueProperties({
               className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
               onClick={clearMonitor}
             >
-              Clear
+              {t("taskDetail.clear")}
             </button>
           ) : null}
         </div>
@@ -1377,18 +1379,18 @@ export function IssueProperties({
       )}
     </div>
   ) : (
-    <span className="text-sm text-muted-foreground">None</span>
+    <span className="text-sm text-muted-foreground">{t("taskDetail.none")}</span>
   );
   const labelsExtra = (issue.labelIds ?? []).length > 0 ? (
     <button
       type="button"
       className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
       onClick={() => setLabelsOpen(true)}
-      aria-label="Add label"
-      title="Add label"
+      aria-label={t("taskDetail.addLabel")}
+      title={t("taskDetail.addLabel")}
     >
       <Plus className="h-3 w-3" />
-      Add label
+      {t("taskDetail.addLabel")}
     </button>
   ) : undefined;
 
@@ -1396,7 +1398,7 @@ export function IssueProperties({
     <>
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Search labels..."
+        placeholder={t("taskDetail.searchLabels")}
         value={labelSearch}
         onChange={(e) => setLabelSearch(e.target.value)}
         autoFocus={!inline}
@@ -1435,7 +1437,7 @@ export function IssueProperties({
           />
           <input
             className="flex-1 px-2 py-1.5 text-xs bg-transparent outline-none rounded placeholder:text-muted-foreground/50"
-            placeholder="New label"
+            placeholder={t("taskDetail.newLabel")}
             value={newLabelName}
             onChange={(e) => setNewLabelName(e.target.value)}
           />
@@ -1451,7 +1453,7 @@ export function IssueProperties({
           }
         >
           <Plus className="h-3 w-3" />
-          {createLabel.isPending ? "Creating…" : "Create label"}
+          {createLabel.isPending ? t("taskDetail.creating") : t("taskDetail.createLabel")}
         </button>
       </div>
     </>
@@ -1465,7 +1467,7 @@ export function IssueProperties({
       <span className="min-w-0 truncate text-sm" title={assigneeUserLabel}>{assigneeUserLabel}</span>
     </>
   ) : (
-    <span className="text-sm text-muted-foreground">Unassigned</span>
+    <span className="text-sm text-muted-foreground">{t("taskDetail.unassigned")}</span>
   );
 
   // Grouped picker options (design surface 2): a board-users section and an
@@ -1477,7 +1479,7 @@ export function IssueProperties({
           kind: "user" as const,
           value: `user:${currentUserId}`,
           userId: currentUserId,
-          label: "Assign to me",
+          label: t("taskDetail.assignToMe", { defaultValue: "Assign to me" }),
           searchText: userLabel(currentUserId) ?? "",
         }]
       : []),
@@ -1486,7 +1488,7 @@ export function IssueProperties({
           kind: "user" as const,
           value: `user:${issue.createdByUserId}`,
           userId: issue.createdByUserId,
-          label: creatorUserLabel ? `Assign to ${creatorUserLabel}` : "Assign to requester",
+          label: creatorUserLabel ? t("taskDetail.assignTo", { name: creatorUserLabel, defaultValue: "Assign to {{name}}" }) : t("taskDetail.assignToRequester", { defaultValue: "Assign to requester" }),
           searchText: creatorUserLabel ?? "requester",
         }]
       : []),
@@ -1555,7 +1557,7 @@ export function IssueProperties({
   const visibleAgentOptions = agentAssigneeOptions.filter((option) =>
     matchesAssigneeSearch(option.label, option.searchText),
   );
-  const showNoAssigneeOption = matchesAssigneeSearch("No assignee", "");
+  const showNoAssigneeOption = matchesAssigneeSearch(t("taskDetail.noAssignee", { defaultValue: "No assignee" }), "");
   const sectionHeader = (text: string) => (
     <div className="px-2 pb-0.5 pt-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
       {text}
@@ -1586,29 +1588,29 @@ export function IssueProperties({
       ) : null}
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Search assignees..."
+        placeholder={t("taskDetail.searchAssignees")}
         value={assigneeSearch}
         onChange={(e) => setAssigneeSearch(e.target.value)}
         autoFocus={!inline}
       />
       <div className="max-h-56 overflow-y-auto overscroll-contain">
         {showNoAssigneeOption
-          ? renderAssigneeOption({ kind: "none", value: "", label: "No assignee", searchText: "" })
+          ? renderAssigneeOption({ kind: "none", value: "", label: t("taskDetail.noAssignee", { defaultValue: "No assignee" }), searchText: "" })
           : null}
         {visibleAgentOptions.length > 0 ? (
           <>
-            {sectionHeader("Agents")}
+            {sectionHeader(t("agentDetail.agents", { defaultValue: "Agents" }))}
             {visibleAgentOptions.map((option) => renderAssigneeOption(option))}
           </>
         ) : null}
         {visibleUserOptions.length > 0 ? (
           <>
-            {sectionHeader("Board users")}
+            {sectionHeader(t("taskDetail.boardUsers", { defaultValue: "Board users" }))}
             {visibleUserOptions.map((option) => renderAssigneeOption(option))}
           </>
         ) : null}
         {!showNoAssigneeOption && visibleAgentOptions.length === 0 && visibleUserOptions.length === 0 ? (
-          <div className="px-2 py-2 text-xs text-muted-foreground">No matches.</div>
+          <div className="px-2 py-2 text-xs text-muted-foreground">{t("taskDetail.noMatches")}</div>
         ) : null}
       </div>
     </>
@@ -1624,7 +1626,7 @@ export function IssueProperties({
     <>
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder={`Search ${stageType === "review" ? "reviewers" : "approvers"}...`}
+        placeholder={t(stageType === "review" ? "taskDetail.searchReviewers" : "taskDetail.searchApprovers", { defaultValue: stageType === "review" ? "Search reviewers..." : "Search approvers..." })}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         autoFocus={!inline}
@@ -1637,7 +1639,7 @@ export function IssueProperties({
           )}
           onClick={onClear}
         >
-          No {stageType === "review" ? "reviewers" : "approvers"}
+          {t(stageType === "review" ? "taskDetail.noReviewers" : "taskDetail.noApprovers", { defaultValue: stageType === "review" ? "No reviewers" : "No approvers" })}
         </button>
         {currentUserId && (
           <button
@@ -1648,7 +1650,7 @@ export function IssueProperties({
             onClick={() => toggleExecutionParticipant(stageType, `user:${currentUserId}`)}
           >
             <User className="h-3 w-3 shrink-0 text-muted-foreground" />
-            Assign to me
+            {t("taskDetail.assignToMe", { defaultValue: "Assign to me" })}
           </button>
         )}
         {issue.createdByUserId && issue.createdByUserId !== currentUserId && (
@@ -1660,7 +1662,7 @@ export function IssueProperties({
             onClick={() => toggleExecutionParticipant(stageType, `user:${issue.createdByUserId}`)}
           >
             <User className="h-3 w-3 shrink-0 text-muted-foreground" />
-            {creatorUserLabel ? creatorUserLabel : "Requester"}
+            {creatorUserLabel ? creatorUserLabel : t("taskDetail.requester", { defaultValue: "Requester" })}
           </button>
         )}
         {otherUserOptions
@@ -1715,11 +1717,11 @@ export function IssueProperties({
       <span className="text-sm truncate min-w-0" title={projectName(issue.projectId)}>{projectName(issue.projectId)}</span>
     </>
   ) : (
-    <span className="text-sm text-muted-foreground">None</span>
+    <span className="text-sm text-muted-foreground">{t("taskDetail.none")}</span>
   );
   const projectPickerOptions = orderItemsBySelectedAndRecent(
     [
-      { id: "", kind: "none" as const, name: "No project", color: null as string | null },
+      { id: "", kind: "none" as const, name: t("taskDetail.noProject", { defaultValue: "No project" }), color: null as string | null },
       ...orderedProjects.map((project) => ({
         id: project.id,
         kind: "project" as const,
@@ -1736,7 +1738,7 @@ export function IssueProperties({
     <>
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Search projects..."
+        placeholder={t("taskDetail.searchProjects")}
         value={projectSearch}
         onChange={(e) => setProjectSearch(e.target.value)}
         autoFocus={!inline}
@@ -1847,7 +1849,7 @@ export function IssueProperties({
       {parentTitle}
     </span>
   ) : (
-    <span className="text-sm text-muted-foreground">None</span>
+    <span className="text-sm text-muted-foreground">{t("taskDetail.none")}</span>
   );
   const parentLink = issue.parentId ? (
     <Link
@@ -1878,7 +1880,7 @@ export function IssueProperties({
     <>
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Search tasks..."
+        placeholder={t("taskDetail.searchTasks")}
         value={parentSearch}
         onChange={(e) => setParentSearch(e.target.value)}
         autoFocus={!inline}
@@ -1949,11 +1951,11 @@ export function IssueProperties({
     <>
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Search tasks..."
+        placeholder={t("taskDetail.searchTasks")}
         value={blockedBySearch}
         onChange={(e) => setBlockedBySearch(e.target.value)}
         autoFocus={!inline}
-        aria-label="Search tasks to add as blockers"
+        aria-label={t("taskDetail.searchTasksToAddBlockers")}
       />
       <div className="max-h-48 overflow-y-auto overscroll-contain">
         <button
@@ -1990,9 +1992,9 @@ export function IssueProperties({
           );
         })}
         {blockerOptionsLoading ? (
-          <div className="px-2 py-2 text-xs text-muted-foreground">Searching tasks...</div>
+          <div className="px-2 py-2 text-xs text-muted-foreground">{t("taskDetail.searchingTasks")}</div>
         ) : blockerOptions.length === 0 ? (
-          <div className="px-2 py-2 text-xs text-muted-foreground">No matching tasks.</div>
+          <div className="px-2 py-2 text-xs text-muted-foreground">{t("taskDetail.noMatchingTasks")}</div>
         ) : null}
       </div>
     </>
@@ -2010,8 +2012,8 @@ export function IssueProperties({
 
   const propertiesBody = (
     <div>
-      <PropertySection title="Triage" first>
-        <PropertyRow label="Status">
+      <PropertySection title={t("taskDetail.triage")} first>
+        <PropertyRow label={t("taskDetail.status")}>
           <StatusIcon
             status={issue.status}
             size="lg"
@@ -2021,7 +2023,7 @@ export function IssueProperties({
           />
         </PropertyRow>
 
-        <PropertyRow label="Priority">
+          <PropertyRow label={t("taskDetail.priority")}>
           <PriorityIcon
             priority={issue.priority}
             onChange={(priority) => onUpdate({ priority })}
@@ -2031,7 +2033,7 @@ export function IssueProperties({
 
         <PropertyPicker
           inline={inline}
-          label="Labels"
+          label={t("taskDetail.labels")}
           open={labelsOpen}
           onOpenChange={(open) => { setLabelsOpen(open); if (!open) setLabelSearch(""); }}
           triggerContent={labelsTrigger}
@@ -2044,7 +2046,7 @@ export function IssueProperties({
 
         <PropertyPicker
           inline={inline}
-          label="Assignee"
+          label={t("taskDetail.assignee")}
           open={assigneeOpen}
           onOpenChange={(open) => { setAssigneeOpen(open); if (!open) { setAssigneeSearch(""); setPendingAssignee(null); } }}
           triggerContent={assigneeTrigger}
@@ -2065,7 +2067,7 @@ export function IssueProperties({
         {showAssigneeAdapterOptions ? (
           <PropertyPicker
             inline={inline}
-            label="Model"
+            label={t("agentDetail.model")}
             open={assigneeOptionsOpen}
             onOpenChange={setAssigneeOptionsOpen}
             triggerContent={assigneeOptionsTrigger}
@@ -2078,7 +2080,7 @@ export function IssueProperties({
 
         <PropertyPicker
           inline={inline}
-          label="Project"
+          label={t("taskDetail.project")}
           open={projectOpen}
           onOpenChange={(open) => { setProjectOpen(open); if (!open) setProjectSearch(""); }}
           triggerContent={projectTrigger}
@@ -2098,10 +2100,10 @@ export function IssueProperties({
         </PropertyPicker>
       </PropertySection>
 
-      <PropertySection title="Relationships">
+      <PropertySection title={t("taskDetail.relationships")}>
         <PropertyPicker
           inline={inline}
-          label="Parent"
+          label={t("taskDetail.parent")}
           open={parentOpen}
           onOpenChange={(open) => {
             setParentOpen(open);
@@ -2117,7 +2119,7 @@ export function IssueProperties({
 
         {inline ? (
           <div>
-            <PropertyRow label="Blocked by" wrap>
+            <PropertyRow label={t("taskDetail.blockedBy")} wrap>
               {visibleBlockedByRelations.map((relation) => (
                 <RemovableIssueReferencePill key={relation.id} issue={relation} onRemove={removeBlockedBy} />
               ))}
@@ -2135,7 +2137,7 @@ export function IssueProperties({
             )}
           </div>
         ) : (
-          <PropertyRow label="Blocked by" wrap>
+          <PropertyRow label={t("taskDetail.blockedBy")} wrap>
             {visibleBlockedByRelations.map((relation) => (
               <RemovableIssueReferencePill key={relation.id} issue={relation} onRemove={removeBlockedBy} />
             ))}
@@ -2161,7 +2163,7 @@ export function IssueProperties({
           </PropertyRow>
         )}
 
-        <PropertyRow label="Blocking" wrap>
+        <PropertyRow label={t("taskDetail.blocking", { defaultValue: "Blocking" })} wrap>
           {blockingIssues.length > 0 ? (
             <div className="flex flex-wrap items-center gap-1.5">
               {visibleBlockingIssues.map((relation) => (
@@ -2174,11 +2176,11 @@ export function IssueProperties({
               />
             </div>
           ) : (
-            <span className="text-sm text-muted-foreground">None</span>
+            <span className="text-sm text-muted-foreground">{t("taskDetail.none")}</span>
           )}
         </PropertyRow>
 
-        <PropertyRow label="Sub-tasks" wrap>
+        <PropertyRow label={t("taskDetail.subTasks")} wrap>
           <div className="flex flex-wrap items-center gap-1.5">
             {childIssues.length > 0
               ? visibleChildIssues.map((child) => (
@@ -2197,14 +2199,14 @@ export function IssueProperties({
                 onClick={onAddSubIssue}
               >
                 <Plus className="h-3 w-3" />
-                Add sub-task
+                {t("taskDetail.addSubTask", { defaultValue: "Add sub-task" })}
               </button>
             ) : null}
           </div>
         </PropertyRow>
 
         {relatedTasks.length > 0 ? (
-          <PropertyRow label="Related tasks" wrap>
+          <PropertyRow label={t("taskDetail.relatedTasks", { defaultValue: "Related tasks" })} wrap>
             <div className="flex flex-wrap items-center gap-1.5">
               {visibleRelatedTasks.map((related) => (
                 <IssueReferencePill key={related.id} issue={related} />
@@ -2226,10 +2228,10 @@ export function IssueProperties({
         />
       </PropertySection>
 
-      <PropertySection title="Execution">
+      <PropertySection title={t("taskDetail.execution")}>
         <PropertyPicker
           inline={inline}
-          label="Reviewers"
+          label={t("taskDetail.reviewers", { defaultValue: "Reviewers" })}
           open={reviewersOpen}
           onOpenChange={(open) => { setReviewersOpen(open); if (!open) setReviewerSearch(""); }}
           triggerContent={reviewerTrigger}
@@ -2248,7 +2250,7 @@ export function IssueProperties({
 
         <PropertyPicker
           inline={inline}
-          label="Approvers"
+          label={t("taskDetail.approvers", { defaultValue: "Approvers" })}
           open={approversOpen}
           onOpenChange={(open) => { setApproversOpen(open); if (!open) setApproverSearch(""); }}
           triggerContent={approverTrigger}
@@ -2266,7 +2268,7 @@ export function IssueProperties({
         {nextRunnableExecutionStage === "approval" && approverValues.length > 0 ? runExecutionButton("approval") : null}
 
         {currentExecutionLabel && (
-          <PropertyRow label="Execution">
+          <PropertyRow label={t("taskDetail.execution")}>
             <span className="text-sm truncate min-w-0" title={currentExecutionLabel}>{currentExecutionLabel}</span>
           </PropertyRow>
         )}
@@ -2274,7 +2276,7 @@ export function IssueProperties({
         {showScheduledRetryRow && scheduledRetryContent ? (
           <PropertyPicker
             inline={inline}
-            label="Scheduled retry"
+            label={t("taskDetail.scheduledRetry", { defaultValue: "Scheduled retry" })}
             open={scheduledRetryOpen}
             onOpenChange={setScheduledRetryOpen}
             triggerContent={scheduledRetryTrigger}
@@ -2288,7 +2290,7 @@ export function IssueProperties({
 
         <PropertyPicker
           inline={inline}
-          label="Monitor"
+          label={t("taskDetail.monitor", { defaultValue: "Monitor" })}
           open={monitorOpen}
           onOpenChange={setMonitorOpen}
           triggerContent={monitorTrigger}
@@ -2301,7 +2303,7 @@ export function IssueProperties({
         {taskWatchdogsEnabled ? (
           <PropertyPicker
             inline={inline}
-            label="Watchdog"
+            label={t("taskDetail.watchdog", { defaultValue: "Watchdog" })}
             open={watchdogOpen}
             onOpenChange={setWatchdogOpen}
             triggerContent={watchdogTrigger}
@@ -2312,8 +2314,8 @@ export function IssueProperties({
                 <Link
                   to={`/issues/${watchdogIssueRef.id}`}
                   className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
-                  title="Open watchdog task"
-                  aria-label="Open watchdog task"
+                  title={t("taskDetail.openWatchdogTask")}
+                  aria-label={t("taskDetail.openWatchdogTask")}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ArrowUpRight className="h-3 w-3" />
@@ -2327,21 +2329,21 @@ export function IssueProperties({
       </PropertySection>
 
       {hasWorkspaceRuntimeControls || issue.currentExecutionWorkspace?.branchName || issue.currentExecutionWorkspace?.cwd || issue.executionWorkspaceId ? (
-        <PropertySection title="Workspace">
+        <PropertySection title={t("taskDetail.workspace")}>
           {showWorkspaceDetailLink && issue.executionWorkspaceId && (
-            <PropertyRow label="Workspace">
+            <PropertyRow label={t("taskDetail.workspace")}>
               <Link
                 to={`/execution-workspaces/${issue.executionWorkspaceId}`}
                 className="text-sm text-primary hover:underline inline-flex min-w-0 items-center gap-1.5"
               >
                 <HardDrive className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                View workspace
+                {t("taskDetail.viewWorkspace", { defaultValue: "View workspace" })}
                 <ArrowUpRight className="h-3 w-3 shrink-0" />
               </Link>
             </PropertyRow>
           )}
           {hasWorkspaceRuntimeControls && (
-            <PropertyRow label="Service">
+            <PropertyRow label={t("taskDetail.service", { defaultValue: "Service" })}>
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <WorkspaceRuntimeQuickControls
                   sections={workspaceRuntimeSections}
@@ -2362,7 +2364,7 @@ export function IssueProperties({
             </PropertyRow>
           )}
           {issue.currentExecutionWorkspace?.branchName && (
-            <PropertyRow label="Branch">
+            <PropertyRow label={t("taskDetail.branch", { defaultValue: "Branch" })}>
               <TruncatedCopyable
                 value={issue.currentExecutionWorkspace.branchName}
                 icon={GitBranch}
@@ -2370,7 +2372,7 @@ export function IssueProperties({
             </PropertyRow>
           )}
           {issue.currentExecutionWorkspace?.cwd && (
-            <PropertyRow label="Folder">
+            <PropertyRow label={t("taskDetail.folder", { defaultValue: "Folder" })}>
               <TruncatedCopyable
                 value={issue.currentExecutionWorkspace.cwd}
                 icon={FolderOpen}
@@ -2380,9 +2382,9 @@ export function IssueProperties({
         </PropertySection>
       ) : null}
 
-      <PropertySection title="About">
+      <PropertySection title={t("taskDetail.about")}>
         {originatingActor ? (
-          <PropertyRow label="Originating">
+          <PropertyRow label={t("taskDetail.originating", { defaultValue: "Originating" })}>
             {originatingActor.kind === "agent" ? (
               <Link
                 to={`/agents/${originatingActor.id}`}
@@ -2403,7 +2405,7 @@ export function IssueProperties({
                 />
                 {originatingViaAgentName ? (
                   <span className="shrink-0 truncate text-xs text-muted-foreground">
-                    via {originatingViaAgentName}
+                    {t("taskDetail.via", { defaultValue: "via" })} {originatingViaAgentName}
                   </span>
                 ) : null}
               </span>
@@ -2411,19 +2413,19 @@ export function IssueProperties({
           </PropertyRow>
         ) : null}
         {issue.startedAt && (
-          <PropertyRow label="Started">
+          <PropertyRow label={t("taskDetail.started", { defaultValue: "Started" })}>
             <span className="text-sm">{formatDateTime(issue.startedAt)}</span>
           </PropertyRow>
         )}
         {issue.completedAt && (
-          <PropertyRow label="Completed">
+          <PropertyRow label={t("taskDetail.completed")}>
             <span className="text-sm">{formatDateTime(issue.completedAt)}</span>
           </PropertyRow>
         )}
-        <PropertyRow label="Created">
+        <PropertyRow label={t("taskDetail.created")}>
           <span className="text-sm">{formatDateTime(issue.createdAt)}</span>
         </PropertyRow>
-        <PropertyRow label="Updated">
+        <PropertyRow label={t("taskDetail.updated")}>
           <span className="text-sm">{timeAgo(issue.updatedAt)}</span>
         </PropertyRow>
         {issue.archivedAt && issue.archivedByActorType === "agent" && issue.archivedByAgentId ? (
@@ -2431,7 +2433,7 @@ export function IssueProperties({
             const archivedByAgent = (agents ?? []).find((candidate) => candidate.id === issue.archivedByAgentId);
             const archivedByName = agentName(issue.archivedByAgentId);
             return (
-              <PropertyRow label="Archived">
+              <PropertyRow label={t("taskDetail.archived")}>
                 <div className="flex min-w-0 max-w-full flex-col items-start gap-1">
                   {/* The row label already reads "Archived", so the value shows just
                       the attributing agent (icon + name) — this gives the name the
@@ -2441,7 +2443,7 @@ export function IssueProperties({
                       truncation on genuinely long names is recoverable. */}
                   <span
                     className="flex min-w-0 max-w-full items-center gap-1.5 text-sm"
-                    title={`Archived by ${archivedByName} · ${formatDateTime(issue.archivedAt)}`}
+                      title={`${t("taskDetail.archivedBy", { defaultValue: "Archived by" })} ${archivedByName} · ${formatDateTime(issue.archivedAt)}`}
                   >
                     {archivedByAgent
                       ? <AgentIcon icon={archivedByAgent.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -2459,7 +2461,7 @@ export function IssueProperties({
                       disabled={unarchiveFromInbox.isPending}
                     >
                       <ArchiveRestore className="h-3 w-3" />
-                      {unarchiveFromInbox.isPending ? "Unarchiving…" : "Unarchive"}
+                      {unarchiveFromInbox.isPending ? t("taskDetail.unarchiving") : t("taskDetail.unarchive")}
                     </button>
                   </div>
                   {unarchiveErrorMessage ? (
@@ -2473,7 +2475,7 @@ export function IssueProperties({
           })()
         ) : null}
         {issue.requestDepth > 0 && (
-          <PropertyRow label="Depth">
+          <PropertyRow label={t("taskDetail.depth")}>
             <span className="text-sm font-mono">{issue.requestDepth}</span>
           </PropertyRow>
         )}
@@ -2496,7 +2498,7 @@ export function IssueProperties({
     return (
       <>
         {paneHeaderSlot
-          ? createPortal(<span className="text-sm font-medium">Properties</span>, paneHeaderSlot)
+          ? createPortal(<span className="text-sm font-medium">{t("taskDetail.properties")}</span>, paneHeaderSlot)
           : null}
         {propertiesBody}
       </>
@@ -2528,16 +2530,16 @@ export function IssueProperties({
       }
     >
       <TabsTrigger value="properties" className={paneTabTriggerClass}>
-        Properties
+        {t("taskDetail.properties")}
       </TabsTrigger>
       {hasPlanTab ? (
         <TabsTrigger value="plans" className={paneTabTriggerClass}>
-          Plan
+          {t("taskDetail.planTab")}
         </TabsTrigger>
       ) : null}
       {hasArtifactsTab ? (
         <TabsTrigger value="artifacts" className={paneTabTriggerClass}>
-          Artifacts
+          {t("taskDetail.issueArtifactsTab")}
         </TabsTrigger>
       ) : null}
     </TabsList>

@@ -119,6 +119,7 @@ import { keepPreviousDataForSameQueryTail } from "../lib/query-placeholder-data"
 import { useProjectOrder } from "../hooks/useProjectOrder";
 import { shouldDisableRerunForPermission, type LivenessRetryKind } from "../lib/pipeline-liveness";
 import { cn, formatNumber, relativeTime } from "../lib/utils";
+import { t, useTranslation } from "@/i18n";
 import { issueStatusText, issueStatusTextDefault } from "../lib/status-colors";
 import { formatBytes } from "../lib/issue-output";
 import { createIssueDetailPath, withIssueDetailHeaderSeed } from "../lib/issueDetailBreadcrumb";
@@ -207,25 +208,25 @@ export function buildBatchPayload(rows: DraftRow[], fields: PipelineIntakeField[
 export function plainBatchError(result: Extract<PipelineBatchIngestResult, { ok: false }>) {
   const details = result.error?.details ?? {};
   if (details.code === "required_field" && typeof details.label === "string") {
-    return `${details.label} is required.`;
+    return t("workflow.pipelines.requiredField", { label: details.label });
   }
   if (details.code === "invalid_select_value" && typeof details.label === "string") {
-    return `${details.label} needs one of the available choices.`;
+    return t("workflow.pipelines.invalidSelectValue", { label: details.label });
   }
   if (details.code === "duplicate_batch_key") {
-    return "This item duplicates another row.";
+    return t("workflow.pipelines.duplicate");
   }
   if (details.code === "blocker_cycle") {
-    return "This item waits on another row that also waits on it.";
+    return t("workflow.pipelines.cycle");
   }
   if (typeof result.error?.message === "string" && result.error.message.trim()) {
     return result.error.message.replace(/^Pipeline\s+/i, "");
   }
-  return "This item needs attention before it can be submitted.";
+  return t("workflow.pipelines.itemNeedsAttention");
 }
 
 function itemCountLabel(count: number) {
-  return `${count} ${count === 1 ? "item" : "items"}`;
+  return t("workflow.pipelines.itemsCount", { count, suffix: count === 1 ? "" : "s" });
 }
 
 function currentStageAutomation(stage: PipelineStage) {
@@ -289,29 +290,29 @@ function retryCleanupItems(plan: PipelineAutomationRetryPlan): Array<{
   return [
     {
       id: "retireDirectChildren",
-      label: "Retire direct child items",
-      description: "Hide child outputs from normal pipeline boards and parent rollups.",
+      label: t("workflow.pipelines.retireDirectChildren"),
+      description: t("workflow.pipelines.retireDirectChildrenDescription"),
       count: plan.effectCounts.directChildren,
       disabled: plan.effectCounts.directChildren === 0,
     },
     {
       id: "retireDescendants",
-      label: "Retire descendants",
-      description: "Hide downstream output items under those children.",
+      label: t("workflow.pipelines.retireDescendants"),
+      description: t("workflow.pipelines.retireDescendantsDescription"),
       count: plan.effectCounts.descendants,
       disabled: plan.effectCounts.descendants === 0,
     },
     {
       id: "cancelLinkedAutomationIssues",
-      label: "Cancel linked automation tasks",
-      description: "Cancel unfinished automation tasks superseded by the fresh retry.",
+      label: t("workflow.pipelines.cancelLinkedAutomationTasks"),
+      description: t("workflow.pipelines.cancelLinkedAutomationTasksDescription"),
       count: plan.effectCounts.linkedAutomationIssues,
       disabled: plan.effectCounts.linkedAutomationIssues === 0,
     },
     {
       id: "keepAuditHistory",
-      label: "Keep audit trail visible in item history",
-      description: "Record retry and retired outputs as history instead of deleting records.",
+      label: t("workflow.pipelines.keepAuditHistory"),
+      description: t("workflow.pipelines.keepAuditHistoryDescription"),
       required: true,
       disabled: true,
     },
@@ -337,9 +338,9 @@ function retryCleanupFromIds(ids: Set<string>): PipelineAutomationRetryCleanupOp
 function retryPrimaryActionLabel(plan: PipelineAutomationRetryPlan) {
   const retiredOutputCount = plan.effectCounts.directChildren + plan.effectCounts.descendants;
   if (retiredOutputCount > 0 && (plan.defaultCleanup.retireDirectChildren || plan.defaultCleanup.retireDescendants)) {
-    return `Retry and retire ${formatNumber(retiredOutputCount)} ${retiredOutputCount === 1 ? "item" : "items"}`;
+    return t("workflow.pipelines.retryAndRetire", { count: retiredOutputCount, suffix: retiredOutputCount === 1 ? "" : "s" });
   }
-  return plan.scope === "previous_stage" ? "Retry previous step" : "Re-run this step";
+  return plan.scope === "previous_stage" ? t("workflow.pipelines.retryPrevious") : t("workflow.pipelines.retryStep");
 }
 
 export function Pipelines() {
@@ -419,7 +420,7 @@ function descendantActiveWorkCount(value: { descendantActiveWorkCount?: number |
 }
 
 function formatLiveDownstream(count: number) {
-  return `${formatNumber(count)} live downstream`;
+  return t("workflow.pipelines.liveDownstream", { count });
 }
 
 function pipelineActivityTime(pipeline: PipelineListItem) {
@@ -563,25 +564,25 @@ export function buildPipelineTableRows(
 }
 
 function formatOpenItems(count: number) {
-  return `${formatNumber(count)} open`;
+  return `${formatNumber(count)} ${t("workflow.pipelines.openItems")}`;
 }
 
 function formatPipelineActivity(value: string | Date | null) {
-  if (!value) return "No activity";
+  if (!value) return t("workflow.pipelines.noActivity");
   const then = new Date(value).getTime();
-  if (!Number.isFinite(then)) return "No activity";
+  if (!Number.isFinite(then)) return t("workflow.pipelines.noActivity");
   const diffSeconds = Math.max(0, Math.round((Date.now() - then) / 1000));
-  if (diffSeconds < 60) return "just now";
+  if (diffSeconds < 60) return t("workflow.common.new");
   const diffMinutes = Math.round(diffSeconds / 60);
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+  if (diffMinutes < 60) return t("workflow.pipelines.minutesAgo", { count: diffMinutes });
   const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return diffHours === 1 ? "1 hr ago" : `${diffHours} hr ago`;
+  if (diffHours < 24) return diffHours === 1 ? t("workflow.pipelines.oneHourAgo") : t("workflow.pipelines.hoursAgo", { count: diffHours });
   const diffDays = Math.round(diffHours / 24);
-  if (diffDays === 1) return "yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 14) return "last week";
-  if (diffDays < 30) return `${Math.round(diffDays / 7)} weeks ago`;
-  return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (diffDays === 1) return t("workflow.pipelines.oneDayAgo");
+  if (diffDays < 7) return t("workflow.pipelines.daysAgo", { count: diffDays });
+  if (diffDays < 14) return t("workflow.common.history");
+  if (diffDays < 30) return t("workflow.pipelines.weeksAgo", { count: Math.round(diffDays / 7) });
+  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function PipelineStatusChip({ archivedAt }: { archivedAt: Date | string | null }) {
@@ -595,7 +596,7 @@ function PipelineStatusChip({ archivedAt }: { archivedAt: Date | string | null }
           : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300",
       )}
     >
-      {paused ? "Paused" : "Active"}
+      {paused ? t("workflow.pipelineSettings.pauseNewEntries") : t("workflow.pipelineSettings.active")}
     </Badge>
   );
 }
@@ -661,12 +662,12 @@ export function PipelinesIndexTable({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 border-y border-border py-4 lg:flex-row lg:items-center lg:justify-between">
         <label className="relative block w-full max-w-md">
-          <span className="sr-only">Search pipelines</span>
+          <span className="sr-only">{t("workflow.pipelines.search")}</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search pipelines"
+            placeholder={t("workflow.pipelines.search")}
             className="h-10 pl-9"
           />
         </label>
@@ -682,7 +683,7 @@ export function PipelinesIndexTable({
               )}
               disabled={!connectionsAvailable}
               onClick={() => onViewModeChange("nested")}
-              title="Nested view"
+              title={t("workflow.pipelines.nestedView")}
             >
               <ListTree className="h-3.5 w-3.5" />
             </button>
@@ -695,7 +696,7 @@ export function PipelinesIndexTable({
                   : "text-muted-foreground hover:text-foreground",
               )}
               onClick={() => onViewModeChange("flat")}
-              title="Flat list"
+              title={t("workflow.pipelines.flatList")}
             >
               <List className="h-3.5 w-3.5" />
             </button>
@@ -703,13 +704,13 @@ export function PipelinesIndexTable({
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" title="Sort">
+              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" title={t("workflow.common.sort")}>
                 <ArrowUpDown className="h-3.5 w-3.5" />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-48 p-0">
               <div className="space-y-0.5 p-2">
-                {PIPELINE_SORT_OPTIONS.map(([field, label]) => (
+                {PIPELINE_SORT_OPTIONS.map(([field]) => (
                   <button
                     key={field}
                     type="button"
@@ -719,7 +720,7 @@ export function PipelinesIndexTable({
                     )}
                     onClick={() => selectSort(field)}
                   >
-                    <span>{label}</span>
+                    <span>{t(`workflow.pipelines.sort${field === "name" ? "Name" : field === "activity" ? "LastActivity" : field === "review" ? "MostToReview" : field === "inMotion" ? "MostInMotion" : "MostOpenItems"}`)}</span>
                     {sortField === field && (
                       <span className="text-xs text-muted-foreground">{sortDir === "asc" ? "↑" : "↓"}</span>
                     )}
@@ -732,17 +733,17 @@ export function PipelinesIndexTable({
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState icon={Hexagon} message="No pipelines match your search." />
+        <EmptyState icon={Hexagon} message={t("workflow.pipelines.noMatch")} />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-(--sz-780px) border-collapse text-sm">
             <thead>
               <tr className="border-b border-border text-left text-(length:--text-micro) font-semibold uppercase tracking-widest text-muted-foreground">
-                <th className="py-2 pl-3 pr-4">Name</th>
-                <th className="px-4 py-2">Attention</th>
-                <th className="px-4 py-2">Open items</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Last activity</th>
+                <th className="py-2 pl-3 pr-4">{t("workflow.common.name")}</th>
+                <th className="px-4 py-2">{t("workflow.pipelines.attention")}</th>
+                <th className="px-4 py-2">{t("workflow.pipelines.openItems")}</th>
+                <th className="px-4 py-2">{t("workflow.common.status")}</th>
+                <th className="px-4 py-2">{t("workflow.pipelines.lastActivity")}</th>
               </tr>
             </thead>
             <tbody>
@@ -758,7 +759,7 @@ export function PipelinesIndexTable({
                           <button
                             type="button"
                             className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent/60 hover:text-foreground"
-                            aria-label={row.expanded ? `Collapse ${row.pipeline.name}` : `Expand ${row.pipeline.name}`}
+                            aria-label={row.expanded ? `${t("workflow.common.collapse")} ${row.pipeline.name}` : `${t("workflow.common.expand")} ${row.pipeline.name}`}
                             onClick={() => togglePipeline(row.pipeline.id)}
                           >
                             {row.expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -774,7 +775,7 @@ export function PipelinesIndexTable({
                             {row.pipeline.name}
                           </Link>
                           {row.parentPipelineName ? (
-                            <span className="ml-2 text-muted-foreground">under {row.parentPipelineName}</span>
+                            <span className="ml-2 text-muted-foreground">{t("workflow.common.pipeline")} {row.parentPipelineName}</span>
                           ) : row.pipeline.description ? (
                             <span className="ml-2 text-muted-foreground">- {row.pipeline.description}</span>
                           ) : null}
@@ -786,12 +787,12 @@ export function PipelinesIndexTable({
                         {attentionCount > 0 ? (
                           <span className="inline-flex items-center gap-1.5 font-semibold text-red-700 dark:text-red-400">
                             <span className="h-2 w-2 rounded-full bg-red-600" aria-hidden="true" />
-                            {formatNumber(attentionCount)} to review
+                            {formatNumber(attentionCount)} {t("workflow.pipelines.attention")}
                           </span>
                         ) : null}
                         {inMotionCount > 0 ? (
                           <span className="text-muted-foreground">
-                            {formatNumber(inMotionCount)} in motion
+                            {formatNumber(inMotionCount)} {t("workflow.pipelines.inMotion")}
                           </span>
                         ) : null}
                         {liveDownstreamCount > 0 ? (
@@ -811,7 +812,7 @@ export function PipelinesIndexTable({
             </tbody>
           </table>
           <p className="mt-4 text-sm text-muted-foreground">
-            Showing {formatNumber(rows.length)} of {formatNumber(filteredPipelines.length)}.
+            {t("workflow.common.selected")} {formatNumber(rows.length)}/{formatNumber(filteredPipelines.length)}
           </p>
         </div>
       )}
@@ -854,16 +855,16 @@ function NewPipelineDialog({
       <DialogContent>
         <form onSubmit={submit} className="space-y-4">
           <DialogHeader>
-            <DialogTitle>New pipeline</DialogTitle>
-            <DialogDescription>Name the pipeline and add a short description.</DialogDescription>
+            <DialogTitle>{t("workflow.pipelines.new")}</DialogTitle>
+            <DialogDescription>{t("workflow.pipelines.createDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <label className="block space-y-1.5 text-sm font-medium">
-              <span>Name</span>
+              <span>{t("workflow.common.name")}</span>
               <Input value={name} onChange={(event) => setName(event.target.value)} autoFocus />
             </label>
             <label className="block space-y-1.5 text-sm font-medium">
-              <span>Description</span>
+              <span>{t("workflow.common.description")}</span>
               <Textarea
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
@@ -874,10 +875,10 @@ function NewPipelineDialog({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-              Cancel
+              {t("workflow.common.cancel")}
             </Button>
             <Button type="submit" disabled={pending || !name.trim()}>
-              {pending ? "Creating..." : "Create pipeline"}
+              {pending ? t("workflow.common.creating") : t("workflow.pipelines.create")}
             </Button>
           </DialogFooter>
         </form>
@@ -897,6 +898,7 @@ export function pipelineKeyFromName(name: string) {
 }
 
 function PipelinesIndex() {
+  useTranslation();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -905,7 +907,7 @@ function PipelinesIndex() {
   const [viewMode, setViewMode] = useState<PipelineViewMode>("nested");
   const [newPipelineOpen, setNewPipelineOpen] = useState(false);
 
-  useEffect(() => setBreadcrumbs([{ label: "Pipelines" }]), [setBreadcrumbs]);
+  useEffect(() => setBreadcrumbs([{ label: t("workflow.common.pipelines") }]), [setBreadcrumbs]);
 
   const pipelinesQuery = useQuery({
     queryKey: selectedCompanyId ? queryKeys.pipelines.list(selectedCompanyId) : ["pipelines", "missing-company"],
@@ -941,7 +943,7 @@ function PipelinesIndex() {
   });
 
   if (!selectedCompanyId) {
-    return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">Select a company to view pipelines.</div>;
+    return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">{t("workflow.pipelines.noCompany")}</div>;
   }
   if (pipelinesQuery.isLoading) return <PageSkeleton />;
 
@@ -952,27 +954,27 @@ function PipelinesIndex() {
     <div className="w-full max-w-6xl px-6 py-8">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">Work</p>
-          <h1 className="text-2xl font-semibold text-foreground">Pipelines</h1>
+          <p className="text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{t("workflow.common.work")}</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t("workflow.common.pipelines")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {formatNumber(pipelines.length)} pipeline{pipelines.length === 1 ? "" : "s"}. Connected ones are grouped from upstream work into downstream work.
+            {formatNumber(pipelines.length)} {t("workflow.common.pipelines")}。{t("workflow.pipelines.builtFor")}
           </p>
         </div>
         <Button onClick={() => setNewPipelineOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          New pipeline
+          {t("workflow.pipelines.new")}
         </Button>
       </div>
 
       {pipelinesQuery.error ? (
-        <p className="mb-4 text-sm text-destructive">Could not load pipelines.</p>
+        <p className="mb-4 text-sm text-destructive">{t("workflow.pipelines.loadFailed")}</p>
       ) : null}
 
       {pipelines.length === 0 && !pipelinesQuery.error ? (
         <EmptyState
           icon={Hexagon}
-          message="No pipelines yet."
-          action="New pipeline"
+          message={t("workflow.pipelines.empty")}
+          action={t("workflow.pipelines.new")}
           onAction={() => setNewPipelineOpen(true)}
         />
       ) : (
@@ -994,7 +996,7 @@ function PipelinesIndex() {
         }}
         onSubmit={(data) => createPipeline.mutate(data)}
         pending={createPipeline.isPending}
-        error={createPipeline.error ? "Could not create the pipeline. Try a different name." : null}
+        error={createPipeline.error ? t("workflow.pipelines.createPipelineError") : null}
       />
     </div>
   );
@@ -1005,7 +1007,6 @@ function PipelinesIndex() {
 // ---------------------------------------------------------------------------
 
 const UNASSIGNED_STAGE_ID = "__pipeline_unassigned_stage";
-const UNASSIGNED_STAGE_NAME = "Unassigned";
 
 type BoardCase = PipelineCase & {
   activeWork?: PipelineCaseActiveWork | null;
@@ -1113,7 +1114,7 @@ export function createUnassignedStage(pipelineId: string): PipelineStage {
     id: UNASSIGNED_STAGE_ID,
     pipelineId,
     key: "__unassigned",
-    name: UNASSIGNED_STAGE_NAME,
+    name: t("workflow.pipelines.unassigned"),
     kind: "working",
     position: Number.MAX_SAFE_INTEGER,
     config: {},
@@ -1196,7 +1197,7 @@ export function groupCasesByBuiltFor(cases: BoardCase[]) {
     const key = parent?.case.id ?? PIPELINE_BOARD_UNGROUPED_KEY;
     const group = groups.get(key) ?? {
       key,
-      label: parent ? `${parent.pipeline.name}: ${parent.case.title}` : "No built-for item",
+      label: parent ? `${parent.pipeline.name}: ${parent.case.title}` : t("workflow.pipelines.noBuiltForItem"),
       href: parent ? `/pipelines/${parent.case.pipelineId}/items/${parent.case.id}` : null,
       cases: [],
     };
@@ -1257,17 +1258,17 @@ function PipelineCaseCard({
           {isWorking ? (
             <Badge variant="outline" className="relative border-emerald-400/40 bg-emerald-50 text-(length:--text-nano) text-emerald-700 dark:border-emerald-300/30 dark:bg-emerald-900/30 dark:text-emerald-300">
               <span className="absolute -left-1 -top-1 h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
-              Working
+              {t("workflow.pipelineSettings.working")}
             </Badge>
           ) : null}
           {hasNeedsAttention ? (
             <Badge variant="outline" className="border-amber-400/40 bg-amber-50 text-(length:--text-nano) text-amber-700 dark:border-amber-300/30 dark:bg-amber-900/25 dark:text-amber-300">
-              Needs attention
+              {t("workflow.pipelines.attention")}
             </Badge>
           ) : null}
           {hasChangedNotice ? (
             <Badge variant="outline" className="border-indigo-400/40 bg-indigo-50 text-(length:--text-nano) text-indigo-700 dark:border-indigo-300/30 dark:bg-indigo-900/25 dark:text-indigo-300">
-              This changed
+              {t("workflow.pipelines.itemChangedShort")}
             </Badge>
           ) : null}
           {liveDownstreamCount > 0 ? (
@@ -1279,7 +1280,7 @@ function PipelineCaseCard({
         </div>
         {childrenSummary != null ? (
           <p className="mt-1.5 text-xs text-muted-foreground">
-            Built from {formatNumber(childrenSummary)} {childrenSummary === 1 ? "item" : "items"}
+            {t("workflow.pipelines.builtFromItems", { count: childrenSummary, label: childrenSummary === 1 ? t("workflow.common.item") : t("workflow.common.items") })}
           </p>
         ) : null}
       </Link>
@@ -1324,7 +1325,7 @@ function PipelineBoardColumn({
   return (
     <div
       key={stage.id}
-      aria-label={`${stage.name} column`}
+      aria-label={t("workflow.pipelines.stageColumn", { name: stage.name })}
       className={cn(
         "flex min-w-(--sz-260px) max-w-(--sz-320px) shrink-0 flex-col rounded-md border",
         tone.outer,
@@ -1337,8 +1338,8 @@ function PipelineBoardColumn({
           {settingsHref ? (
             <Link
               to={settingsHref}
-              aria-label={`Edit ${stage.name} stage`}
-              title={`Edit ${stage.name} stage`}
+              aria-label={t("workflow.pipelines.editStage", { name: stage.name })}
+              title={t("workflow.pipelines.editStage", { name: stage.name })}
               className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/stage-header:opacity-100"
             >
               <Settings className="h-3.5 w-3.5" />
@@ -1346,11 +1347,11 @@ function PipelineBoardColumn({
           ) : null}
         </div>
         <span className="ml-2 flex shrink-0 items-center gap-2 text-xs">
-          <span>{cases.length} item{cases.length === 1 ? "" : "s"}</span>
+          <span>{t("workflow.pipelines.itemsCount", { count: cases.length, suffix: cases.length === 1 ? "" : "s" })}</span>
           {warningCount ? (
             <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300">
               <AlertTriangle className="h-3.5 w-3.5" />
-              {warningCount} warning{warningCount === 1 ? "" : "s"}
+              {t("workflow.pipelines.warningCount", { count: warningCount, suffix: warningCount === 1 ? "" : "s" })}
             </span>
           ) : null}
         </span>
@@ -1361,7 +1362,7 @@ function PipelineBoardColumn({
             <Link
               to={automationHref}
               className="inline-flex max-w-full items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-              title={`Edit ${stage.name} automation`}
+              title={t("workflow.pipelines.editAutomation", { name: stage.name })}
             >
               <AgentIcon icon={automationAgent.icon} className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{automationAgent.name}</span>
@@ -1371,10 +1372,10 @@ function PipelineBoardColumn({
             <Link
               to={`/pipelines/${breakdownTarget.pipelineId}`}
               className="inline-flex max-w-full items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-              title={`Breaks into ${breakdownTarget.name}`}
+              title={t("workflow.pipelines.breaksInto", { name: breakdownTarget.name })}
             >
               <span className="shrink-0">→</span>
-              <span className="truncate">Breaks into {breakdownTarget.name}</span>
+              <span className="truncate">{t("workflow.pipelines.breaksInto", { name: breakdownTarget.name })}</span>
             </Link>
           ) : null}
         </div>
@@ -1388,7 +1389,7 @@ function PipelineBoardColumn({
       >
         {isBlockedDropTarget ? (
           <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-(length:--text-micro) text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
-            This move skips the normal flow
+            {t("workflow.pipelines.skippedFlow")}
           </p>
         ) : null}
         <SortableContext items={sortableCaseIds} strategy={verticalListSortingStrategy}>
@@ -1404,7 +1405,7 @@ function PipelineBoardColumn({
                     ) : (
                       <span className="min-w-0 truncate">{group.label}</span>
                     )}
-                    <span className="shrink-0">{group.cases.length} item{group.cases.length === 1 ? "" : "s"}</span>
+                    <span className="shrink-0">{t("workflow.pipelines.itemsCount", { count: group.cases.length, suffix: group.cases.length === 1 ? "" : "s" })}</span>
                   </div>
                 ) : null}
                 {group.cases.map((item) => <PipelineCaseCard key={item.id} caseItem={item} />)}
@@ -1412,7 +1413,7 @@ function PipelineBoardColumn({
             ))
           ) : (
             <div className="rounded-md border border-dashed border-border px-3 py-8 text-center text-xs text-muted-foreground">
-              {onColumnEmpty ? onColumnEmpty(stage) : "Empty"}
+              {onColumnEmpty ? onColumnEmpty(stage) : t("workflow.common.none")}
             </div>
           )}
         </SortableContext>
@@ -1630,11 +1631,11 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
     },
     onError: (error) => {
       pushToast({
-        title: "Move blocked",
+        title: t("workflow.pipelines.moveBlocked"),
         body:
           error instanceof ApiError && error.status === 409
-            ? "This item changed while you were looking. The board has been refreshed."
-            : "The item could not be moved.",
+            ? t("workflow.pipelines.changed")
+            : t("workflow.pipelines.itemCouldNotMove"),
         tone: "error",
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.pipelines.detail(pipelineId) });
@@ -1675,8 +1676,8 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
     const targetStageKey = stageKeyById.get(targetStageId);
     if (!targetStageKey) return;
 
-    const sourceName = stageNameById.get(sourceStageId ?? "") ?? UNASSIGNED_STAGE_NAME;
-    const targetName = stageNameById.get(targetStageId) ?? UNASSIGNED_STAGE_NAME;
+    const sourceName = stageNameById.get(sourceStageId ?? "") ?? t("workflow.pipelines.unassigned");
+    const targetName = stageNameById.get(targetStageId) ?? t("workflow.pipelines.unassigned");
     setPendingMove({
       caseId: activeCase.id,
       caseVersion: activeCase.version ?? 1,
@@ -1702,21 +1703,21 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
 
   if (pipelineQuery.isLoading || casesQuery.isLoading) return <PageSkeleton />;
   if (!pipeline) {
-    return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">Pipeline not found.</div>;
+    return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">{t("workflow.pipelines.pipelineNotFound")}</div>;
   }
 
   if (orderedStages.length === 0) {
     return (
       <div className="mx-auto max-w-6xl space-y-4 px-6 py-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">Pipeline</p>
+          <p className="text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{t("workflow.common.pipeline")}</p>
           <h1 className="text-2xl font-semibold text-foreground">{pipeline.name}</h1>
-          <p className="text-sm text-muted-foreground">No stages are set up for this pipeline yet.</p>
+          <p className="text-sm text-muted-foreground">{t("workflow.pipelines.noStages")}</p>
         </div>
         <EmptyState
           icon={Hexagon}
-          message="Add stages in pipeline settings to enable the board."
-          action="Open settings"
+          message={t("workflow.pipelines.addStagesHint")}
+          action={t("workflow.pipelines.openSettings")}
           onAction={() => navigate(`/pipelines/${pipelineId}/settings`)}
         />
       </div>
@@ -1729,10 +1730,10 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
     <div className="w-full space-y-4 px-6 py-8">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">Pipeline</p>
+          <p className="text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{t("workflow.common.pipeline")}</p>
           <h1 className="text-2xl font-semibold text-foreground">{pipeline.name}</h1>
           {pipeline.description ? <p className="mt-1 text-sm text-muted-foreground">{pipeline.description}</p> : null}
-          <p className="mt-1 text-xs text-muted-foreground">{cases.length} total item{cases.length === 1 ? "" : "s"}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("workflow.pipelines.totalItems", { count: cases.length, suffix: cases.length === 1 ? "" : "s" })}</p>
           {fedByPipelines.length > 0 ? (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {fedByPipelines.map((source) => (
@@ -1751,13 +1752,13 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
           <Select value={groupBy} onValueChange={handleGroupByChange}>
-            <SelectTrigger className="h-9 w-(--sz-148px)" aria-label="Group by" title="Group by">
+            <SelectTrigger className="h-9 w-(--sz-148px)" aria-label={t("workflow.pipelines.groupBy")} title={t("workflow.pipelines.groupBy")}>
               <Layers className="h-4 w-4 text-muted-foreground" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              <SelectItem value="builtFor">Built for</SelectItem>
+              <SelectItem value="none">{t("workflow.common.none")}</SelectItem>
+              <SelectItem value="builtFor">{t("workflow.pipelines.builtFor")}</SelectItem>
             </SelectContent>
           </Select>
           <Button asChild>
@@ -1767,7 +1768,7 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
             </Link>
           </Button>
           <Button variant="outline" size="icon" asChild>
-            <Link to={`/pipelines/${pipelineId}/settings`} aria-label="Pipeline settings" title="Pipeline settings">
+            <Link to={`/pipelines/${pipelineId}/settings`} aria-label={t("workflow.common.settings")} title={t("workflow.common.settings")}>
               <Settings className="h-4 w-4" />
             </Link>
           </Button>
@@ -1824,7 +1825,7 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
                   isDragTargeted={isDragTargeted}
                   isDragBlocked={isDragBlocked}
                   onColumnEmpty={(columnStage) =>
-                    columnStage.id === UNASSIGNED_STAGE_ID ? "Unassigned items" : "Drop items here"
+                    columnStage.id === UNASSIGNED_STAGE_ID ? t("workflow.pipelines.unassignedItems") : t("workflow.pipelines.dropItems")
                   }
                 />
               );
@@ -1849,24 +1850,24 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {pendingMove?.allowed ? `Move ${pendingMove.itemTitle}?` : "This skips the normal flow"}
+              {pendingMove?.allowed ? t("workflow.pipelines.moveItemQuestion", { title: pendingMove.itemTitle }) : t("workflow.pipelines.skippedFlow")}
             </DialogTitle>
             <DialogDescription>
               {pendingMove?.allowed
-                ? `Move ${pendingMove.itemTitle} to ${pendingMove.targetName} yourself? Usually the agent suggests this when it is ready.`
+                ? t("workflow.pipelines.moveItemDescription", { title: pendingMove.itemTitle, target: pendingMove.targetName })
                 : pendingMove
-                  ? `${pendingMove.itemTitle} would jump from ${pendingMove.sourceName} to ${pendingMove.targetName}. Add a reason before overriding.`
-                  : "Review this move before continuing."}
+                  ? t("workflow.pipelines.overrideMoveDescription", { title: pendingMove.itemTitle, source: pendingMove.sourceName, target: pendingMove.targetName })
+                  : t("workflow.pipelines.reviewMoveDescription")}
             </DialogDescription>
           </DialogHeader>
           {pendingMove && !pendingMove.allowed ? (
             <label className="block space-y-1.5 text-sm font-medium">
-              <span>Reason</span>
+              <span>{t("workflow.pipelines.reason")}</span>
               <Textarea
                 value={overrideReason}
                 onChange={(event) => setOverrideReason(event.target.value)}
                 rows={3}
-                placeholder="Explain why this item should skip the normal flow."
+                placeholder={t("workflow.pipelines.requiredReason")}
                 autoFocus
               />
             </label>
@@ -1881,7 +1882,7 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
                 setOverrideReason("");
               }}
             >
-              Cancel
+              {t("workflow.common.cancel")}
             </Button>
             {pendingMove?.allowed ? (
               <Button
@@ -1895,7 +1896,7 @@ function PipelineBoard({ pipelineId }: { pipelineId: string }) {
                   })
                 }
               >
-                Move it
+                {t("workflow.pipelines.move")}
               </Button>
             ) : pendingMove ? (
               <Button
@@ -1933,7 +1934,7 @@ function NavigateToItem({ pipelineId, caseId }: { pipelineId: string; caseId: st
 }
 
 function NavigateMissingItem() {
-  return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">Item not found.</div>;
+  return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">{t("workflow.pipelines.itemNotFound")}</div>;
 }
 
 function LinkRedirect({ to }: { to: string }) {
@@ -2284,9 +2285,9 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Pipelines", href: "/pipelines" },
-      { label: pipeline.data?.name ?? detail?.pipeline.name ?? "Pipeline", href: `/pipelines/${pipelineId}` },
-      { label: detail?.case.title ?? "Item" },
+      { label: t("workflow.common.pipelines"), href: "/pipelines" },
+      { label: pipeline.data?.name ?? detail?.pipeline.name ?? t("workflow.common.pipeline"), href: `/pipelines/${pipelineId}` },
+      { label: detail?.case.title ?? t("workflow.common.item") },
     ]);
   }, [detail?.case.title, detail?.pipeline.name, pipeline.data?.name, pipelineId, setBreadcrumbs]);
 
@@ -2306,9 +2307,9 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
     },
     onSuccess: async () => {
       await invalidateItem();
-      pushToast({ title: "Conversation started", tone: "success" });
+      pushToast({ title: t("workflow.pipelines.conversationStarted"), tone: "success" });
     },
-    onError: () => pushToast({ title: "Could not start the conversation", tone: "error" }),
+    onError: () => pushToast({ title: t("workflow.pipelines.conversationStartFailed"), tone: "error" }),
   });
 
   // Body-document selection → "Start conversation & comment": returns the created issue so the
@@ -2319,7 +2320,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
       await invalidateItem();
       return ("issue" in result ? result.issue : null) ?? null;
     } catch {
-      pushToast({ title: "Could not start the conversation", tone: "error" });
+      pushToast({ title: t("workflow.pipelines.conversationStartFailed"), tone: "error" });
       return null;
     }
   }, [caseId, invalidateItem, pushToast]);
@@ -2390,7 +2391,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
 
   const handleConversationImageUpload = useCallback(async (file: File) => {
     if (!conversationIssueId || !conversationCompanyId) {
-      throw new Error("No active conversation issue is available for image uploads.");
+      throw new Error(t("workflow.pipelines.conversationImageUploadUnavailable"));
     }
     const attachment = await issuesApi.uploadAttachment(conversationCompanyId, conversationIssueId, file);
     return attachment.contentPath;
@@ -2398,7 +2399,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
 
   const handleConversationAttachImage = useCallback(async (file: File) => {
     if (!conversationIssueId || !conversationCompanyId) {
-      throw new Error("No active conversation issue is available for image attachments.");
+      throw new Error(t("workflow.pipelines.conversationImageAttachmentUnavailable"));
     }
     return issuesApi.uploadAttachment(conversationCompanyId, conversationIssueId, file);
   }, [conversationCompanyId, conversationIssueId]);
@@ -2470,20 +2471,20 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
     onSuccess: async (_result, variables) => {
       await invalidateItem();
       pushToast({
-        title: variables.resolution === "accept" ? "Move approved" : "Suggestion dismissed",
+        title: variables.resolution === "accept" ? t("workflow.pipelines.moveApproved") : t("workflow.pipelines.suggestionDismissed"),
         tone: "success",
       });
     },
-    onError: () => pushToast({ title: "Could not resolve the suggestion", tone: "error" }),
+    onError: () => pushToast({ title: t("workflow.pipelines.suggestionResolveFailed"), tone: "error" }),
   });
 
   const acknowledgeChange = useMutation({
     mutationFn: () => pipelinesApi.acknowledgeDrift(caseId, { expectedVersion: detail?.case.version }),
     onSuccess: async () => {
       await invalidateItem();
-      pushToast({ title: "Change acknowledged", tone: "success" });
+      pushToast({ title: t("workflow.pipelines.changeAcknowledged"), tone: "success" });
     },
-    onError: () => pushToast({ title: "Could not acknowledge the change", tone: "error" }),
+    onError: () => pushToast({ title: t("workflow.pipelines.changeAcknowledgeFailed"), tone: "error" }),
   });
 
   const previousRetryAvailability = useQuery({
@@ -2532,12 +2533,12 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
     onSuccess: async () => {
       setRetryDialogScope(null);
       await invalidateItem();
-      pushToast({ title: "Step automation re-run started", tone: "success" });
+      pushToast({ title: t("workflow.pipelines.stepAutomationRerunStarted"), tone: "success" });
     },
     onError: (error: unknown) => {
-      const message = error instanceof ApiError && error.message ? error.message : "Could not re-run this step.";
+      const message = error instanceof ApiError && error.message ? error.message : t("workflow.pipelines.stepRerunFailed");
       setRetryDialogError(message);
-      pushToast({ title: "Could not re-run this step", tone: "error" });
+      pushToast({ title: t("workflow.pipelines.stepRerunFailed"), tone: "error" });
     },
   });
 
@@ -2557,12 +2558,12 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
         queryClient.invalidateQueries({ queryKey: ["pipelines", "item", caseId, "automation-retry-plan"] }),
         queryClient.invalidateQueries({ queryKey: queryKeys.pipelines.caseChildren(caseId) }),
       ]);
-      pushToast({ title: "Retry started", tone: "success" });
+      pushToast({ title: t("workflow.pipelines.retryStarted"), tone: "success" });
     },
     onError: (error: unknown) => {
-      const message = error instanceof ApiError && error.message ? error.message : "Could not retry this automation.";
+      const message = error instanceof ApiError && error.message ? error.message : t("workflow.pipelines.retryFailed");
       setRetryDialogError(message);
-      pushToast({ title: "Could not retry this automation", tone: "error" });
+      pushToast({ title: t("workflow.pipelines.retryFailed"), tone: "error" });
     },
   });
 
@@ -2599,14 +2600,14 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
     onMutate: () => setLivenessRetryError(null),
     onSuccess: async () => {
       await invalidateItem();
-      pushToast({ title: "Retry started", tone: "success" });
+      pushToast({ title: t("workflow.pipelines.retryStarted"), tone: "success" });
     },
     onError: (error: unknown) => {
       const message = error instanceof ApiError && error.message
         ? error.message
-        : "Could not retry. Please try again.";
+        : t("workflow.pipelines.retryPleaseTryAgain");
       setLivenessRetryError(message);
-      pushToast({ title: "Could not retry the automation", tone: "error" });
+      pushToast({ title: t("workflow.pipelines.retryAutomationFailed"), tone: "error" });
     },
   });
 
@@ -2626,7 +2627,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
   );
   const moveItemToStage = useMutation({
     mutationFn: () => {
-      if (!selectedMoveStage || !detail?.case.version) throw new Error("Missing target stage");
+      if (!selectedMoveStage || !detail?.case.version) throw new Error(t("workflow.pipelines.missingTargetStage"));
       return pipelinesApi.transitionCase(caseId, {
         toStageKey: selectedMoveStage.key,
         expectedVersion: detail.case.version,
@@ -2638,26 +2639,26 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
       setMoveDialogOpen(false);
       setMoveStageKey("");
       await invalidateItem();
-      pushToast({ title: "Item moved", tone: "success" });
+      pushToast({ title: t("workflow.pipelines.itemMoved"), tone: "success" });
     },
-    onError: () => pushToast({ title: "Could not move the item", tone: "error" }),
+    onError: () => pushToast({ title: t("workflow.pipelines.itemMoveFailed"), tone: "error" }),
   });
   const removeItem = useMutation({
     mutationFn: () => {
-      if (!removeStage || !detail?.case.version) throw new Error("Missing removal stage");
+      if (!removeStage || !detail?.case.version) throw new Error(t("workflow.pipelines.missingRemovalStage"));
       return pipelinesApi.transitionCase(caseId, {
         toStageKey: removeStage.key,
         expectedVersion: detail.case.version,
-        reason: "Removed from the item detail page.",
+        reason: t("workflow.pipelines.removedFromDetail"),
       });
     },
     onSuccess: async () => {
       setRemoveDialogOpen(false);
       await invalidateItem();
-      pushToast({ title: "Item removed", tone: "success" });
+      pushToast({ title: t("workflow.pipelines.itemRemoved"), tone: "success" });
       navigate(`/pipelines/${pipelineId}`);
     },
-    onError: () => pushToast({ title: "Could not remove the item", tone: "error" }),
+    onError: () => pushToast({ title: t("workflow.pipelines.itemRemoveFailed"), tone: "error" }),
   });
 
   const reviewConfig = useMemo(
@@ -2720,7 +2721,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
 
   if (pipeline.isLoading || item.isLoading) return <PageSkeleton />;
   if (!detail || !pipeline.data) {
-    return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">Item not found.</div>;
+    return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">{t("workflow.pipelines.itemNotFound")}</div>;
   }
 
   const workReferences = extractWorkReferences(detail.case);
@@ -2761,14 +2762,14 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
         <Button asChild>
           <Link to={conversationIssuePath!} state={conversationIssueState} issuePrefetch={conversationIssueDetail.data ?? null}>
             <MessageSquare className="mr-2 h-4 w-4" />
-            Open conversation
+            {t("workflow.pipelineCasesTraining.openConversation")}
           </Link>
         </Button>
       )
     : (
         <Button onClick={() => startConversation.mutate()} disabled={startConversation.isPending}>
           <MessageSquare className="mr-2 h-4 w-4" />
-          {startConversation.isPending ? "Starting..." : "Start a conversation"}
+          {startConversation.isPending ? t("workflow.pipelines.starting") : t("workflow.pipelines.startConversation")}
         </Button>
       );
   const reviewPanel = detail.stage.kind === "review" && reviewConfig ? (
@@ -2789,7 +2790,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
       <div className="mb-6 grid gap-5 lg:grid-cols-(--gtc-45) lg:items-start lg:gap-8">
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <Link to="/pipelines" className="hover:text-foreground">Pipelines</Link>
+            <Link to="/pipelines" className="hover:text-foreground">{t("workflow.common.pipelines")}</Link>
             <ChevronRight className="h-3.5 w-3.5" />
             <Link to={`/pipelines/${pipelineId}`} className="hover:text-foreground">{pipeline.data.name}</Link>
           </div>
@@ -2837,14 +2838,14 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
             {primaryAction}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="Item actions">
+                <Button variant="outline" size="icon" aria-label={t("workflow.pipelines.itemActions")}>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   disabled={!stageAutomation || rerunCurrentStageAutomation.isPending || rerunBlockedByPermission}
-                  title={rerunBlockedByPermission ? "Permission still missing — request access first" : undefined}
+                  title={rerunBlockedByPermission ? t("workflow.pipelines.permissionRequestFirst") : undefined}
                   onSelect={(event) => {
                     event.preventDefault();
                     setRetryTargetStageId(null);
@@ -2856,7 +2857,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
                   ) : (
                     <CircleDot className="h-4 w-4" />
                   )}
-                  Re-run this step
+                  {t("workflow.pipelines.retryStep")}
                 </DropdownMenuItem>
                 {previousRetryPlan?.allowed ? (
                   <DropdownMenuItem
@@ -2872,7 +2873,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
                     ) : (
                       <ArrowUpDown className="h-4 w-4" />
                     )}
-                    Retry previous step...
+                    {t("workflow.pipelineCasesTraining.retryPreviousStep")}
                   </DropdownMenuItem>
                 ) : null}
                 <DropdownMenuItem
@@ -2906,7 +2907,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
       <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Move to stage</DialogTitle>
+            <DialogTitle>{t("workflow.pipelines.moveToStage")}</DialogTitle>
             <DialogDescription>
               Manual moves can bypass the normal agent handoff for this item. Let automation move work when possible;
               use this override only when the board needs to correct the item state.
@@ -2923,10 +2924,10 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
               </div>
             </div>
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-foreground">Stage</span>
+              <span className="text-sm font-medium text-foreground">{t("workflow.common.stage")}</span>
               <Select value={moveStageKey} onValueChange={setMoveStageKey}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a stage" />
+                  <SelectValue placeholder={t("workflow.pipelines.chooseStage")} />
                 </SelectTrigger>
                 <SelectContent>
                   {moveStageOptions.map((stage) => (
@@ -2945,14 +2946,14 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
               onClick={() => setMoveDialogOpen(false)}
               disabled={moveItemToStage.isPending}
             >
-              Cancel
+              {t("workflow.common.cancel")}
             </Button>
             <Button
               type="button"
               onClick={() => moveItemToStage.mutate()}
               disabled={!selectedMoveStage || moveItemToStage.isPending}
             >
-              {moveItemToStage.isPending ? "Moving..." : `Move to ${selectedMoveStage?.name ?? "stage"}`}
+              {moveItemToStage.isPending ? t("workflow.pipelines.moving") : t("workflow.pipelines.moveToTarget", { name: selectedMoveStage?.name ?? t("workflow.common.stage") })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2966,38 +2967,38 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{retryDialogScope === "previous_stage" ? "Retry previous step" : "Re-run this step"}</DialogTitle>
+            <DialogTitle>{retryDialogScope === "previous_stage" ? t("workflow.pipelines.retryPrevious") : t("workflow.pipelines.retryStep")}</DialogTitle>
             <DialogDescription>
-              Review the automation preflight before Paperclip dispatches a fresh run.
+              {t("workflow.pipelines.reviewAutomationPreflight")}
             </DialogDescription>
           </DialogHeader>
           {retryPlan.isLoading ? (
             <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Checking retry safety...
+              {t("workflow.pipelines.checkingRetrySafety")}
             </div>
           ) : retryPlan.error ? (
             <div className="rounded-sm border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
               {retryPlan.error instanceof ApiError && retryPlan.error.message
                 ? retryPlan.error.message
-                : "Could not check whether this automation can be retried."}
+                : t("workflow.pipelines.retryCheckFailed")}
             </div>
           ) : retryPlan.data ? (
             <div className="space-y-4 py-2">
               <div className="grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <div className="text-xs font-medium uppercase text-muted-foreground">From</div>
+                  <div className="text-xs font-medium uppercase text-muted-foreground">{t("workflow.common.old")}</div>
                   <div className="mt-1 font-medium text-foreground">{retryPlan.data.currentStage.name}</div>
                 </div>
                 <div>
-                  <div id="retry-runs-at-label" className="text-xs font-medium uppercase text-muted-foreground">Runs at</div>
+                  <div id="retry-runs-at-label" className="text-xs font-medium uppercase text-muted-foreground">{t("workflow.training.runs")}</div>
                   {retryShowTargetDropdown ? (
                     <Select
                       value={retrySelectedTargetId}
                       onValueChange={(value) => setRetryTargetStageId(value)}
                     >
                       <SelectTrigger className="mt-1 w-full" aria-labelledby="retry-runs-at-label">
-                        <SelectValue placeholder="Choose a step" />
+                        <SelectValue placeholder={t("workflow.pipelines.chooseStep")} />
                       </SelectTrigger>
                       <SelectContent>
                         {retryAvailableTargets.map((stage) => (
@@ -3008,11 +3009,11 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
                       </SelectContent>
                     </Select>
                   ) : (
-                    <div className="mt-1 font-medium text-foreground">{retryPlan.data.targetStage?.name ?? "No retryable step"}</div>
+                    <div className="mt-1 font-medium text-foreground">{retryPlan.data.targetStage?.name ?? t("workflow.pipelines.noRetryableStep")}</div>
                   )}
                 </div>
                 <div className="sm:col-span-2">
-                  <div className="text-xs font-medium uppercase text-muted-foreground">Automation</div>
+                  <div className="text-xs font-medium uppercase text-muted-foreground">{t("workflow.pipelineSettings.automation")}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-foreground">
                     {retryPlan.data.routine ? (
                       <>
@@ -3022,7 +3023,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
                         >
                           {retryPlan.data.routine.title}
                         </Link>
-                        <span className="text-muted-foreground">assigned to</span>
+                        <span className="text-muted-foreground">{t("workflow.pipelines.assignedTo")}</span>
                         {retryPlan.data.routine.assigneeAgent ? (
                           <Link
                             to={`/agents/${retryPlan.data.routine.assigneeAgent.id}`}
@@ -3031,11 +3032,11 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
                             {retryPlan.data.routine.assigneeAgent.name}
                           </Link>
                         ) : (
-                          <span className="font-medium text-muted-foreground">No responsible</span>
+                          <span className="font-medium text-muted-foreground">{t("workflow.pipelines.noResponsible")}</span>
                         )}
                       </>
                     ) : (
-                      "No routine configured"
+                      t("workflow.pipelines.noRoutine")
                     )}
                   </div>
                 </div>
@@ -3045,7 +3046,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
                 {retryPreflightRefreshing ? (
                   <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 rounded-sm bg-background/70 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Checking retry safety...
+                    {t("workflow.pipelines.checkingRetrySafety")}
                   </div>
                 ) : null}
                 <div className={cn("space-y-4", retryPreflightRefreshing && "opacity-50")}>
@@ -3146,7 +3147,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
               }}
             >
               {(rerunCurrentStageAutomation.isPending || retryStageAutomation.isPending)
-                ? "Starting..."
+                ? t("workflow.pipelines.starting")
                 : retryPlan.data ? retryPrimaryActionLabel(retryPlan.data) : "Retry"}
             </Button>
           </DialogFooter>
@@ -3187,7 +3188,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
                 disabled={resolveSuggestion.isPending}
               >
                 <X className="mr-2 h-4 w-4" />
-                Not yet
+                {t("workflow.pipelines.suggestionDismissed")}
               </Button>
             </div>
           ) : null}
@@ -3209,13 +3210,13 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
             onClick={() => acknowledgeChange.mutate()}
             disabled={acknowledgeChange.isPending}
           >
-            Acknowledge
+            {t("workflow.pipelines.changeAcknowledged")}
           </Button>
         </section>
       ) : null}
 
       {(childrenGate || (breakdown?.waitForPieces ?? false)) && waitingChildren.length > 0 ? (
-        <section aria-label="Waiting child items" className="mb-5 border-y border-border px-4 py-4">
+        <section aria-label={t("workflow.pipelineSettings.advanceChildren")} className="mb-5 border-y border-border px-4 py-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <ListTree className="h-4 w-4 text-muted-foreground" />
@@ -3280,7 +3281,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
             onRetry={() => outputs.refetch()}
           />
 
-          <DetailSection title="Conversation">
+          <DetailSection title={t("workflow.pipelines.conversation")}>
             {activeConversationIssue ? (
               <div className="py-3">
                 <IssueChatThread
@@ -3335,10 +3336,10 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
               </div>
             ) : (
               <div className="flex flex-col items-start gap-3 py-3 text-sm text-muted-foreground">
-                <p>No active conversation yet.</p>
+                <p>{t("workflow.pipelines.noActiveConversation")}</p>
                 <Button size="sm" variant="outline" onClick={() => startConversation.mutate()} disabled={startConversation.isPending}>
                   <MessageSquare className="mr-2 h-4 w-4" />
-                  {startConversation.isPending ? "Starting..." : "Start a conversation"}
+                  {startConversation.isPending ? t("workflow.pipelines.starting") : t("workflow.pipelineCasesTraining.startConversation")}
                 </Button>
               </div>
             )}
@@ -3348,7 +3349,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
         <aside className="min-w-0 space-y-8">
           {reviewPanel}
 
-          <DetailSection title="Linked work">
+          <DetailSection title={t("workflow.pipelines.linkedWork")}>
             <PipelineWorkReferences references={workReferences} />
           </DetailSection>
 
@@ -3383,7 +3384,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
             ) : null}
           </DetailSection>
 
-          <DetailSection title="Details">
+          <DetailSection title={t("workflow.common.details")}>
             {itemFields.length > 0 ? (
               <dl className="divide-y divide-border">
                 {itemFields.map((field) => (
@@ -3394,11 +3395,11 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
                 ))}
               </dl>
             ) : (
-              <p className="py-3 text-sm text-muted-foreground">No added details.</p>
+              <p className="py-3 text-sm text-muted-foreground">{t("workflow.pipelines.noDetails")}</p>
             )}
           </DetailSection>
 
-          <DetailSection title="Activity">
+          <DetailSection title={t("workflow.common.activity")}>
             {eventRows.length > 0 ? (
               <ol className="divide-y divide-border">
                 {eventRows.map((event) => (
@@ -3411,7 +3412,7 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
                 ))}
               </ol>
             ) : (
-              <p className="py-3 text-sm text-muted-foreground">No activity yet.</p>
+              <p className="py-3 text-sm text-muted-foreground">{t("workflow.pipelines.noActivity")}</p>
             )}
           </DetailSection>
         </aside>
@@ -3420,15 +3421,15 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
       <Dialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Remove item</DialogTitle>
-            <DialogDescription>
-              This moves the item out of active work. It stays visible in the pipeline history.
+            <DialogTitle>{t("workflow.pipelines.removeItem")}</DialogTitle>
+          <DialogDescription>
+              {t("workflow.pipelines.removeDescription")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRemoveDialogOpen(false)}>Keep item</Button>
+            <Button variant="outline" onClick={() => setRemoveDialogOpen(false)}>{t("workflow.pipelines.keepItem")}</Button>
             <Button variant="destructive" onClick={() => removeItem.mutate()} disabled={removeItem.isPending || !removeStage}>
-              {removeItem.isPending ? "Removing..." : "Remove item"}
+              {removeItem.isPending ? t("workflow.pipelines.removing") : t("workflow.pipelines.removeItem")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3439,10 +3440,10 @@ export function PipelineItemDetailView({ pipelineId, caseId }: { pipelineId: str
 
 function ActivePipelineWorkBanner({ activeWork }: { activeWork: PipelineCaseActiveWork }) {
   const isAutomation = activeWork.issueRole === "automation";
-  const title = isAutomation ? "Automation is running" : "Linked work is running";
+  const title = isAutomation ? t("workflow.pipelines.activeWorkAutomation") : t("workflow.pipelines.activeWorkLinked");
   const issueLabel = activeWork.issueIdentifier ?? activeWork.issueTitle;
   const issuePath = createIssueDetailPath(activeWork.issueIdentifier ?? activeWork.issueId);
-  const startedLabel = activeWork.startedAt ? `Started ${relativeTime(activeWork.startedAt)}` : null;
+  const startedLabel = activeWork.startedAt ? t("workflow.pipelines.started", { time: relativeTime(activeWork.startedAt) }) : null;
 
   return (
     <section
@@ -3460,8 +3461,7 @@ function ActivePipelineWorkBanner({ activeWork }: { activeWork: PipelineCaseActi
             <Link to={issuePath} className="font-medium underline-offset-2 hover:underline">
               {issueLabel}
             </Link>{" "}
-            is active with {activeWork.agentName}
-            {startedLabel ? ` · ${startedLabel}` : ""}.
+            {t("workflow.pipelines.activeWorkDescription", { name: activeWork.agentName, started: startedLabel ? ` · ${startedLabel}` : "" })}
           </p>
         </div>
       </div>
@@ -3473,7 +3473,7 @@ function ActivePipelineWorkBanner({ activeWork }: { activeWork: PipelineCaseActi
       >
         <Link to={issuePath}>
           <ExternalLink className="mr-2 h-4 w-4" />
-          Open task
+          {t("workflow.pipelines.openTask")}
         </Link>
       </Button>
     </section>
@@ -3583,7 +3583,7 @@ function reviewDecisionActions(
   if (config.approveToStageKey) {
     actions.push({
       decision: "approve",
-      label: "Approve",
+      label: t("workflow.pipelines.approve"),
       targetStageKey: config.approveToStageKey,
       targetStageName: stageLookup.get(config.approveToStageKey) ?? humanizePipelineItemStatus(config.approveToStageKey),
       requireReason: false,
@@ -3593,7 +3593,7 @@ function reviewDecisionActions(
   if (config.requestChangesToStageKey) {
     actions.push({
       decision: "request_changes",
-      label: "Request changes",
+      label: t("workflow.pipelines.requestChanges"),
       targetStageKey: config.requestChangesToStageKey,
       targetStageName: stageLookup.get(config.requestChangesToStageKey) ?? humanizePipelineItemStatus(config.requestChangesToStageKey),
       requireReason: config.requireRequestChangesReason,
@@ -3603,7 +3603,7 @@ function reviewDecisionActions(
   if (config.rejectToStageKey) {
     actions.push({
       decision: "reject",
-      label: "Reject",
+      label: t("workflow.pipelines.reject"),
       targetStageKey: config.rejectToStageKey,
       targetStageName: stageLookup.get(config.rejectToStageKey) ?? humanizePipelineItemStatus(config.rejectToStageKey),
       requireReason: config.requireRejectReason,
@@ -3615,11 +3615,11 @@ function reviewDecisionActions(
 
 function reviewDecisionToastTitle(decision: PipelineReviewDecision, movedToNextItem: boolean) {
   const prefix = decision === "approve"
-    ? "Item approved"
+    ? t("workflow.pipelines.itemApproved")
     : decision === "request_changes"
-      ? "Changes requested"
-      : "Item rejected";
-  return movedToNextItem ? `${prefix}; moved to the next review` : prefix;
+      ? t("workflow.pipelines.changesRequested")
+      : t("workflow.pipelines.itemRejected");
+  return movedToNextItem ? t("workflow.pipelines.movedToNextReview", { prefix }) : prefix;
 }
 
 function ReviewDecisionPanel({
@@ -3645,26 +3645,26 @@ function ReviewDecisionPanel({
 
   return (
     <section>
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">Review</h2>
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{t("workflow.common.review")}</h2>
       <div className="border-y border-amber-300 bg-amber-50/70 p-5 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100 sm:p-6">
         <div className="space-y-5">
           <div className="flex items-start gap-3">
             <AlertTriangle className="mt-1 h-5 w-5 shrink-0" />
             <div>
-              <p className="text-2xl font-semibold leading-tight">In review</p>
+              <p className="text-2xl font-semibold leading-tight">{t("workflow.pipelines.inReview")}</p>
               <p className="mt-1 text-sm opacity-80">
-                Decide where this item goes next.
+                {t("workflow.pipelines.decideNext")}
               </p>
             </div>
           </div>
 
           <label className="block space-y-1.5 text-sm font-medium">
-            <span>Reason</span>
+            <span>{t("workflow.pipelines.reason")}</span>
             <Textarea
               value={note}
               onChange={(event) => onNoteChange(event.target.value)}
               rows={4}
-              placeholder={requireReason ? "Required for changes or rejection." : "Optional note."}
+              placeholder={requireReason ? t("workflow.pipelines.requiredReason") : t("workflow.pipelines.optionalNote")}
               className="bg-background/90 text-foreground"
             />
           </label>
@@ -3679,7 +3679,7 @@ function ReviewDecisionPanel({
                   type="button"
                   variant={action.variant}
                   className="h-auto min-h-14 w-full justify-start px-4 py-3 text-left"
-                  aria-label={`${action.label} and move to ${action.targetStageName}`}
+                  aria-label={`${action.label}，${t("workflow.pipelines.moveToStage")} ${action.targetStageName}`}
                   disabled={pending || reasonMissing}
                   onClick={() => onDecide(action.decision)}
                 >
@@ -3693,7 +3693,7 @@ function ReviewDecisionPanel({
                   <span className="min-w-0 flex-1">
                     <span className="block">{action.label}</span>
                     <span className="block truncate text-xs font-normal opacity-75">
-                      Move to {action.targetStageName}
+                      {t("workflow.pipelines.moveToStageNamed", { name: action.targetStageName })}
                     </span>
                   </span>
                 </Button>
@@ -3703,10 +3703,10 @@ function ReviewDecisionPanel({
 
           {nextItemTitle ? (
             <p className="text-xs opacity-75">
-              Next in this review queue: <span className="font-medium">{nextItemTitle}</span>
+              {t("workflow.pipelines.nextReviewItem")} <span className="font-medium">{nextItemTitle}</span>
             </p>
           ) : (
-            <p className="text-xs opacity-75">No other item is waiting in this pipeline review queue.</p>
+            <p className="text-xs opacity-75">{t("workflow.pipelines.noOtherWaiting")}</p>
           )}
         </div>
       </div>
@@ -3785,32 +3785,32 @@ function DetailSection({
 }
 
 const DELIVERABLE_OUTPUT_PATTERNS: Array<[RegExp, string]> = [
-  [/brief/i, "Brief"],
-  [/spec/i, "Spec"],
-  [/report/i, "Report"],
-  [/design/i, "Design"],
-  [/summary/i, "Summary"],
-  [/plan/i, "Plan"],
+  [/brief/i, "workflow.outputLabels.brief"],
+  [/spec/i, "workflow.outputLabels.spec"],
+  [/report/i, "workflow.outputLabels.report"],
+  [/design/i, "workflow.outputLabels.design"],
+  [/summary/i, "workflow.outputLabels.summary"],
+  [/plan/i, "workflow.outputLabels.plan"],
 ];
 
 const OUTPUT_SOURCE_ROLE_LABELS: Record<string, string> = {
-  origin: "Origin",
-  conversation: "Conversation",
-  work: "Work",
-  automation: "Automation",
+  origin: "workflow.pipelines.origin",
+  conversation: "workflow.pipelines.conversationRole",
+  work: "workflow.pipelines.workRole",
+  automation: "workflow.pipelines.automationRole",
 };
 
 function deliverableDocumentLabel(item: PipelineCaseDocumentOutputItem): string | null {
   const haystack = `${item.title} ${item.documentKey}`;
   for (const [pattern, label] of DELIVERABLE_OUTPUT_PATTERNS) {
-    if (pattern.test(haystack)) return label;
+    if (pattern.test(haystack)) return t(label);
   }
   return null;
 }
 
 function humanizeOutputStatus(status: string) {
   const normalized = status.trim().toLowerCase();
-  if (!normalized) return "Unknown";
+  if (!normalized) return t("workflow.pipelines.unknownOutputStatus");
   return normalized.charAt(0).toUpperCase() + normalized.slice(1).replace(/_/g, " ");
 }
 
@@ -3881,7 +3881,9 @@ function OutputPreview({ text, dimmed }: { text: string; dimmed: boolean }) {
 
 function ItemOutputMeta({ item, children }: { item: PipelineCaseOutputItem; children?: ReactNode }) {
   const statusClass = issueStatusText[item.sourceIssueStatus] ?? issueStatusTextDefault;
-  const roleLabel = OUTPUT_SOURCE_ROLE_LABELS[item.sourceRole] ?? humanizeOutputStatus(item.sourceRole);
+  const roleLabel = OUTPUT_SOURCE_ROLE_LABELS[item.sourceRole]
+    ? t(OUTPUT_SOURCE_ROLE_LABELS[item.sourceRole]!)
+    : humanizeOutputStatus(item.sourceRole);
   return (
     <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-(length:--text-micro) text-muted-foreground">
       <Link
@@ -3889,7 +3891,7 @@ function ItemOutputMeta({ item, children }: { item: PipelineCaseOutputItem; chil
         className="font-mono text-(length:--text-micro) text-muted-foreground hover:text-foreground hover:underline"
         title={item.sourceIssueTitle}
       >
-        {item.sourceIssueIdentifier ?? "Source task"}
+        {item.sourceIssueIdentifier ?? t("workflow.pipelines.sourceTask")}
       </Link>
       <OutputMetaDot />
       <span>{roleLabel}</span>
@@ -3928,8 +3930,8 @@ function ItemOutputDocumentRow({ item }: { item: PipelineCaseDocumentOutputItem 
       <Link
         to={href}
         className="inline-flex h-(--sz-30px) w-(--sz-30px) shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-        aria-label={`Open ${item.title}`}
-        title="Open document"
+        aria-label={t("workflow.pipelines.openOutput", { name: item.title })}
+        title={t("workflow.pipelines.openDocument")}
       >
         <ArrowUpRight className="h-4 w-4" />
       </Link>
@@ -3956,8 +3958,8 @@ function ItemOutputWorkProductRow({ item }: { item: PipelineCaseWorkProductOutpu
       <OutputLink
         to={href}
         className="inline-flex h-(--sz-30px) w-(--sz-30px) shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-        ariaLabel={`Open ${item.title}`}
-        title="Open work product"
+        ariaLabel={t("workflow.pipelines.openOutput", { name: item.title })}
+        title={t("workflow.pipelines.openWorkProduct")}
       >
         <ArrowUpRight className="h-4 w-4" />
       </OutputLink>
@@ -3966,7 +3968,7 @@ function ItemOutputWorkProductRow({ item }: { item: PipelineCaseWorkProductOutpu
 }
 
 function ItemOutputAttachmentRow({ item }: { item: PipelineCaseAttachmentOutputItem }) {
-  const filename = item.filename ?? item.title ?? "Attachment";
+  const filename = item.filename ?? item.title ?? t("workflow.pipelines.attachment");
   const isImage = item.contentType?.startsWith("image/");
   return (
     <div
@@ -3979,7 +3981,7 @@ function ItemOutputAttachmentRow({ item }: { item: PipelineCaseAttachmentOutputI
           target="_blank"
           rel="noreferrer"
           className="mt-0.5 block h-(--sz-30px) w-10 shrink-0 overflow-hidden rounded-sm border border-border bg-accent/10"
-          aria-label={`Open ${filename}`}
+          aria-label={t("workflow.pipelines.openOutput", { name: filename })}
         >
           <img src={item.contentPath} alt={filename} className="h-full w-full object-cover" loading="lazy" />
         </a>
@@ -4009,16 +4011,16 @@ function ItemOutputAttachmentRow({ item }: { item: PipelineCaseAttachmentOutputI
           target="_blank"
           rel="noreferrer"
           className="inline-flex h-(--sz-30px) w-(--sz-30px) items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-          aria-label={`Open ${filename}`}
-          title="Open"
+          aria-label={t("workflow.pipelines.openOutput", { name: filename })}
+          title={t("workflow.common.open")}
         >
           <ArrowUpRight className="h-4 w-4" />
         </a>
         <a
           href={item.downloadPath}
           className="inline-flex h-(--sz-30px) w-(--sz-30px) items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-          aria-label={`Download ${filename}`}
-          title="Download"
+          aria-label={t("workflow.pipelines.downloadOutput", { name: filename })}
+          title={t("workflow.common.download")}
         >
           <Download className="h-4 w-4" />
         </a>
@@ -4048,7 +4050,7 @@ function ItemOutputsSection({
   if (documents.length > 0) {
     groups.push({
       key: "document",
-      label: "Documents",
+      label: t("workflow.pipelines.documentsGroup"),
       icon: <FileText className="h-4 w-4 text-muted-foreground" />,
       rows: documents.map((item) => <ItemOutputDocumentRow key={item.id} item={item} />),
     });
@@ -4056,7 +4058,7 @@ function ItemOutputsSection({
   if (workProducts.length > 0) {
     groups.push({
       key: "work_product",
-      label: "Work products",
+      label: t("workflow.pipelines.workProductsGroup"),
       icon: <Package className="h-4 w-4 text-muted-foreground" />,
       rows: workProducts.map((item) => <ItemOutputWorkProductRow key={item.id} item={item} />),
     });
@@ -4064,7 +4066,7 @@ function ItemOutputsSection({
   if (attachments.length > 0) {
     groups.push({
       key: "attachment",
-      label: "Attachments",
+      label: t("workflow.pipelines.attachmentsGroup"),
       icon: <Paperclip className="h-4 w-4 text-muted-foreground" />,
       rows: attachments.map((item) => <ItemOutputAttachmentRow key={item.id} item={item} />),
     });
@@ -4072,7 +4074,7 @@ function ItemOutputsSection({
 
   return (
     <DetailSection
-      title="Item outputs"
+      title={t("workflow.pipelines.outputs")}
       trailing={
         loading ? null : (
           <Badge variant="ghost" className="bg-muted text-(length:--text-micro) normal-case tracking-normal text-muted-foreground">
@@ -4093,7 +4095,7 @@ function ItemOutputsSection({
       ) : error ? (
         <div className="flex items-center gap-2 py-2.5 text-xs text-destructive">
           <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>Couldn't load item outputs.</span>
+          <span>{t("workflow.pipelines.loadOutputsFailed")}</span>
           <button
             type="button"
             onClick={onRetry}
@@ -4126,7 +4128,7 @@ function BuiltFromTree({
   rows: Array<{ case: PipelineCase; stage: PipelineStage }>;
 }) {
   if (rows.length === 0) {
-    return <p className="py-3 text-sm text-muted-foreground">No built-from items.</p>;
+    return <p className="py-3 text-sm text-muted-foreground">{t("workflow.pipelines.noOutputs")}</p>;
   }
   return (
     <ul className="divide-y divide-border">
@@ -4182,9 +4184,9 @@ function PipelineAddItems({ pipelineId }: { pipelineId: string }) {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Pipelines", href: "/pipelines" },
-      { label: pipeline.data?.name ?? "Pipeline", href: `/pipelines/${pipelineId}` },
-      { label: "Add items" },
+      { label: t("workflow.common.pipelines"), href: "/pipelines" },
+      { label: pipeline.data?.name ?? t("workflow.common.pipeline"), href: `/pipelines/${pipelineId}` },
+      { label: t("workflow.pipelines.addItems") },
     ]);
   }, [pipeline.data?.name, pipelineId, setBreadcrumbs]);
 
@@ -4213,34 +4215,34 @@ function PipelineAddItems({ pipelineId }: { pipelineId: string }) {
         queryClient.invalidateQueries({ queryKey: queryKeys.pipelines.detail(pipelineId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.pipelines.cases(pipelineId) }),
       ]);
-      pushToast({ title: `${itemCountLabel(rows.length)} submitted`, tone: "success" });
+      pushToast({ title: t("workflow.pipelines.submitted", { count: rows.length }), tone: "success" });
       navigate(`/pipelines/${pipelineId}`);
     },
   });
 
   if (pipeline.isLoading || intake.isLoading) return <PageSkeleton />;
   if (!pipeline.data || !intake.data) {
-    return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">Pipeline not found.</div>;
+    return <div className="mx-auto max-w-3xl py-10 text-sm text-muted-foreground">{t("workflow.pipelines.pipelineNotFound")}</div>;
   }
 
-  const firstStageName = intake.data.stageName ?? pipeline.data.stages[0]?.name ?? "first stage";
+  const firstStageName = intake.data.stageName ?? pipeline.data.stages[0]?.name ?? t("workflow.pipelines.firstStage");
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-          Add to {pipeline.data.name}
+          {t("workflow.pipelines.addToPipeline", { name: pipeline.data.name })}
         </p>
-        <h1 className="text-2xl font-semibold text-foreground">Build your list, then submit it all at once</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("workflow.pipelines.buildList")}</h1>
         <p className="text-sm text-muted-foreground">
-          Items will be added to the first stage ({firstStageName}).
+          {t("workflow.pipelines.itemsAddedToFirstStage", { name: firstStageName })}
         </p>
       </div>
 
       <div className="mb-5 flex items-center gap-2 border border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
         <Info className="h-4 w-4 shrink-0" />
         <span>
-          These fields come from <span className="font-medium text-foreground">Pipeline settings -&gt; {firstStageName} stage</span>.
+          {t("workflow.pipelines.fieldsFromSettings", { name: firstStageName })}
         </span>
       </div>
 
@@ -4275,20 +4277,20 @@ function PipelineAddItems({ pipelineId }: { pipelineId: string }) {
           onClick={() => setRows((current) => [...current, newDraftRow(false)])}
         >
           <Plus className="mr-2 h-4 w-4" />
-          Add another item
+          {t("workflow.pipelines.addAnotherItem")}
         </button>
       </div>
 
       <div className="mt-10 flex items-center justify-between border-t border-border pt-5">
         <Button variant="outline" onClick={() => navigate(`/pipelines/${pipelineId}`)}>
-          Cancel
+          {t("workflow.common.cancel")}
         </Button>
         <div className="flex items-center gap-4">
           <span className="text-sm text-muted-foreground">
-            {rows.length === 0 ? "Add at least one item." : "Count updates live."}
+            {rows.length === 0 ? t("workflow.pipelines.atLeastOneItem") : t("workflow.pipelines.countUpdatesLive")}
           </span>
           <Button disabled={invalid || submit.isPending} onClick={() => submit.mutate()}>
-            {submit.isPending ? "Submitting..." : `Submit ${itemCountLabel(rows.length)}`}
+            {submit.isPending ? t("workflow.pipelines.submitting") : `${t("workflow.pipelines.submitItems")} ${itemCountLabel(rows.length)}`}
           </Button>
         </div>
       </div>
@@ -4315,7 +4317,7 @@ function DraftItemRow({
   onRemove: () => void;
   onChange: (fieldKey: string, value: string) => void;
 }) {
-  const title = row.values.title?.trim() || `Item ${index + 1}`;
+  const title = row.values.title?.trim() || t("workflow.pipelines.itemNumber", { number: index + 1 });
   const preview = fields
     .filter((field) => field.key !== "title")
     .map((field) => row.values[field.key])
@@ -4327,16 +4329,16 @@ function DraftItemRow({
     <section className={cn("border border-border bg-background", row.expanded && "border-primary")}>
       <div className="grid grid-cols-(--gtc-17) items-center gap-3 px-4 py-3">
         <button type="button" className="min-w-0 text-left" onClick={onToggle}>
-          <span className="block text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">Item {index + 1}</span>
+          <span className="block text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{t("workflow.pipelines.itemNumber", { number: index + 1 })}</span>
           <span className="block truncate text-sm font-semibold text-foreground">{title}</span>
           {!row.expanded && preview ? <span className="block truncate text-xs text-muted-foreground">{preview}</span> : null}
           {!row.expanded && row.serverError ? <span className="block text-xs text-destructive">{row.serverError}</span> : null}
         </button>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={onToggle} aria-label={row.expanded ? "Collapse item" : "Expand item"}>
+          <Button variant="outline" size="icon" onClick={onToggle} aria-label={row.expanded ? t("workflow.pipelines.collapseItem") : t("workflow.pipelines.expandItem")}>
             {row.expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
-          <Button variant="outline" size="icon" onClick={onRemove} aria-label="Remove item">
+          <Button variant="outline" size="icon" onClick={onRemove} aria-label={t("workflow.pipelines.removeItem")}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -4357,10 +4359,10 @@ function DraftItemRow({
             {row.serverError ? <p className="md:col-span-2 text-sm text-destructive">{row.serverError}</p> : null}
           </div>
           <aside className="border border-border p-4 text-sm">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">Preview</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{t("workflow.common.preview")}</p>
             <p className="font-semibold text-foreground">{title}</p>
-            <p className="mt-3 text-xs text-muted-foreground">First stage on submit:</p>
-            <p className="font-semibold text-foreground">{intake.stageName ?? "First stage"}</p>
+            <p className="mt-3 text-xs text-muted-foreground">{t("workflow.pipelines.firstStageOnSubmit")}</p>
+            <p className="font-semibold text-foreground">{intake.stageName ?? t("workflow.pipelines.firstStage")}</p>
           </aside>
         </div>
       ) : null}
@@ -4384,12 +4386,12 @@ export function GeneratedField({
     <label className={cn("block space-y-1", field.type === "multiline" && "md:col-span-2")}>
       <span className="text-sm font-medium text-foreground">
         {field.label}
-        {field.required ? <span className="ml-1 font-normal text-destructive">required</span> : null}
+        {field.required ? <span className="ml-1 font-normal text-destructive">{t("workflow.common.requiredShort")}</span> : null}
       </span>
       {field.type === "select" ? (
         <Select value={value} onValueChange={onChange}>
           <SelectTrigger id={inputId} aria-invalid={Boolean(error)} className="w-full">
-            <SelectValue placeholder="Choose..." />
+            <SelectValue placeholder={t("workflow.pipelines.chooseStep")} />
           </SelectTrigger>
           <SelectContent>
             {(field.options ?? []).map((option) => (
@@ -4430,9 +4432,9 @@ export interface ReviewQueueRow {
 }
 
 const REVIEW_QUEUE_SECTION_LABELS: Record<ReviewQueueKind, string> = {
-  suggestion: "Suggestions to review",
-  review: "Final calls",
-  headsUp: "Heads-up",
+  suggestion: "workflow.pipelines.reviewSectionSuggestions",
+  review: "workflow.pipelines.reviewSectionFinalCalls",
+  headsUp: "workflow.pipelines.reviewSectionHeadsUp",
 };
 
 const REVIEW_QUEUE_SECTION_ORDER: ReviewQueueKind[] = ["suggestion", "review", "headsUp"];
@@ -4468,7 +4470,7 @@ export function buildReviewQueueRows({
       title: entry.case.title,
       prompt:
         entry.suggestion.rationale?.trim() ||
-        `${entry.case.pipeline.name} thinks ${entry.case.title} is ready to move forward.`,
+        t("workflow.pipelines.reviewPrompt", { title: entry.case.title }),
       kind: "suggestion",
       createdAt: entry.suggestion.createdAt ?? entry.case.updatedAt ?? null,
       expectedVersion: entry.case.version ?? null,
@@ -4489,7 +4491,7 @@ export function buildReviewQueueRows({
       title: entry.case.title,
       prompt:
         entry.case.summary?.trim() ||
-        `Decide whether ${entry.case.title} is ready to move forward.`,
+        t("workflow.pipelines.reviewPrompt", { title: entry.case.title }),
       kind: "review",
       createdAt: entry.case.updatedAt ?? entry.case.createdAt ?? null,
       expectedVersion: entry.review.expectedVersion ?? entry.case.version ?? null,
@@ -4510,8 +4512,8 @@ export function buildReviewQueueRows({
       pipelineName: entry.case.pipeline.name,
       title: entry.case.title,
       prompt: upstreamTitle
-        ? `${upstreamTitle} changed upstream. Take a quick look before work continues.`
-        : `${entry.case.title} needs a quick look before work continues.`,
+        ? t("workflow.pipelines.reviewChanged", { upstream: upstreamTitle })
+        : t("workflow.pipelines.reviewNeedsLook", { title: entry.case.title }),
       kind: "headsUp",
       createdAt: entry.drift.createdAt ?? entry.case.updatedAt ?? null,
       expectedVersion: entry.case.version ?? null,
@@ -4542,7 +4544,7 @@ export function buildReviewQueueRows({
       prompt:
         pendingSuggestion?.rationale?.trim() ||
         entry.case.summary?.trim() ||
-        `Decide whether ${entry.case.title} is ready to move forward.`,
+        t("workflow.pipelines.reviewPrompt", { title: entry.case.title }),
       kind: "review",
       createdAt: entry.case.updatedAt ?? entry.case.createdAt ?? null,
       expectedVersion: typeof entry.case.version === "number" ? entry.case.version : null,
@@ -4565,7 +4567,7 @@ function ReviewQueueStatusChip({ failed }: { failed: boolean }) {
   return (
     <Badge variant="outline" className="border-amber-200 bg-amber-50 font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-300">
       <AlertTriangle className="h-3 w-3" />
-      Needs attention
+      {t("workflow.pipelines.attention")}
     </Badge>
   );
 }
@@ -4607,20 +4609,20 @@ function ReviewQueueDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{row?.title ?? "Review item"}</DialogTitle>
+          <DialogTitle>{row?.title ?? t("workflow.pipelines.reviewItem")}</DialogTitle>
           <DialogDescription>
-            {row ? `${row.pipelineName} is waiting for your decision.` : "Review the item and decide what happens next."}
+            {row ? t("workflow.pipelines.reviewWaiting", { pipeline: row.pipelineName }) : t("workflow.pipelines.reviewItemDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
           <section className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">What is being decided</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("workflow.pipelines.whatDecided")}</p>
             <p className="text-sm text-foreground">{row?.prompt}</p>
           </section>
 
           <section className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Item preview</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("workflow.pipelines.itemPreview")}</p>
             {fields.length > 0 ? (
               <div className="divide-y divide-border rounded-md border border-border">
                 {fields.map(([key, value]) => (
@@ -4632,7 +4634,7 @@ function ReviewQueueDetailDialog({
               </div>
             ) : (
               <p className="rounded-md border border-border px-3 py-3 text-sm text-muted-foreground">
-                No preview details yet.
+                {t("workflow.pipelines.noPreviewDetails")}
               </p>
             )}
           </section>
@@ -4643,18 +4645,18 @@ function ReviewQueueDetailDialog({
               className="inline-block text-sm font-medium text-primary hover:underline"
               onClick={() => onOpenChange(false)}
             >
-              Open the full item
+              {t("workflow.pipelines.openFullItem")}
             </Link>
           ) : null}
 
           {canDecide ? (
             <label className="block space-y-1.5 text-sm font-medium">
-              <span>Note</span>
+              <span>{t("workflow.training.notes")}</span>
               <Textarea
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
                 rows={3}
-                placeholder={requestChangesRequiresNote ? "Required when requesting changes." : "Optional note."}
+                placeholder={requestChangesRequiresNote ? t("workflow.pipelines.requiredWhenRequestingChanges") : t("workflow.pipelines.optionalNote")}
               />
             </label>
           ) : null}
@@ -4662,7 +4664,7 @@ function ReviewQueueDetailDialog({
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-            Cancel
+            {t("workflow.common.cancel")}
           </Button>
           {canDecide ? (
             <>
@@ -4672,11 +4674,11 @@ function ReviewQueueDetailDialog({
                 onClick={() => onRequestChanges(trimmedNote)}
                 disabled={pending || (requestChangesRequiresNote && !trimmedNote)}
               >
-                {row?.kind === "suggestion" ? "Not yet" : "Request changes"}
+                {row?.kind === "suggestion" ? t("workflow.pipelines.notYet") : t("workflow.pipelines.requestChanges")}
               </Button>
               <Button type="button" onClick={() => onApprove(trimmedNote)} disabled={pending}>
                 {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                Approve
+                {t("workflow.pipelines.approve")}
               </Button>
             </>
           ) : null}
@@ -4793,7 +4795,7 @@ function ReviewQueueSection({
                       event.stopPropagation();
                       onDecline(row);
                     }}>
-                      Not yet
+                      {t("workflow.pipelines.suggestionDismissed")}
                     </Button>
                   </>
                 ) : row.kind === "review" ? (
@@ -5046,7 +5048,7 @@ export function ReviewQueue() {
   }, [activeRowId, decideRow, openItem, visibleRows]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Hexagon} message="Select a company to view the review queue." />;
+    return <EmptyState icon={Hexagon} message={t("workflow.pipelineCasesTraining.selectCompanyReviewQueue")} />;
   }
 
   if (attentionQuery.isLoading || reviewCasesQuery.isLoading) {
@@ -5059,7 +5061,7 @@ export function ReviewQueue() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-normal text-foreground">Review queue</h1>
+        <h1 className="text-2xl font-semibold tracking-normal text-foreground">{t("workflow.pipelines.reviewQueue")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Needs your attention ({formatNumber(visibleRows.length)})
           </p>
@@ -5070,16 +5072,16 @@ export function ReviewQueue() {
           onClick={() => bulkApprove.mutate(selectedRows)}
         >
           {bulkApprove.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-          Approve {formatNumber(selectedCount)} item{selectedCount === 1 ? "" : "s"}
+          {t("workflow.pipelineCasesTraining.approveSelected", { count: selectedCount, suffix: selectedCount === 1 ? "" : "s" })}
         </Button>
       </div>
 
       {attentionQuery.error || reviewCasesQuery.error ? (
-        <p className="text-sm text-amber-700 dark:text-amber-300">Some items need attention. Try again in a moment.</p>
+        <p className="text-sm text-amber-700 dark:text-amber-300">{t("workflow.pipelines.queueAttention")}</p>
       ) : null}
 
       {visibleRows.length === 0 ? (
-        <EmptyState icon={Check} message="Nothing needs you right now." />
+        <EmptyState icon={Check} message={t("workflow.pipelineCasesTraining.nothingNeedsYou")} />
       ) : (
         <div className="space-y-6">
           {groupedRows.map((group) => (
@@ -5111,7 +5113,7 @@ export function ReviewQueue() {
       )}
 
       <p className="text-xs text-muted-foreground">
-        Shortcuts: <span className="font-semibold">j</span>/<span className="font-semibold">k</span> or arrow keys move, <span className="font-semibold">Enter</span> opens item, <span className="font-semibold">a</span> approves.
+        {t("workflow.pipelines.reviewShortcuts")}
       </p>
 
       <ReviewQueueDetailDialog
@@ -5170,7 +5172,7 @@ export function Learnings() {
   });
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={BookOpenText} message="Select a company to view learnings." />;
+    return <EmptyState icon={BookOpenText} message={t("workflow.pipelineCasesTraining.selectCompanyLearnings")} />;
   }
 
   if (learningsQuery.isLoading && !learningsQuery.data) {
@@ -5188,7 +5190,7 @@ export function Learnings() {
   return (
     <div className="space-y-6">
       <div className="border-b border-border pb-5">
-        <h1 className="text-2xl font-semibold tracking-normal text-foreground">Learnings</h1>
+        <h1 className="text-2xl font-semibold tracking-normal text-foreground">{t("workflow.pipelines.learnings")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Patterns from review decisions and hand moves, in plain words.
         </p>
@@ -5197,17 +5199,17 @@ export function Learnings() {
       <div className="flex items-center justify-end">
         <p className="text-sm text-muted-foreground">
           {learningsQuery.isFetching
-            ? "Refreshing..."
+            ? t("workflow.common.loading")
             : events.length > 0
               ? `${formatNumber(firstVisible)}-${formatNumber(lastVisible)}`
-              : "No rows"}
+              : t("workflow.pipelineCasesTraining.noRows")}
         </p>
       </div>
 
       {learningsQuery.error ? (
-        <p className="text-sm text-destructive">Could not load learnings.</p>
+        <p className="text-sm text-destructive">{t("workflow.pipelines.loadLearningsFailed")}</p>
       ) : groups.length === 0 ? (
-        <EmptyState icon={BookOpenText} message="No learnings yet." />
+        <EmptyState icon={BookOpenText} message={t("workflow.pipelineCasesTraining.noLearnings")} />
       ) : (
         <div className="space-y-6">
           {groups.map((group) => (
@@ -5258,7 +5260,7 @@ export function Learnings() {
           Previous
         </Button>
         <span className="text-sm text-muted-foreground">
-          {events.length > 0 ? `${formatNumber(firstVisible)}-${formatNumber(lastVisible)}` : "No rows"}
+          {events.length > 0 ? `${formatNumber(firstVisible)}-${formatNumber(lastVisible)}` : t("workflow.pipelineCasesTraining.noRows")}
         </span>
         <Button
           type="button"

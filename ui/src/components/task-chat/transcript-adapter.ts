@@ -13,6 +13,7 @@ import type {
   TaskChatTurnItem,
 } from "./task-chat-model";
 import { isGenericToolName, mcpToolSegment, toolTaxonomy } from "./tool-taxonomy";
+import { t } from "@/i18n";
 
 const TERMINAL_STATUSES = new Set([
   "failed",
@@ -87,7 +88,7 @@ export function summarizeToolInput(input: unknown): string | undefined {
  */
 export function toolDisplayName(name: string | undefined | null): string {
   const raw = (name ?? "").trim();
-  if (isGenericToolName(raw)) return "Tool";
+  if (isGenericToolName(raw)) return t("taskChat.tools.generic");
   const mcp = mcpToolSegment(raw);
   if (mcp) return mcp;
   return raw.charAt(0).toUpperCase() + raw.slice(1);
@@ -101,7 +102,8 @@ function thoughtDurationLabel(startTs: string | undefined, endTs: string): strin
   if (!Number.isFinite(start) || !Number.isFinite(end)) return undefined;
   const secs = Math.round((end - start) / 1000);
   if (secs < 1) return undefined;
-  return secs < 60 ? `Thought for ${secs}s` : `Thought for ${Math.floor(secs / 60)}m ${secs % 60}s`;
+  const duration = secs < 60 ? `${secs}s` : `${Math.floor(secs / 60)}m ${secs % 60}s`;
+  return t("taskChat.status.thoughtFor", { duration });
 }
 
 const DETAIL_MAX = 600;
@@ -382,8 +384,8 @@ export function deriveRunStatusLabel(entries: readonly TranscriptEntry[]): {
       };
     }
     if (entry.kind === "tool_result") break;
-    if (entry.kind === "assistant") return { label: "Responding" };
-    if (entry.kind === "thinking") return { label: "Thinking" };
+    if (entry.kind === "assistant") return { label: t("taskChat.status.responding") };
+    if (entry.kind === "thinking") return { label: t("taskChat.status.thinking") };
   }
-  return { label: "Running" };
+  return { label: t("taskChat.status.running") };
 }

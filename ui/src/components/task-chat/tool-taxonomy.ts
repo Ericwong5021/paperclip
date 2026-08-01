@@ -16,6 +16,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { t } from "@/i18n";
 
 export type ToolFamily =
   | "terminal"
@@ -63,13 +64,13 @@ export function mcpToolSegment(name: string): string | null {
 }
 
 const FAMILY_META: Record<Exclude<ToolFamily, "mcp">, Omit<ToolTaxonomyEntry, "family">> = {
-  terminal: { icon: SquareTerminal, verbLabel: "Running a command" },
-  search: { icon: FileSearch, verbLabel: "Searching" },
-  read: { icon: BookOpen, verbLabel: "Reading files" },
-  edit: { icon: Pencil, verbLabel: "Editing files" },
-  web: { icon: Globe, verbLabel: "Fetching the web" },
-  agent: { icon: Bot, verbLabel: "Delegating" },
-  other: { icon: Wrench, verbLabel: "Working" },
+  terminal: { icon: SquareTerminal, verbLabel: t("taskChat.tools.runningCommand") },
+  search: { icon: FileSearch, verbLabel: t("taskChat.tools.searching") },
+  read: { icon: BookOpen, verbLabel: t("taskChat.tools.readingFiles") },
+  edit: { icon: Pencil, verbLabel: t("taskChat.tools.editingFiles") },
+  web: { icon: Globe, verbLabel: t("taskChat.tools.fetchingWeb") },
+  agent: { icon: Bot, verbLabel: t("taskChat.tools.delegating") },
+  other: { icon: Wrench, verbLabel: t("taskChat.tools.working") },
 };
 
 function classify(n: string): Exclude<ToolFamily, "mcp"> {
@@ -94,7 +95,7 @@ export function toolTaxonomy(name: string | undefined | null): ToolTaxonomyEntry
   const raw = (name ?? "").trim();
   if (!raw) return { family: "other", ...FAMILY_META.other };
   const mcpTool = mcpToolSegment(raw);
-  if (mcpTool) return { family: "mcp", icon: Plug, verbLabel: `Using ${mcpTool}` };
+  if (mcpTool) return { family: "mcp", icon: Plug, verbLabel: t("taskChat.tools.using", { name: mcpTool }) };
   const family = classify(raw.toLowerCase());
   return { family, ...FAMILY_META[family] };
 }

@@ -12,6 +12,7 @@ import { formatDate, cn, agentUrl } from "../lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "../i18n";
 
 interface GoalPropertiesProps {
   goal: Goal;
@@ -36,11 +37,13 @@ function PickerButton({
   options,
   onChange,
   children,
+  optionLabel,
 }: {
   current: string;
   options: readonly string[];
   onChange: (value: string) => void;
   children: React.ReactNode;
+  optionLabel?: (value: string) => string;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -62,7 +65,7 @@ function PickerButton({
               setOpen(false);
             }}
           >
-            {label(opt)}
+            {optionLabel?.(opt) ?? label(opt)}
           </Button>
         ))}
       </PopoverContent>
@@ -71,6 +74,7 @@ function PickerButton({
 }
 
 export function GoalProperties({ goal, onUpdate }: GoalPropertiesProps) {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompany();
 
   const { data: agents } = useQuery({
@@ -96,12 +100,13 @@ export function GoalProperties({ goal, onUpdate }: GoalPropertiesProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <PropertyRow label="Status">
+        <PropertyRow label={t("goalsPage.status")}>
           {onUpdate ? (
             <PickerButton
               current={goal.status}
               options={GOAL_STATUSES}
               onChange={(status) => onUpdate({ status })}
+              optionLabel={(value) => t(`goalsPage.values.${value}`, { defaultValue: label(value) })}
             >
               <StatusBadge status={goal.status} />
             </PickerButton>
@@ -110,21 +115,22 @@ export function GoalProperties({ goal, onUpdate }: GoalPropertiesProps) {
           )}
         </PropertyRow>
 
-        <PropertyRow label="Level">
+        <PropertyRow label={t("goalsPage.level")}>
           {onUpdate ? (
             <PickerButton
               current={goal.level}
               options={GOAL_LEVELS}
               onChange={(level) => onUpdate({ level })}
+              optionLabel={(value) => t(`goalsPage.values.${value}`, { defaultValue: label(value) })}
             >
-              <span className="text-sm capitalize">{goal.level}</span>
+              <span className="text-sm">{t(`goalsPage.values.${goal.level}`, { defaultValue: label(goal.level) })}</span>
             </PickerButton>
           ) : (
-            <span className="text-sm capitalize">{goal.level}</span>
+            <span className="text-sm">{t(`goalsPage.values.${goal.level}`, { defaultValue: label(goal.level) })}</span>
           )}
         </PropertyRow>
 
-        <PropertyRow label="Owner">
+        <PropertyRow label={t("goalsPage.owner")}>
           {ownerAgent ? (
             <Link
               to={agentUrl(ownerAgent)}
@@ -133,12 +139,12 @@ export function GoalProperties({ goal, onUpdate }: GoalPropertiesProps) {
               {ownerAgent.name}
             </Link>
           ) : (
-            <span className="text-sm text-muted-foreground">None</span>
+            <span className="text-sm text-muted-foreground">{t("goalsPage.none")}</span>
           )}
         </PropertyRow>
 
         {goal.parentId && (
-          <PropertyRow label="Parent Goal">
+          <PropertyRow label={t("goalsPage.parentGoal")}>
             <Link
               to={`/goals/${goal.parentId}`}
               className="text-sm hover:underline"
@@ -152,10 +158,10 @@ export function GoalProperties({ goal, onUpdate }: GoalPropertiesProps) {
       <Separator />
 
       <div className="space-y-1">
-        <PropertyRow label="Created">
+        <PropertyRow label={t("goalsPage.created")}>
           <span className="text-sm">{formatDate(goal.createdAt)}</span>
         </PropertyRow>
-        <PropertyRow label="Updated">
+        <PropertyRow label={t("goalsPage.updated")}>
           <span className="text-sm">{formatDate(goal.updatedAt)}</span>
         </PropertyRow>
       </div>

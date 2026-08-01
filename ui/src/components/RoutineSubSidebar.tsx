@@ -11,6 +11,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { t } from "@/i18n";
 import { Link } from "@/lib/router";
 import { cn } from "@/lib/utils";
 import {
@@ -40,21 +41,21 @@ type NavGroup = {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Routine",
+    label: t("routineStatus.sections.routine"),
     items: [
-      { key: "overview", label: "Overview", icon: Circle },
-      { key: "triggers", label: "Triggers", icon: Clock3 },
-      { key: "variables", label: "Variables", icon: LayoutGrid },
-      { key: "secrets", label: "Secrets", icon: KeyRound },
-      { key: "delivery", label: "Delivery", icon: Send },
+      { key: "overview", label: t("routineStatus.sections.overview"), icon: Circle },
+      { key: "triggers", label: t("routineStatus.sections.triggers"), icon: Clock3 },
+      { key: "variables", label: t("routineStatus.sections.variables"), icon: LayoutGrid },
+      { key: "secrets", label: t("routineStatus.sections.secrets"), icon: KeyRound },
+      { key: "delivery", label: t("routineStatus.sections.delivery"), icon: Send },
     ],
   },
   {
-    label: "Operate",
+    label: t("routineStatus.sections.operate"),
     items: [
-      { key: "runs", label: "Runs", icon: Play },
-      { key: "activity", label: "Activity", icon: ActivityIcon },
-      { key: "history", label: "History", icon: HistoryIcon },
+      { key: "runs", label: t("routineStatus.sections.runs"), icon: Play },
+      { key: "activity", label: t("routineStatus.sections.activity"), icon: ActivityIcon },
+      { key: "history", label: t("routineStatus.sections.history"), icon: HistoryIcon },
     ],
   },
 ];
@@ -109,7 +110,7 @@ export function RoutineSubSidebar({
 
   return (
     <nav
-      aria-label="Routine sections"
+      aria-label={t("routineStatus.sections.sections")}
       className="hidden h-full w-52 shrink-0 flex-col gap-4 overflow-y-auto border-r border-border bg-background px-3 py-4 md:flex"
     >
       {NAV_GROUPS.map((group) => (
@@ -152,7 +153,7 @@ export function RoutineSubSidebar({
                   <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500 motion-safe:animate-pulse" />
                 ) : dirty ? (
                   <span
-                    aria-label="Unsaved changes"
+                    aria-label={t("routineStatus.sections.unsaved")}
                     className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500 ring-2 ring-background"
                   />
                 ) : null}
@@ -185,7 +186,7 @@ export function RoutineSectionPicker({
           }
         }}
       >
-        <SelectTrigger className="h-11 w-full" aria-label="Routine section">
+        <SelectTrigger className="h-11 w-full" aria-label={t("routineStatus.sections.sections")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

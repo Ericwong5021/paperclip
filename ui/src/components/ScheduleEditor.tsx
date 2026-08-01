@@ -3,17 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { nextCronFires, parseCronExpression } from "../lib/cron-fires";
+import { t } from "@/i18n";
 
 export type SchedulePreset = "every_minute" | "every_hour" | "every_day" | "weekdays" | "weekly" | "monthly" | "custom";
 
 const PRESETS: { value: SchedulePreset; label: string }[] = [
-  { value: "every_minute", label: "Every minute" },
-  { value: "every_hour", label: "Every hour" },
-  { value: "every_day", label: "Every day" },
-  { value: "weekdays", label: "Weekdays" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "custom", label: "Custom (cron)" },
+  { value: "every_minute", label: t("routineStatus.schedule.everyMinute") },
+  { value: "every_hour", label: t("routineStatus.schedule.everyHour") },
+  { value: "every_day", label: t("routineStatus.schedule.everyDay") },
+  { value: "weekdays", label: t("routineStatus.schedule.weekdays") },
+  { value: "weekly", label: t("routineStatus.schedule.weekly") },
+  { value: "monthly", label: t("routineStatus.schedule.monthly") },
+  { value: "custom", label: t("routineStatus.schedule.custom") },
 ];
 
 const HOURS = Array.from({ length: 24 }, (_, i) => ({
@@ -27,13 +28,13 @@ const MINUTES = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 const DAYS_OF_WEEK = [
-  { value: "1", label: "Mon" },
-  { value: "2", label: "Tue" },
-  { value: "3", label: "Wed" },
-  { value: "4", label: "Thu" },
-  { value: "5", label: "Fri" },
-  { value: "6", label: "Sat" },
-  { value: "0", label: "Sun" },
+  { value: "1", label: t("routineStatus.schedule.mon") },
+  { value: "2", label: t("routineStatus.schedule.tue") },
+  { value: "3", label: t("routineStatus.schedule.wed") },
+  { value: "4", label: t("routineStatus.schedule.thu") },
+  { value: "5", label: t("routineStatus.schedule.fri") },
+  { value: "6", label: t("routineStatus.schedule.sat") },
+  { value: "0", label: t("routineStatus.schedule.sun") },
 ];
 
 const DAYS_OF_MONTH = Array.from({ length: 31 }, (_, i) => ({
@@ -126,21 +127,21 @@ function describeSchedule(cron: string): string {
 
   switch (preset) {
     case "every_minute":
-      return "Every minute";
+      return t("routineStatus.schedule.everyMinute");
     case "every_hour":
-      return `Every hour at :${minute.padStart(2, "0")}`;
+      return t("routineStatus.schedule.everyHourAt", { minute: minute.padStart(2, "0") });
     case "every_day":
-      return `Every day at ${timeStr}`;
+      return t("routineStatus.schedule.everyDayAt", { time: timeStr });
     case "weekdays":
-      return `Weekdays at ${timeStr}`;
+      return t("routineStatus.schedule.weekdaysAt", { time: timeStr });
     case "weekly": {
       const day = DAYS_OF_WEEK.find((d) => d.value === dayOfWeek)?.label ?? dayOfWeek;
-      return `Every ${day} at ${timeStr}`;
+      return t("routineStatus.schedule.everyDayOfWeekAt", { day, time: timeStr });
     }
     case "monthly":
-      return `Monthly on the ${dayOfMonth}${ordinalSuffix(Number(dayOfMonth))} at ${timeStr}`;
+      return t("routineStatus.schedule.monthlyOn", { day: dayOfMonth, ord: ordinalSuffix(Number(dayOfMonth)), time: timeStr });
     case "custom":
-      return cron || "No schedule set";
+      return cron || t("routineStatus.schedule.noSchedule");
   }
 }
 
@@ -161,7 +162,7 @@ export function getScheduleCronValidation(cron: string): {
   if (!trimmed) {
     return {
       valid: false,
-      message: "Enter a 5-field cron expression.",
+      message: t("routineStatus.schedule.enterCron"),
       nextFires: [],
     };
   }
@@ -170,7 +171,7 @@ export function getScheduleCronValidation(cron: string): {
   if (fields.length !== 5) {
     return {
       valid: false,
-      message: `Use exactly 5 fields; this has ${fields.length}.`,
+      message: t("routineStatus.schedule.exactFields", { count: fields.length }),
       nextFires: [],
     };
   }
@@ -178,7 +179,7 @@ export function getScheduleCronValidation(cron: string): {
   if (!parseCronExpression(trimmed)) {
     return {
       valid: false,
-      message: "Cron fields must use valid numbers, ranges, lists, wildcards, or steps.",
+      message: t("routineStatus.schedule.invalidFields"),
       nextFires: [],
     };
   }
@@ -186,7 +187,7 @@ export function getScheduleCronValidation(cron: string): {
   const nextFires = nextCronFires(trimmed, 3, { timeZone: "UTC" });
   return {
     valid: true,
-    message: nextFires.length > 0 ? "Valid cron." : "Valid cron, but no upcoming fires were found.",
+    message: nextFires.length > 0 ? t("routineStatus.schedule.validCron") : t("routineStatus.schedule.validCronNoFires"),
     nextFires,
   };
 }
@@ -247,8 +248,8 @@ export function ScheduleEditor({
   return (
     <div className="space-y-3">
       <Select value={preset} onValueChange={(v) => handlePresetChange(v as SchedulePreset)}>
-        <SelectTrigger className="w-full" aria-label="Schedule frequency">
-          <SelectValue placeholder="Choose frequency..." />
+        <SelectTrigger className="w-full" aria-label={t("routineStatus.schedule.scheduleFrequency")}>
+          <SelectValue placeholder={t("routineStatus.schedule.chooseFrequency")} />
         </SelectTrigger>
         <SelectContent>
           {PRESETS.map((p) => (
@@ -277,12 +278,12 @@ export function ScheduleEditor({
               }
             }}
             placeholder="0 10 * * *"
-            aria-label="Cron expression"
+            aria-label={t("routineStatus.schedule.cronExpression")}
             aria-invalid={!customValidation.valid}
             className="font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            Five fields: minute hour day-of-month month day-of-week
+            {t("routineStatus.schedule.cronFields")}
           </p>
           <p
             className={customValidation.valid ? "text-xs text-muted-foreground" : "text-xs text-destructive"}
@@ -298,7 +299,7 @@ export function ScheduleEditor({
         <div className="flex flex-wrap items-center gap-2">
           {preset !== "every_minute" && preset !== "every_hour" && (
             <>
-              <span className="text-sm text-muted-foreground">at</span>
+              <span className="text-sm text-muted-foreground">{t("routineStatus.schedule.at")}</span>
               <Select
                 value={hour}
                 onValueChange={(h) => {
@@ -341,7 +342,7 @@ export function ScheduleEditor({
 
           {preset === "every_hour" && (
             <>
-              <span className="text-sm text-muted-foreground">at minute</span>
+              <span className="text-sm text-muted-foreground">{t("routineStatus.schedule.atMinute")}</span>
               <Select
                 value={minute}
                 onValueChange={(m) => {
@@ -365,7 +366,7 @@ export function ScheduleEditor({
 
           {preset === "weekly" && (
             <>
-              <span className="text-sm text-muted-foreground">on</span>
+              <span className="text-sm text-muted-foreground">{t("routineStatus.schedule.on")}</span>
               <div className="flex gap-1">
                 {DAYS_OF_WEEK.map((d) => (
                   <Button
@@ -389,7 +390,7 @@ export function ScheduleEditor({
 
           {preset === "monthly" && (
             <>
-              <span className="text-sm text-muted-foreground">on day</span>
+              <span className="text-sm text-muted-foreground">{t("routineStatus.schedule.onDay")}</span>
               <Select
                 value={dayOfMonth}
                 onValueChange={(dom) => {

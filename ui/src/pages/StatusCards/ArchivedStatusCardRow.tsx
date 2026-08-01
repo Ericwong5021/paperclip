@@ -7,6 +7,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { formatDateTime } from "@/lib/utils";
 import { formatCents, formatTokens, rollupUpdates } from "./format";
 import type { StatusCardView } from "./types";
+import { t } from "@/i18n";
 
 function shortDate(iso: string | null): string {
   if (!iso) return "—";
@@ -34,10 +35,10 @@ export function ArchivedStatusCardRow({
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 px-4 py-3">
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold">{card.title ?? "Untitled card"}</p>
+        <p className="truncate text-sm font-semibold">{card.title ?? t("routineStatus.statusCards.untitled")}</p>
         <p className="mt-0.5 text-xs text-muted-foreground" title={card.archivedAt ? formatDateTime(card.archivedAt) : undefined}>
-          archived {shortDate(card.archivedAt)} · last summary {shortDate(card.lastGeneratedAt)}
-          {rollup ? ` · lifetime ${formatTokens(rollup.totalTokens)} / ${formatCents(rollup.totalCostCents)}` : ""}
+          {t("routineStatus.statusCards.archived")} {shortDate(card.archivedAt)} · {t("routineStatus.statusCards.lastSummary")} {shortDate(card.lastGeneratedAt)}
+          {rollup ? ` · ${t("routineStatus.statusCards.lifetime")} ${formatTokens(rollup.totalTokens)} / ${formatCents(rollup.totalCostCents)}` : ""}
         </p>
       </div>
       {/* View is the more common intent on an archived row (reading the last
@@ -45,11 +46,11 @@ export function ArchivedStatusCardRow({
           stale and never auto-runs. */}
       <div className="flex shrink-0 gap-2">
         <Button size="sm" onClick={onView}>
-          View
+          {t("routineStatus.statusCards.view")}
         </Button>
         <Button variant="outline" size="sm" onClick={onRestore} disabled={restorePending}>
           {restorePending ? <Loader2 className="animate-spin" /> : null}
-          Restore
+          {t("routineStatus.statusCards.restore")}
         </Button>
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
 import { externalObjectStatusBadge, externalObjectStatusBadgeDefault } from "../lib/status-colors";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import { cn } from "../lib/utils";
+import { t } from "@/i18n";
 
 interface ExternalObjectStatusSummaryProps {
   summary: ExternalObjectSummary | null | undefined;
@@ -32,11 +33,11 @@ function buildBreakdownTitle(summary: ExternalObjectSummary): string {
   const parts: string[] = [];
   for (const [category, count] of Object.entries(summary.byStatusCategory)) {
     if (!count) continue;
-    parts.push(`${count} ${externalObjectCategoryLabel(category).toLowerCase()}`);
+    parts.push(`${count} ${t(`routinesStatus.external.category.${category}`, { defaultValue: externalObjectCategoryLabel(category) }).toLowerCase()}`);
   }
-  if (summary.staleCount > 0) parts.push(`${summary.staleCount} stale`);
-  parts.push(`${summary.total} total`);
-  return `External objects: ${parts.join(", ")}`;
+  if (summary.staleCount > 0) parts.push(t("routinesStatus.external.stale", { count: summary.staleCount }));
+  parts.push(t("routinesStatus.external.total", { count: summary.total }));
+  return `${t("routinesStatus.external.objects")}: ${parts.join(", ")}`;
 }
 
 /**

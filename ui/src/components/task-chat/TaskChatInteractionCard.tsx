@@ -2,6 +2,7 @@ import type { ComponentProps } from "react";
 import { IssueThreadInteractionCard } from "@/components/IssueThreadInteractionCard";
 import { TaskChatMarker } from "./TaskChatMarker";
 import type { TaskChatInteractionItem } from "./task-chat-model";
+import { t } from "@/i18n";
 
 type InteractionCardProps = Omit<ComponentProps<typeof IssueThreadInteractionCard>, "interaction">;
 
@@ -26,8 +27,8 @@ export function TaskChatInteractionCard({ item, ...cardProps }: TaskChatInteract
           id: item.id,
           kind: "marker",
           variant: "turn_boundary",
-          label: interaction.title ?? "Confirmation",
-          detail: "expired",
+          label: interaction.title ?? t("interactions.chatConfirmation"),
+          detail: t("interactions.chatConfirmationExpired"),
         }}
       />
     );

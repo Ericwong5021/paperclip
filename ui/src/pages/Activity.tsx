@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { History } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "@/i18n";
 
 const ACTIVITY_PAGE_LIMIT = 200;
 
@@ -45,13 +46,14 @@ function activityEntityTitle(event: ActivityEvent) {
 }
 
 export function Activity() {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Activity" }]);
-  }, [setBreadcrumbs]);
+    setBreadcrumbs([{ label: t("activityPage.title") }]);
+  }, [setBreadcrumbs, t]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: [...queryKeys.activity(selectedCompanyId!), { limit: ACTIVITY_PAGE_LIMIT }],
@@ -102,7 +104,7 @@ export function Activity() {
   }, [data]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={History} message="Select a company to view activity." />;
+    return <EmptyState icon={History} message={t("activityPage.selectCompany")} />;
   }
 
   if (isLoading) {
@@ -123,13 +125,15 @@ export function Activity() {
       <div className="flex items-center justify-end">
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger className="w-(--sz-140px) h-8 text-xs">
-            <SelectValue placeholder="Filter by type" />
+            <SelectValue placeholder={t("activityPage.filter")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="all">{t("activityPage.allTypes")}</SelectItem>
             {entityTypes.map((type) => (
               <SelectItem key={type} value={type}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
+                {t(`activityPage.${type.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())}`, {
+                  defaultValue: type.replace(/_/g, " "),
+                })}
               </SelectItem>
             ))}
           </SelectContent>
@@ -139,7 +143,7 @@ export function Activity() {
       {error && <p className="text-sm text-destructive">{error.message}</p>}
 
       {filtered && filtered.length === 0 && (
-        <EmptyState icon={History} message="No activity yet." />
+        <EmptyState icon={History} message={t("activityPage.empty")} />
       )}
 
       {filtered && filtered.length > 0 && (

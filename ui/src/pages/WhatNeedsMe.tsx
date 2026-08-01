@@ -48,12 +48,13 @@ import { IssueGroupHeader } from "../components/IssueGroupHeader";
 import { Button } from "../components/ui/button";
 import { Checkbox } from "../components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
+import { t, useTranslation } from "@/i18n";
 
 const SEVERITY_LABELS: Record<string, string> = {
-  critical: "Critical",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
+  critical: "inboxResidual.severity.critical",
+  high: "inboxResidual.severity.high",
+  medium: "inboxResidual.severity.medium",
+  low: "inboxResidual.severity.low",
 };
 
 /** Curtain rows never expand; module-level so memoized rows see one identity. */
@@ -93,6 +94,7 @@ function findScrollContainer(element: HTMLElement | null): HTMLElement | null {
 }
 
 export function WhatNeedsMe() {
+  useTranslation();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -128,7 +130,7 @@ export function WhatNeedsMe() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Decisions" }]);
+    setBreadcrumbs([{ label: t("workflow.decisions.title") }]);
   }, [setBreadcrumbs]);
 
   // Re-hydrate per-company preferences when the company changes.
@@ -371,11 +373,11 @@ export function WhatNeedsMe() {
       pushToast({
         id: `attention-dismiss-${item.id}`,
         dedupeKey: `attention-dismiss-${item.dismissalKey}`,
-        title: "Dismissed",
+        title: t("workflow.decisions.dismissed"),
         body: item.subject.title ?? undefined,
         tone: "info",
         ttlMs: 8000,
-        action: { label: "Undo", onClick: () => handleUndoDismiss(item) },
+        action: { label: t("workflow.common.undo"), onClick: () => handleUndoDismiss(item) },
       });
     },
     [dismiss, handleUndoDismiss, pushToast],
@@ -451,7 +453,7 @@ export function WhatNeedsMe() {
   const activeFilterCount = countActiveAttentionFilters(filters);
 
   if (!selectedCompanyId) {
-    return <p className="text-sm text-muted-foreground">Select a company first.</p>;
+    return <p className="text-sm text-muted-foreground">{t("workflow.decisions.selectCompany")}</p>;
   }
 
   if (isLoading) {
@@ -463,11 +465,11 @@ export function WhatNeedsMe() {
   return (
     <div ref={rootRef} className="max-w-3xl space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-bold">Decisions</h1>
+        <h1 className="text-xl font-bold">{t("workflow.decisions.title")}</h1>
         <div className="flex items-center gap-2">
           {visibleCount > 0 && (
             <span className="text-sm text-muted-foreground">
-              {visibleCount} {visibleCount === 1 ? "decision" : "decisions"}
+              {visibleCount} {t("workflow.common.decisions")}
             </span>
           )}
           {/* Filter */}
@@ -478,8 +480,8 @@ export function WhatNeedsMe() {
                 variant="outline"
                 size="icon"
                 className={cn("h-8 w-8 shrink-0", activeFilterCount > 0 && "bg-accent")}
-                title="Filter"
-                aria-label="Filter"
+                title={t("workflow.decisions.filter")}
+                aria-label={t("workflow.decisions.filter")}
               >
                 <ListFilter className="h-3.5 w-3.5" />
               </Button>
@@ -500,8 +502,8 @@ export function WhatNeedsMe() {
                 variant="outline"
                 size="icon"
                 className={cn("h-8 w-8 shrink-0", groupBy !== "none" && "bg-accent")}
-                title="Group"
-                aria-label="Group"
+                title={t("workflow.decisions.group")}
+                aria-label={t("workflow.decisions.group")}
               >
                 <Layers className="h-3.5 w-3.5" />
               </Button>
@@ -530,8 +532,8 @@ export function WhatNeedsMe() {
             variant="outline"
             size="icon"
             className="h-8 w-8 shrink-0"
-            title="Training"
-            aria-label="Training"
+            title={t("workflow.decisions.training")}
+            aria-label={t("workflow.decisions.training")}
             onClick={() => navigate(decisionTrainingHref())}
           >
             <GraduationCap className="h-3.5 w-3.5" />
@@ -544,8 +546,8 @@ export function WhatNeedsMe() {
                 variant="outline"
                 size="icon"
                 className="h-8 w-8 shrink-0"
-                title="Sort"
-                aria-label="Sort"
+                title={t("workflow.decisions.sort")}
+                aria-label={t("workflow.decisions.sort")}
               >
                 <ArrowUpDown className="h-3.5 w-3.5" />
               </Button>
@@ -655,7 +657,7 @@ export function WhatNeedsMe() {
 
           {snoozedItems.length > 0 && (
             <Curtain
-              label="Snoozed"
+              label={t("workflow.decisions.snoozed")}
               count={snoozedItems.length}
               open={snoozedOpen}
               onToggle={() => setSnoozedOpen((prev) => !prev)}
@@ -679,7 +681,7 @@ export function WhatNeedsMe() {
 
           {dismissedItems.length > 0 && (
             <Curtain
-              label="Dismissed"
+              label={t("workflow.decisions.dismissed")}
               count={dismissedItems.length}
               open={dismissedOpen}
               onToggle={() => setDismissedOpen((prev) => !prev)}
@@ -706,13 +708,13 @@ export function WhatNeedsMe() {
 
       <div className="space-y-4">
         <Curtain
-          label="Decided"
+          label={t("workflow.decisions.decided")}
           count={decisionHistoryCount(decidedDecisions?.length)}
           open={decidedOpen}
           onToggle={() => setDecidedOpen((prev) => !prev)}
         >
           {decidedDecisionsLoading ? (
-            <p className="text-xs text-muted-foreground">Loading decided decisions…</p>
+            <p className="text-xs text-muted-foreground">{t("workflow.decisions.loadingDecided")}</p>
           ) : (decidedDecisions?.length ?? 0) > 0 ? (
             decidedDecisions!.slice(0, DECISION_HISTORY_VISIBLE_LIMIT).map((decision) => (
               <DecisionResolver
@@ -724,18 +726,18 @@ export function WhatNeedsMe() {
               />
             ))
           ) : (
-            <p className="text-xs text-muted-foreground">No decided decisions.</p>
+            <p className="text-xs text-muted-foreground">{t("workflow.decisions.noDecided")}</p>
           )}
         </Curtain>
 
         <Curtain
-          label="Expired"
+          label={t("workflow.decisions.expired")}
           count={decisionHistoryCount(expiredDecisions?.length)}
           open={expiredOpen}
           onToggle={() => setExpiredOpen((prev) => !prev)}
         >
           {expiredDecisionsLoading ? (
-            <p className="text-xs text-muted-foreground">Loading expired decisions…</p>
+            <p className="text-xs text-muted-foreground">{t("workflow.decisions.loadingExpired")}</p>
           ) : (expiredDecisions?.length ?? 0) > 0 ? (
             expiredDecisions!.slice(0, DECISION_HISTORY_VISIBLE_LIMIT).map((decision) => (
               <DecisionResolver
@@ -747,7 +749,7 @@ export function WhatNeedsMe() {
               />
             ))
           ) : (
-            <p className="text-xs text-muted-foreground">No expired decisions.</p>
+            <p className="text-xs text-muted-foreground">{t("workflow.decisions.noExpired")}</p>
           )}
         </Curtain>
       </div>
@@ -781,15 +783,15 @@ export function DecisionBundleHeader({
   originIssue: AttentionSubject | null;
   count: number;
 }) {
-  const noun = count === 1 ? "decision" : "decisions";
+  const noun = t("workflow.common.decisions");
   return (
     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-sm border-l-2 border-violet-500/60 bg-violet-500/5 px-3 py-1.5 text-xs">
       <span className="font-semibold text-violet-800 dark:text-violet-200">
-        {agentName ?? "An agent"} proposed {count} {noun}
+        {agentName ?? t("workflow.common.agent")} {t("workflow.decisions.proposed")} {count} {noun}
       </span>
       {originIssue && (originIssue.identifier || originIssue.title) && (
         <span className="text-muted-foreground">
-          {"· from "}
+          {`· ${t("workflow.decisions.from")} `}
           {originIssue.href ? (
             <a href={originIssue.href} className="hover:underline">
               {originIssue.identifier ?? originIssue.title}
@@ -800,7 +802,7 @@ export function DecisionBundleHeader({
         </span>
       )}
       {title && <span className="text-muted-foreground">· {title}</span>}
-      <span className="text-muted-foreground">· {count} pending</span>
+      <span className="text-muted-foreground">· {count} {t("workflow.decisions.pending")}</span>
     </div>
   );
 }
@@ -824,20 +826,20 @@ function FilterMenu({
   return (
     <div className="max-h-(--sz-70vh) overflow-y-auto">
       <div className="flex items-center justify-between px-3 py-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Filter</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("workflow.decisions.filter")}</span>
         {hasActive && (
           <button
             type="button"
             className="text-xs text-muted-foreground hover:text-foreground"
             onClick={() => onChange(defaultAttentionFilterState)}
           >
-            Clear
+            {t("workflow.common.clear")}
           </button>
         )}
       </div>
 
       {options.sourceKinds.length > 1 && (
-        <FilterSection title="Type">
+        <FilterSection title={t("workflow.decisions.type")}>
           {options.sourceKinds.map((kind) => (
             <FilterRow
               key={kind}
@@ -850,11 +852,11 @@ function FilterMenu({
       )}
 
       {options.severities.length > 1 && (
-        <FilterSection title="Severity">
+        <FilterSection title={t("workflow.decisions.severity")}>
           {options.severities.map((severity) => (
             <FilterRow
               key={severity}
-              label={SEVERITY_LABELS[severity] ?? severity}
+              label={t(SEVERITY_LABELS[severity] ?? severity)}
               checked={filters.severities.includes(severity)}
               onToggle={() => toggle("severities", severity)}
             />
@@ -863,7 +865,7 @@ function FilterMenu({
       )}
 
       {(options.projects.length > 0 || options.hasNoProject) && (
-        <FilterSection title="Project">
+        <FilterSection title={t("workflow.decisions.project")}>
           {options.projects.map((project) => (
             <FilterRow
               key={project.id}
@@ -874,7 +876,7 @@ function FilterMenu({
           ))}
           {options.hasNoProject && (
             <FilterRow
-              label="No project"
+              label={t("workflow.cases.noProject")}
               checked={filters.projectIds.includes(NO_GROUP_SENTINEL)}
               onToggle={() => toggle("projectIds", NO_GROUP_SENTINEL)}
             />
@@ -883,7 +885,7 @@ function FilterMenu({
       )}
 
       {(options.workspaces.length > 0 || options.hasNoWorkspace) && (
-        <FilterSection title="Workspace">
+        <FilterSection title={t("workflow.decisions.workspace")}>
           {options.workspaces.map((workspace) => (
             <FilterRow
               key={workspace.id}
@@ -894,7 +896,7 @@ function FilterMenu({
           ))}
           {options.hasNoWorkspace && (
             <FilterRow
-              label="No workspace"
+              label={t("workflow.decisions.noWorkspace")}
               checked={filters.workspaceIds.includes(NO_GROUP_SENTINEL)}
               onToggle={() => toggle("workspaceIds", NO_GROUP_SENTINEL)}
             />
@@ -968,10 +970,10 @@ function CaughtUpNote({ filtered }: { filtered: boolean }) {
   return (
     <div className="rounded-xl border border-dashed border-border py-10 text-center">
       <p className="text-sm font-medium text-foreground">
-        {filtered ? "No decisions match your filters." : "You're all caught up."}
+        {filtered ? t("workflow.decisions.noMatch") : t("workflow.decisions.caughtUp")}
       </p>
       {filtered && (
-        <p className="mt-1 text-xs text-muted-foreground">Adjust or clear the filters to see the rest.</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("workflow.decisions.adjustFilters")}</p>
       )}
     </div>
   );
@@ -983,10 +985,10 @@ function ZeroState() {
       <div className="mb-4 rounded-full bg-green-500/10 p-4">
         <CheckCircle2 className="h-10 w-10 text-green-500" />
       </div>
-      <p className="text-lg font-semibold text-foreground">You're all caught up</p>
+      <p className="text-lg font-semibold text-foreground">{t("workflow.decisions.caughtUp")}</p>
       <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
         <Inbox className="h-4 w-4" />
-        Nothing needs a decision from you right now.
+        {t("workflow.decisions.nothingNeedsDecision")}
       </p>
     </div>
   );

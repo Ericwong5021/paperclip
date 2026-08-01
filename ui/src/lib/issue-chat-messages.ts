@@ -19,6 +19,7 @@ import type { IssueTimelineEvent } from "./issue-timeline-events";
 import {
   summarizeNotice,
 } from "./transcriptPresentation";
+import { getLocale, t } from "@/i18n";
 
 type JsonValue = null | string | number | boolean | JsonValue[] | { [key: string]: JsonValue };
 type JsonObject = { [key: string]: JsonValue };
@@ -470,17 +471,33 @@ function authorNameForComment(
 ) {
   const authorAgentId = effectiveCommentAuthorAgentId(comment);
   if (authorAgentId) {
-    return agentMap?.get(authorAgentId)?.name ?? (options?.isSystemNotice ? "Paperclip" : authorAgentId.slice(0, 8));
+    return agentMap?.get(authorAgentId)?.name ?? (options?.isSystemNotice ? t("interactions.paperclip") : authorAgentId.slice(0, 8));
   }
   const authorUserId = comment.authorUserId ?? null;
-  if (!authorUserId) return options?.isSystemNotice ? "Paperclip" : "You";
+  if (!authorUserId) return options?.isSystemNotice ? t("interactions.paperclip") : t("interactions.you");
   const userLabel = userLabelMap?.get(authorUserId)?.trim();
   if (userLabel) return userLabel;
-  return formatAssigneeUserLabel(authorUserId, currentUserId, userLabelMap) ?? "You";
+  return formatAssigneeUserLabel(authorUserId, currentUserId, userLabelMap) ?? t("interactions.you");
 }
 
 function formatStatusLabel(status: string) {
-  return status.replace(/_/g, " ");
+  const statusKeys: Record<string, string> = {
+    todo: "interactions.interactionStatusTodo",
+    in_progress: "interactions.interactionStatusInProgress",
+    blocked: "interactions.interactionStatusBlocked",
+    done: "interactions.interactionStatusDone",
+    cancelled: "interactions.interactionStatusCancelled",
+    backlog: "interactions.interactionStatusBacklog",
+    queued: "interactions.interactionStatusQueued",
+    running: "interactions.interactionStatusRunning",
+    succeeded: "interactions.interactionStatusSucceeded",
+    failed: "interactions.interactionStatusFailed",
+    timed_out: "interactions.interactionStatusTimedOut",
+    pending: "interactions.interactionStatusPending",
+    error: "interactions.interactionStatusError",
+  };
+  const key = statusKeys[status];
+  return key ? t(key) : status.replace(/_/g, " ");
 }
 
 function createCommentMessage(args: {
@@ -575,31 +592,39 @@ function createTimelineEventMessage(args: {
 }) {
   const { event, agentMap, currentUserId, userLabelMap } = args;
   const actorName = event.actorType === "agent"
-    ? (agentMap?.get(event.actorId)?.name ?? event.actorId.slice(0, 8))
-    : event.actorType === "system"
-      ? "System"
-      : (formatAssigneeUserLabel(event.actorId, currentUserId, userLabelMap) ?? "Board");
+      ? (agentMap?.get(event.actorId)?.name ?? event.actorId.slice(0, 8))
+      : event.actorType === "system"
+      ? t("interactions.system")
+      : (formatAssigneeUserLabel(event.actorId, currentUserId, userLabelMap) ?? t("interactions.theBoard"));
 
   const lines: string[] = [
-    event.followUpRequested ? `${actorName} requested follow-up` : `${actorName} updated this issue`,
+    event.followUpRequested
+      ? t("interactions.timelineRequestedFollowUp", { actor: actorName })
+      : t("interactions.timelineUpdatedIssue", { actor: actorName }),
   ];
   if (event.statusChange) {
     lines.push(
-      `Status: ${event.statusChange.from ?? "none"} -> ${event.statusChange.to ?? "none"}`,
+      t("interactions.timelineStatusChange", {
+        from: formatStatusLabel(event.statusChange.from ?? "none"),
+        to: formatStatusLabel(event.statusChange.to ?? "none"),
+      }),
     );
   }
   if (event.assigneeChange) {
     const from = event.assigneeChange.from.agentId
       ? (agentMap?.get(event.assigneeChange.from.agentId)?.name ?? event.assigneeChange.from.agentId.slice(0, 8))
-      : (formatAssigneeUserLabel(event.assigneeChange.from.userId, currentUserId, userLabelMap) ?? "Unassigned");
+      : (formatAssigneeUserLabel(event.assigneeChange.from.userId, currentUserId, userLabelMap) ?? t("taskDetail.unassigned"));
     const to = event.assigneeChange.to.agentId
       ? (agentMap?.get(event.assigneeChange.to.agentId)?.name ?? event.assigneeChange.to.agentId.slice(0, 8))
-      : (formatAssigneeUserLabel(event.assigneeChange.to.userId, currentUserId, userLabelMap) ?? "Unassigned");
-    lines.push(`Assignee: ${from} -> ${to}`);
+      : (formatAssigneeUserLabel(event.assigneeChange.to.userId, currentUserId, userLabelMap) ?? t("taskDetail.unassigned"));
+    lines.push(t("interactions.timelineAssigneeChange", { from, to }));
   }
   if (event.workspaceChange) {
     lines.push(
-      `Workspace: ${event.workspaceChange.from.label ?? "none"} -> ${event.workspaceChange.to.label ?? "none"}`,
+      t("interactions.timelineWorkspaceChange", {
+        from: event.workspaceChange.from.label ?? t("interactions.none"),
+        to: event.workspaceChange.to.label ?? t("interactions.none"),
+      }),
     );
   }
 
@@ -702,19 +727,22 @@ function computeSegmentTimings(entries: readonly IssueChatTranscriptEntry[]): Se
 export function formatDurationWords(ms: number | null) {
   if (ms === null || !Number.isFinite(ms) || ms <= 0) return null;
   const totalSeconds = Math.max(1, Math.round(ms / 1000));
+  const chinese = getLocale() === "zh-CN";
   if (totalSeconds < 60) {
-    return `${totalSeconds} second${totalSeconds === 1 ? "" : "s"}`;
+    return chinese ? `${totalSeconds} 秒` : `${totalSeconds} second${totalSeconds === 1 ? "" : "s"}`;
   }
   const totalMinutes = Math.round(totalSeconds / 60);
   if (totalMinutes < 60) {
-    return `${totalMinutes} minute${totalMinutes === 1 ? "" : "s"}`;
+    return chinese ? `${totalMinutes} 分钟` : `${totalMinutes} minute${totalMinutes === 1 ? "" : "s"}`;
   }
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   if (minutes === 0) {
-    return `${hours} hour${hours === 1 ? "" : "s"}`;
+    return chinese ? `${hours} 小时` : `${hours} hour${hours === 1 ? "" : "s"}`;
   }
-  return `${hours} hour${hours === 1 ? "" : "s"} ${minutes} minute${minutes === 1 ? "" : "s"}`;
+  return chinese
+    ? `${hours} 小时 ${minutes} 分钟`
+    : `${hours} hour${hours === 1 ? "" : "s"} ${minutes} minute${minutes === 1 ? "" : "s"}`;
 }
 
 function runDurationLabel(run: {
@@ -730,26 +758,39 @@ function runDurationLabel(run: {
   const durationMs = end ? Math.max(0, toTimestamp(end) - toTimestamp(start)) : null;
   const durationText = formatDurationWords(durationMs);
   const stopReason = typeof run.resultJson?.stopReason === "string" ? run.resultJson.stopReason : null;
+  const chinese = getLocale() === "zh-CN";
   switch (run.status) {
     case "succeeded":
-      return durationText ? `Worked for ${durationText}` : "Finished work";
+      return chinese
+        ? durationText ? `运行了 ${durationText}` : "工作已完成"
+        : durationText ? t("interactions.runWorkedFor", { duration: durationText }) : t("interactions.runFinished");
     case "failed":
     case "error":
-      return durationText ? `Failed after ${durationText}` : "Run failed";
+      return chinese
+        ? durationText ? `运行 ${durationText}后失败` : "运行失败"
+        : durationText ? t("interactions.runFailedAfter", { duration: durationText }) : t("interactions.runFailed");
     case "timed_out":
-      return durationText ? `Timed out after ${durationText}` : "Run timed out";
+      return chinese
+        ? durationText ? `运行 ${durationText}后超时` : "运行超时"
+        : durationText ? t("interactions.runTimedOutAfter", { duration: durationText }) : t("interactions.runTimedOut");
     case "cancelled":
       if (isOperatorInterruptedRun(run.resultJson, run.errorCode)) {
-        return durationText ? `Interrupted by board after ${durationText}` : "Interrupted by board";
+        return chinese
+          ? durationText ? `面板在 ${durationText}后中断了运行` : "已被面板中断"
+          : durationText ? t("interactions.runInterruptedByBoardAfter", { duration: durationText }) : t("interactions.runInterruptedByBoard");
       }
       if (stopReason === "paused") {
-        return durationText ? `Paused by board after ${durationText}` : "Paused by board";
+        return chinese
+          ? durationText ? `面板在 ${durationText}后暂停了运行` : "已被面板暂停"
+          : durationText ? t("interactions.runPausedByBoardAfter", { duration: durationText }) : t("interactions.runPausedByBoard");
       }
-      return durationText ? `Cancelled after ${durationText}` : "Run cancelled";
+      return chinese
+        ? durationText ? `运行 ${durationText}后取消` : "运行已取消"
+        : durationText ? t("interactions.runCancelledAfter", { duration: durationText }) : t("interactions.runCancelled");
     case "queued":
-      return "Queued";
+      return t("interactions.chatQueued");
     case "running":
-      return "Working...";
+      return t("interactions.working");
     default:
       return formatStatusLabel(run.status);
   }
@@ -761,7 +802,7 @@ function createHistoricalRunMessage(run: IssueChatLinkedRun, agentMap?: Map<stri
     id: `run:${run.runId}`,
     role: "system",
     createdAt: toDate(runTimestamp(run)),
-    content: [{ type: "text", text: `${agentName} run ${run.runId.slice(0, 8)} ${formatStatusLabel(run.status)}` }],
+    content: [{ type: "text", text: t("interactions.runSummary", { agent: agentName, runId: run.runId.slice(0, 8), status: formatStatusLabel(run.status) }) }],
     metadata: {
       custom: {
         kind: "run",
@@ -787,7 +828,7 @@ function createHistoricalTranscriptMessage(args: {
   const agentName = run.agentName ?? agentMap?.get(run.agentId)?.name ?? run.agentId.slice(0, 8);
   const compactedTranscript = compactIssueChatTranscript(transcript);
   const { parts, notices, segments } = buildAssistantPartsFromTranscript(compactedTranscript);
-  const waitingText = hasOutput ? "" : "Run finished";
+  const waitingText = hasOutput ? "" : t("interactions.runFinished");
   const content = parts.length > 0
     ? parts
     : waitingText
@@ -909,13 +950,13 @@ export function buildAssistantPartsFromTranscript(entries: readonly IssueChatTra
     if (entry.kind === "result") {
       if (entry.isError && entry.errors?.length) {
         for (const error of entry.errors) {
-          orderedParts.push({ type: "reasoning", text: `Run error: ${summarizeNotice(error)}` });
+          orderedParts.push({ type: "reasoning", text: `${t("interactions.runError")}: ${summarizeNotice(error)}` });
         }
       } else if (entry.text) {
         orderedParts.push({
           type: "reasoning",
           text: entry.isError
-            ? `Run error: ${summarizeNotice(entry.text)}`
+            ? `${t("interactions.runError")}: ${summarizeNotice(entry.text)}`
             : summarizeNotice(entry.text),
         });
       }
@@ -1004,10 +1045,10 @@ function createLiveRunMessage(args: {
   const { parts, notices, segments } = buildAssistantPartsFromTranscript(compactedTranscript);
   const waitingText =
     run.status === "queued"
-      ? "Queued..."
+      ? t("interactions.chatQueued")
       : parts.length > 0
         ? ""
-        : "Working...";
+        : t("interactions.working");
 
   const content = parts;
 

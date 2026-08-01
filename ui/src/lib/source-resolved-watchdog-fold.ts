@@ -1,4 +1,5 @@
 import type { HeartbeatRun } from "@paperclipai/shared";
+import { getLocale } from "@/i18n";
 
 export type SourceResolvedFoldCleanupOutcome =
   | "terminated"
@@ -113,19 +114,30 @@ const CLEANUP_OUTCOME_LABELS: Record<string, string> = {
   skipped_non_local_adapter: "skipped (non-local adapter)",
 };
 
+const CLEANUP_OUTCOME_LABELS_ZH_CN: Record<string, string> = {
+  terminated: "已终止",
+  termination_sent_still_running: "已发送终止信号（仍在运行）",
+  failed: "失败",
+  not_running: "未运行",
+  no_process_metadata: "无进程元数据",
+  skipped_non_local_adapter: "已跳过（非本地适配器）",
+};
+
 export function formatCleanupOutcome(outcome: string): string {
+  if (getLocale() === "zh-CN") return CLEANUP_OUTCOME_LABELS_ZH_CN[outcome] ?? outcome.replace(/_/g, " ");
   return CLEANUP_OUTCOME_LABELS[outcome] ?? outcome.replace(/_/g, " ");
 }
 
 export function formatSilenceAgeMs(ms: number | null | undefined): string | null {
   if (!ms || ms <= 0) return null;
+  const chinese = getLocale() === "zh-CN";
   const totalMinutes = Math.floor(ms / 60_000);
-  if (totalMinutes < 1) return "under 1 minute";
-  if (totalMinutes < 60) return `${totalMinutes} minute${totalMinutes === 1 ? "" : "s"}`;
+  if (totalMinutes < 1) return chinese ? "1 分钟以内" : "under 1 minute";
+  if (totalMinutes < 60) return chinese ? `${totalMinutes} 分钟` : `${totalMinutes} minute${totalMinutes === 1 ? "" : "s"}`;
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  if (minutes === 0) return `${hours} hour${hours === 1 ? "" : "s"}`;
-  return `${hours}h ${minutes}m`;
+  if (minutes === 0) return chinese ? `${hours} 小时` : `${hours} hour${hours === 1 ? "" : "s"}`;
+  return chinese ? `${hours} 小时 ${minutes} 分钟` : `${hours}h ${minutes}m`;
 }
 
 export function shortenEvidenceId(id: string): string {

@@ -6,6 +6,7 @@ import { useSidebar } from "../context/SidebarContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/i18n";
 
 /**
  * Forces the full-label (non-rail) presentation for any `SidebarNavItem`
@@ -89,6 +90,7 @@ export function SidebarNavItem({
   trailingLabel,
   liveAccessory,
 }: SidebarNavItemProps) {
+  const { t } = useTranslation();
   const { isMobile, setSidebarOpen, collapsed, peeking } = useSidebar();
   // A fixed-width contextual pane (SecondarySidebar) forces full labels even
   // when the global app sidebar is collapsed to its rail (PAP-10700).
@@ -108,7 +110,7 @@ export function SidebarNavItem({
     : hasBadge
       ? `${badge}${badgeLabel ? ` ${badgeLabel}` : ""}`
       : alert
-        ? "attention needed"
+        ? t("settingsShell.sidebar.attentionNeeded")
         : undefined;
   const railAriaLabel = !rail || (!railStatusText && !trailingLabel)
     ? undefined

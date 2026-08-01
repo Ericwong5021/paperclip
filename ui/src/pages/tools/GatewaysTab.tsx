@@ -14,6 +14,7 @@ import { toolsApi } from "@/api/tools";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/context/ToastContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { t } from "@/i18n";
 import { ErrorState, LoadingState, RelativeTime, ToolsPageHeader } from "./shared";
 
 type CreateGatewayDraft = {
@@ -170,11 +171,11 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
     onSuccess: async (gateway) => {
       setCreateDraft({ name: "", description: "", profileId: activeProfiles[0]?.id ?? "" });
       setCreating(false);
-      pushToast({ title: "Gateway created", body: gateway.name, tone: "success" });
+      pushToast({ title: t("appsTools.gatewayCreated", { defaultValue: "网关已创建" }), body: gateway.name, tone: "success" });
       await invalidateGateways();
     },
     onError: (error) => {
-      pushToast({ title: "Gateway was not created", body: error instanceof Error ? error.message : String(error), tone: "error" });
+      pushToast({ title: t("appsTools.gatewayNotCreated", { defaultValue: "网关创建失败" }), body: error instanceof Error ? error.message : String(error), tone: "error" });
     },
   });
 
@@ -193,11 +194,11 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
       setCreatedTokens((current) => ({ ...current, [token.gatewayId]: token }));
       setIssuingGatewayId(null);
       setTokenDrafts((current) => ({ ...current, [token.gatewayId]: defaultTokenDraft() }));
-      pushToast({ title: "Token issued", body: `${token.name} was created. Copy it now; it will not be shown again.`, tone: "success" });
+      pushToast({ title: t("appsTools.tokenIssued", { defaultValue: "令牌已签发" }), body: `${token.name} ${t("appsTools.tokenCreatedOnce", { defaultValue: "已创建，请立即复制，之后不会再次显示。" })}`, tone: "success" });
       await invalidateGateways();
     },
     onError: (error) => {
-      pushToast({ title: "Token was not issued", body: error instanceof Error ? error.message : String(error), tone: "error" });
+      pushToast({ title: t("appsTools.tokenNotIssued", { defaultValue: "令牌签发失败" }), body: error instanceof Error ? error.message : String(error), tone: "error" });
     },
   });
 
@@ -205,11 +206,11 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
     mutationFn: (tokenId: string) => toolsApi.revokeGatewayToken(companyId, tokenId),
     onSuccess: async (token) => {
       setConfirmingRevokeTokenId(null);
-      pushToast({ title: "Token revoked", body: token.name, tone: "success" });
+      pushToast({ title: t("appsTools.tokenRevoked", { defaultValue: "令牌已撤销" }), body: token.name, tone: "success" });
       await invalidateGateways();
     },
     onError: (error) => {
-      pushToast({ title: "Token was not revoked", body: error instanceof Error ? error.message : String(error), tone: "error" });
+      pushToast({ title: t("appsTools.tokenNotRevoked", { defaultValue: "令牌撤销失败" }), body: error instanceof Error ? error.message : String(error), tone: "error" });
     },
   });
 
@@ -219,9 +220,9 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
         throw new Error("Clipboard access is unavailable.");
       }
       await navigator.clipboard.writeText(value);
-      pushToast({ title: "Copied to clipboard", body: label, tone: "success" });
+      pushToast({ title: t("appsTools.copiedToClipboard", { defaultValue: "已复制到剪贴板" }), body: label, tone: "success" });
     } catch (error) {
-      pushToast({ title: "Copy failed", body: error instanceof Error ? error.message : "Clipboard access is unavailable.", tone: "error" });
+      pushToast({ title: t("appsTools.copyFailed", { defaultValue: "复制失败" }), body: error instanceof Error ? error.message : t("appsTools.clipboardUnavailable", { defaultValue: "剪贴板不可用。" }), tone: "error" });
     }
   }
 
@@ -238,7 +239,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
   function submitCreateGateway(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!createDraft.profileId) {
-      pushToast({ title: "Pick a profile", body: "A gateway needs an access profile before it can be created.", tone: "warn" });
+      pushToast({ title: t("appsTools.pickProfile", { defaultValue: "请选择配置档案" }), body: t("appsTools.gatewayNeedsProfile", { defaultValue: "创建网关前需要先选择访问配置档案。" }), tone: "warn" });
       return;
     }
     createGatewayMutation.mutate();
@@ -248,13 +249,13 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
     event.preventDefault();
     const draft = tokenDrafts[gatewayId] ?? defaultTokenDraft();
     if (draft.allowedActions.length === 0) {
-      pushToast({ title: "Pick token actions", body: "Gateway tokens need at least one allowed MCP action.", tone: "warn" });
+      pushToast({ title: t("appsTools.pickTokenActions", { defaultValue: "请选择令牌操作" }), body: t("appsTools.gatewayTokenActionRequired", { defaultValue: "网关令牌至少需要一个允许的 MCP 操作。" }), tone: "warn" });
       return;
     }
     createTokenMutation.mutate(gatewayId);
   }
 
-  if (gatewaysQuery.isLoading) return <LoadingState label="Loading gateways..." />;
+  if (gatewaysQuery.isLoading) return <LoadingState label={t("appsTools.loadingGateways", { defaultValue: "正在加载网关…" })} />;
   if (gatewaysQuery.isError) return <ErrorState error={gatewaysQuery.error} />;
 
   const gateways = gatewaysQuery.data?.gateways ?? [];
@@ -265,8 +266,8 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <ToolsPageHeader
-          title="Named MCP gateways"
-          description="Stable endpoints for external clients that use the same profiles, rules, and audit trail as agent tool access."
+          title={t("appsTools.namedMcpGateways", { defaultValue: "命名 MCP 网关" })}
+          description={t("appsTools.gatewayDescription", { defaultValue: "为外部客户端提供稳定端点，并复用 Agent 工具访问的配置档案、规则与审计记录。" })}
         />
         <Button
           type="button"
@@ -278,7 +279,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
           disabled={profileLoading}
         >
           <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Create gateway
+          {t("appsTools.createGateway", { defaultValue: "创建网关" })}
         </Button>
       </div>
 
@@ -286,7 +287,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
         <form className="space-y-3 rounded-md border border-border p-4" onSubmit={submitCreateGateway}>
           <div className="grid gap-3 md:grid-cols-(--gtc-60)">
             <label className="space-y-1.5 text-sm">
-              <span className="text-xs font-medium text-muted-foreground">Gateway name</span>
+              <span className="text-xs font-medium text-muted-foreground">{t("appsTools.gatewayName", { defaultValue: "网关名称" })}</span>
               <input
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 value={createDraft.name}
@@ -296,7 +297,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
               />
             </label>
             <label className="space-y-1.5 text-sm">
-              <span className="text-xs font-medium text-muted-foreground">Access profile</span>
+              <span className="text-xs font-medium text-muted-foreground">{t("appsTools.accessProfile", { defaultValue: "访问配置档案" })}</span>
               <select
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 value={createDraft.profileId}
@@ -305,7 +306,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                 disabled={activeProfiles.length === 0}
               >
                 <option value="" disabled>
-                  {profileLoading ? "Loading profiles..." : "Choose a profile"}
+                  {profileLoading ? t("appsTools.loadingProfiles", { defaultValue: "正在加载配置档案…" }) : t("appsTools.chooseProfile", { defaultValue: "选择配置档案" })}
                 </option>
                 {activeProfiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
@@ -316,7 +317,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
             </label>
           </div>
           <label className="space-y-1.5 text-sm">
-            <span className="text-xs font-medium text-muted-foreground">Description</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("appsTools.description", { defaultValue: "描述" })}</span>
             <textarea
               className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={createDraft.description}
@@ -325,14 +326,14 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
             />
           </label>
           {activeProfiles.length === 0 && !profileLoading ? (
-            <p className="text-xs text-muted-foreground">Create an access profile before adding a gateway.</p>
+            <p className="text-xs text-muted-foreground">{t("appsTools.createProfileBeforeGateway", { defaultValue: "添加网关前，请先创建访问配置档案。" })}</p>
           ) : null}
           <div className="flex flex-wrap justify-end gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => setCreating(false)}>
-              Cancel
+              {t("appsTools.cancel", { defaultValue: "取消" })}
             </Button>
             <Button type="submit" size="sm" disabled={createDisabled || !createDraft.name.trim() || !createDraft.profileId}>
-              {createGatewayMutation.isPending ? "Creating..." : "Create gateway"}
+              {createGatewayMutation.isPending ? t("appsTools.creating", { defaultValue: "创建中…" }) : t("appsTools.createGateway", { defaultValue: "创建网关" })}
             </Button>
           </div>
         </form>
@@ -340,7 +341,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
 
       {gateways.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-5 text-sm text-muted-foreground">
-          No named gateways yet. Create one here, then issue a token for the client that will connect to it.
+          {t("appsTools.noNamedGateways", { defaultValue: "还没有命名网关。请先在这里创建网关，再为要连接它的客户端签发令牌。" })}
         </div>
       ) : (
         <div className="divide-y divide-border rounded-md border border-border">
@@ -365,13 +366,13 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                     ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => void copyText(endpoint, "Gateway endpoint")}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => void copyText(endpoint, t("appsTools.gatewayEndpoint", { defaultValue: "网关端点" }))}>
                       <Copy className="mr-1.5 h-3.5 w-3.5" />
-                      Copy endpoint
+                      {t("appsTools.copyEndpoint", { defaultValue: "复制端点" })}
                     </Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => startIssuing(gateway.id)}>
                       <KeyRound className="mr-1.5 h-3.5 w-3.5" />
-                      Issue token
+                      {t("appsTools.issueToken", { defaultValue: "签发令牌" })}
                     </Button>
                   </div>
                 </div>
@@ -382,23 +383,23 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
 
                 <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
                   <div>
-                    <dt className="text-xs font-medium text-muted-foreground">Owner</dt>
+                    <dt className="text-xs font-medium text-muted-foreground">{t("appsTools.owner", { defaultValue: "所有者" })}</dt>
                     <dd className="mt-0.5 text-foreground">{formatOwner(gateway, agentNames)}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-medium text-muted-foreground">Scope</dt>
+                    <dt className="text-xs font-medium text-muted-foreground">{t("appsTools.scope", { defaultValue: "范围" })}</dt>
                     <dd className="mt-0.5 text-foreground">{formatScope(gateway, projectNames, agentNames)}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-medium text-muted-foreground">Allowed tools</dt>
+                    <dt className="text-xs font-medium text-muted-foreground">{t("appsTools.allowedTools", { defaultValue: "允许的工具" })}</dt>
                     <dd className="mt-0.5 text-foreground">
                       {profile ? `${formatAllowedTools(profile)} via ${profile.name}` : `Profile ${shortId(gateway.profileId)}`}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-medium text-muted-foreground">Last activity</dt>
+                    <dt className="text-xs font-medium text-muted-foreground">{t("appsTools.lastActivity", { defaultValue: "最近活动" })}</dt>
                     <dd className="mt-0.5 text-foreground">
-                      {lastActivity ? <RelativeTime value={lastActivity} /> : "Never used"}
+                      {lastActivity ? <RelativeTime value={lastActivity} /> : t("appsTools.neverUsed", { defaultValue: "从未使用" })}
                     </dd>
                   </div>
                 </dl>
@@ -407,7 +408,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                   <form className="space-y-3 rounded-md border border-border p-3" onSubmit={(event) => submitCreateToken(event, gateway.id)}>
                     <div className="grid gap-3 md:grid-cols-2">
                       <label className="space-y-1.5 text-sm">
-                        <span className="text-xs font-medium text-muted-foreground">Token name</span>
+                        <span className="text-xs font-medium text-muted-foreground">{t("appsTools.tokenName", { defaultValue: "令牌名称" })}</span>
                         <input
                           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                           value={tokenDraft.name}
@@ -422,7 +423,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                         />
                       </label>
                       <label className="space-y-1.5 text-sm">
-                        <span className="text-xs font-medium text-muted-foreground">Client label</span>
+                        <span className="text-xs font-medium text-muted-foreground">{t("appsTools.clientLabel", { defaultValue: "客户端标签" })}</span>
                         <input
                           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                           value={tokenDraft.clientLabel}
@@ -439,7 +440,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                     </div>
                     <div className="grid gap-3 md:grid-cols-[1fr_auto]">
                       <label className="space-y-1.5 text-sm">
-                        <span className="text-xs font-medium text-muted-foreground">Owner note</span>
+                        <span className="text-xs font-medium text-muted-foreground">{t("appsTools.ownerNote", { defaultValue: "所有者备注" })}</span>
                         <input
                           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                           value={tokenDraft.ownerNote}
@@ -454,7 +455,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                         />
                       </label>
                       <label className="space-y-1.5 text-sm">
-                        <span className="text-xs font-medium text-muted-foreground">Expires</span>
+                        <span className="text-xs font-medium text-muted-foreground">{t("appsTools.expires", { defaultValue: "过期时间" })}</span>
                         <input
                           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                           type="date"
@@ -488,7 +489,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
                       <Button type="button" variant="ghost" size="sm" onClick={() => setIssuingGatewayId(null)}>
-                        Cancel
+                        {t("appsTools.cancel", { defaultValue: "取消" })}
                       </Button>
                       <Button
                         type="submit"
@@ -501,7 +502,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                           !tokenDraft.expiresAt
                         }
                       >
-                        {createTokenMutation.isPending ? "Issuing..." : "Issue token"}
+                        {createTokenMutation.isPending ? t("appsTools.issuing", { defaultValue: "签发中…" }) : t("appsTools.issueToken", { defaultValue: "签发令牌" })}
                       </Button>
                     </div>
                   </form>
@@ -510,10 +511,10 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                 {createdToken ? (
                   <div className="space-y-2 rounded-md border border-border bg-muted/40 p-3 text-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="font-medium text-foreground">New token for {createdToken.name}</div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => void copyText(createdToken.token, "Gateway bearer token")}>
+                      <div className="font-medium text-foreground">{t("appsTools.newTokenFor", { defaultValue: "新令牌：{{name}}", name: createdToken.name })}</div>
+                      <Button type="button" variant="outline" size="sm" onClick={() => void copyText(createdToken.token, t("appsTools.gatewayBearerToken", { defaultValue: "网关 Bearer 令牌" }))}>
                         <Copy className="mr-1.5 h-3.5 w-3.5" />
-                        Copy token
+                        {t("appsTools.copyToken", { defaultValue: "复制令牌" })}
                       </Button>
                     </div>
                     <div className="break-all rounded bg-background px-3 py-2 font-mono text-xs text-muted-foreground">
@@ -526,11 +527,11 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                   <div>
                     <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <KeyRound className="h-3.5 w-3.5" />
-                      Tokens
+                      {t("appsTools.tokens", { defaultValue: "令牌" })}
                     </div>
                     <div className="space-y-1 text-sm">
                       {gateway.tokens.length === 0 ? (
-                        <p className="text-muted-foreground">No tokens issued.</p>
+                        <p className="text-muted-foreground">{t("appsTools.noTokensIssued", { defaultValue: "尚未签发令牌。" })}</p>
                       ) : (
                         gateway.tokens.map((token) => {
                           const revoked = Boolean(token.revokedAt);
@@ -548,14 +549,14 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                                   <span className="text-xs text-muted-foreground">
                                     {token.revokedAt ? (
                                       <>
-                                        revoked <RelativeTime value={token.revokedAt} />
+                                        {t("appsTools.revoked", { defaultValue: "已撤销" })} <RelativeTime value={token.revokedAt} />
                                       </>
                                     ) : token.expiresAt ? (
                                       <>
-                                        expires <RelativeTime value={token.expiresAt} />
+                                        {t("appsTools.expiresLabel", { defaultValue: "过期" })} <RelativeTime value={token.expiresAt} />
                                       </>
                                     ) : (
-                                      "no expiry"
+                                      t("appsTools.noExpiry", { defaultValue: "永不过期" })
                                     )}
                                   </span>
                                   {!revoked ? (
@@ -565,17 +566,17 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                                       size="sm"
                                       className="h-7 px-2 text-xs text-destructive hover:text-destructive"
                                       onClick={() => setConfirmingRevokeTokenId(token.id)}
-                                      aria-label={`Revoke ${token.name}`}
+                                      aria-label={t("appsTools.revokeTokenNamed", { defaultValue: "撤销令牌 {{name}}", name: token.name })}
                                     >
                                       <RotateCcw className="mr-1 h-3.5 w-3.5" />
-                                      Revoke
+                                      {t("appsTools.revoke", { defaultValue: "撤销" })}
                                     </Button>
                                   ) : null}
                                 </div>
                               </div>
                               {confirming ? (
                                 <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-muted-foreground">
-                                  <span>Revoke this token now?</span>
+                                  <span>{t("appsTools.revokeTokenNow", { defaultValue: "现在撤销此令牌吗？" })}</span>
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -584,7 +585,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                                     onClick={() => setConfirmingRevokeTokenId(null)}
                                   >
                                     <X className="mr-1 h-3.5 w-3.5" />
-                                    Cancel
+                                    {t("appsTools.cancel", { defaultValue: "取消" })}
                                   </Button>
                                   <Button
                                     type="button"
@@ -595,7 +596,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                                     disabled={revokeTokenMutation.isPending}
                                   >
                                     <Check className="mr-1 h-3.5 w-3.5" />
-                                    Confirm
+                                    {t("appsTools.confirm", { defaultValue: "确认" })}
                                   </Button>
                                 </div>
                               ) : null}
@@ -607,10 +608,10 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                   </div>
 
                   <div>
-                    <div className="mb-1.5 text-xs font-medium text-muted-foreground">Client snippets</div>
+                    <div className="mb-1.5 text-xs font-medium text-muted-foreground">{t("appsTools.clientSnippets", { defaultValue: "客户端配置片段" })}</div>
                     <div className="space-y-1 text-sm">
                       {snippets.length === 0 ? (
-                        <p className="text-muted-foreground">No snippets available.</p>
+                        <p className="text-muted-foreground">{t("appsTools.noSnippetsAvailable", { defaultValue: "暂无可用配置片段。" })}</p>
                       ) : (
                         snippets.map((snippet) => (
                           <details key={snippet.client} className="rounded px-2 py-1 open:bg-muted/40">

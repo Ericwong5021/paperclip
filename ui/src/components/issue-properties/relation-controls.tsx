@@ -14,6 +14,7 @@ import {
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { StatusIcon } from "../StatusIcon";
+import { t } from "@/i18n";
 
 export function RemovableIssueReferencePill({
   issue,
@@ -36,7 +37,7 @@ export function RemovableIssueReferencePill({
       <span className="truncate">{issueLabel}</span>
     </>
   );
-  const removeLabel = `Remove ${issueLabel} as blocker`;
+  const removeLabel = t("taskDetail.removeBlockerLabel", { name: issueLabel, defaultValue: "Remove {{name}} as blocker" });
   const handleRemove = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -83,17 +84,17 @@ export function RemovableIssueReferencePill({
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Remove blocker?</DialogTitle>
+            <DialogTitle>{t("taskDetail.removeBlockerQuestion", { defaultValue: "Remove blocker?" })}</DialogTitle>
             <DialogDescription>
-              Remove {confirmLabel} as a blocker for this task.
+              {t("taskDetail.removeBlockerDescription", { name: confirmLabel, defaultValue: "Remove {{name}} as a blocker for this task." })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline">{t("taskDetail.cancel")}</Button>
             </DialogClose>
             <Button type="button" variant="destructive" onClick={confirmRemove}>
-              Remove blocker
+              {t("taskDetail.removeBlocker", { defaultValue: "Remove blocker" })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -117,9 +118,9 @@ export function ExpandRelationListButton({
       type="button"
       className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
       onClick={onClick}
-      aria-label={expanded ? "Show fewer items" : `Show ${hiddenCount} more items`}
+      aria-label={expanded ? t("taskDetail.showFewerItems", { defaultValue: "Show fewer items" }) : t("taskDetail.showMoreItems", { count: hiddenCount, defaultValue: "Show {{count}} more items" })}
     >
-      {expanded ? "Show less" : `Show ${hiddenCount} more`}
+      {expanded ? t("taskDetail.showLess", { defaultValue: "Show less" }) : t("taskDetail.showMore", { count: hiddenCount, defaultValue: "Show {{count}} more" })}
     </button>
   );
 }

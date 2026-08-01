@@ -4,6 +4,7 @@ import { ExternalObjectPill } from "./ExternalObjectPill";
 import type { IssueExternalObjectGroup } from "../hooks/useIssueExternalObjects";
 import { externalObjectToneSeverity } from "../lib/external-objects";
 import { Badge } from "@/components/ui/badge";
+import { t, useTranslation } from "@/i18n";
 
 type GroupedSource = {
   label: string;
@@ -26,6 +27,33 @@ function groupSourcesByLabel(sources: IssueRelatedWorkItem["sources"]): GroupedS
     }
   }
   return Array.from(groups.values());
+}
+
+function localizedSourceLabel(label: string): string {
+  const normalized = label.trim();
+  const directKey: Record<string, string> = {
+    title: "title",
+    description: "description",
+    comment: "comment",
+    document: "document",
+    plan: "plan",
+    goal: "goal",
+    plugin: "plugin",
+    property: "property",
+    source: "source",
+  };
+  const key = directKey[normalized.toLowerCase()];
+  if (key) return t(`issueResidual.relatedWork.sourceLabels.${key}`);
+  const prefixed = normalized.match(/^(Document|Property):\s*(.+)$/i);
+  if (prefixed) {
+    return t(
+      prefixed[1].toLowerCase() === "document"
+        ? "issueResidual.relatedWork.sourceLabels.documentNamed"
+        : "issueResidual.relatedWork.sourceLabels.propertyNamed",
+      { name: prefixed[2] },
+    );
+  }
+  return label;
 }
 
 function Section({
@@ -71,7 +99,7 @@ function Section({
                       className="border-border bg-muted/40 text-muted-foreground"
                       title={group.sampleMatchedText ?? undefined}
                     >
-                      <span>{group.label}</span>
+                      <span>{localizedSourceLabel(group.label)}</span>
                       {group.count > 1 ? (
                         <span className="tabular-nums text-(length:--text-nano) font-medium opacity-80">×{group.count}</span>
                       ) : null}
@@ -111,30 +139,30 @@ function ExternalObjectsSection({
   return (
     <section className="space-y-3 rounded-lg border border-border p-3">
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold">External objects</h3>
+        <h3 className="text-sm font-semibold">{t("issueResidual.relatedWork.externalObjects")}</h3>
         <p className="text-xs text-muted-foreground">
-          Remote work referenced from this issue — pull requests, deployments, tickets in other systems, and more.
+          {t("issueResidual.relatedWork.externalDescription")}
         </p>
       </div>
 
       {isError ? (
         <p className="text-xs text-muted-foreground">
-          Couldn't load external objects.{" "}
+          {t("issueResidual.relatedWork.externalLoadFailed")}{" "}
           {onRetry ? (
             <button
               type="button"
               onClick={onRetry}
               className="text-primary underline-offset-2 hover:underline"
             >
-              Retry
+              {t("issueResidual.relatedWork.retry")}
             </button>
           ) : null}
         </p>
       ) : isLoading ? (
-        <p className="text-xs text-muted-foreground">Loading external objects…</p>
+        <p className="text-xs text-muted-foreground">{t("issueResidual.relatedWork.loadingExternal")}</p>
       ) : sorted.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          This issue does not reference any external objects yet.
+          {t("issueResidual.relatedWork.noExternalObjects")}
         </p>
       ) : (
         <ul className="-mx-1 flex flex-col">
@@ -157,7 +185,7 @@ function ExternalObjectsSection({
                       key={`${object?.id ?? pill.url ?? label}:${label}`}
                       className="border-border bg-muted/40 text-muted-foreground"
                     >
-                      <span>{label}</span>
+                      <span>{localizedSourceLabel(label)}</span>
                     </Badge>
                   ))}
                 </div>
@@ -185,16 +213,17 @@ export function IssueRelatedWorkPanel({
   externalObjectsError?: boolean;
   onRetryExternalObjects?: () => void;
 }) {
+  useTranslation();
   const outbound = relatedWork?.outbound ?? [];
   const inbound = relatedWork?.inbound ?? [];
 
   return (
     <div className="space-y-3">
       <Section
-        title="References"
-        description="Other tasks this task currently points at in its title, description, comments, or documents."
+        title={t("issueResidual.relatedWork.references")}
+        description={t("issueResidual.relatedWork.referencesDescription")}
         items={outbound}
-        emptyLabel="This task does not reference any other tasks yet."
+        emptyLabel={t("issueResidual.relatedWork.noReferences")}
       />
       {externalObjectsEnabled ? (
         <ExternalObjectsSection
@@ -205,10 +234,10 @@ export function IssueRelatedWorkPanel({
         />
       ) : null}
       <Section
-        title="Referenced by"
-        description="Other tasks that currently point at this task."
+        title={t("issueResidual.relatedWork.referencedBy")}
+        description={t("issueResidual.relatedWork.referencedByDescription")}
         items={inbound}
-        emptyLabel="No other tasks reference this task yet."
+        emptyLabel={t("issueResidual.relatedWork.notReferenced")}
       />
     </div>
   );

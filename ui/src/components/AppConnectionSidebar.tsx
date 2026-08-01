@@ -12,6 +12,7 @@ import {
   CONNECTED_ONLY_APP_TABS,
   appApplicationTabHref,
   appTabHref,
+  appTabLabel,
   type AppTabKey,
 } from "@/pages/apps/app-tabs";
 import { AppLogo } from "@/pages/apps/AppLogo";
@@ -22,12 +23,14 @@ import {
   type AppGalleryDisplayEntry,
 } from "@/pages/apps/app-definition-display";
 import { SidebarNavItem } from "./SidebarNavItem";
+import { useTranslation } from "@/i18n";
 
 type AppDetailSidebarProps =
   | { kind: "connection"; connectionId: string }
   | { kind: "application"; applicationId: string };
 
 export function AppDetailSidebar(props: AppDetailSidebarProps) {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompany();
   const { isMobile, setSidebarOpen } = useSidebar();
 
@@ -66,7 +69,7 @@ export function AppDetailSidebar(props: AppDetailSidebarProps) {
     ? (connectionsQuery.data?.connections ?? []).filter((candidate) => candidate.applicationId === props.applicationId)
     : [];
   const previousConnection = latestArchivedConnection(appConnections);
-  const appName = connection ? humanizeConnectionDisplayName(connection) : application?.name ?? "App";
+  const appName = connection ? humanizeConnectionDisplayName(connection) : application?.name ?? t("appsTools.app");
   const logoEntry = galleryEntryFor(
     (galleryQuery.data?.apps ?? []) as AppGalleryDisplayEntry[],
     connection,
@@ -90,7 +93,7 @@ export function AppDetailSidebar(props: AppDetailSidebarProps) {
           className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
         >
           <ChevronLeft className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">All apps</span>
+          <span className="truncate">{t("appsTools.allApps")}</span>
         </Link>
         <div className="flex min-w-0 items-center gap-2 px-2 py-1">
           <AppLogo name={appName} logoUrl={appDefinitionLogoUrl(logoEntry)} size={28} />
@@ -106,12 +109,12 @@ export function AppDetailSidebar(props: AppDetailSidebarProps) {
             <SidebarNavItem
               key={tab.key}
               to={tabHref(props, tab.key)}
-              label={tab.label}
+              label={appTabLabel(tab.key)}
               icon={tab.icon}
               end
               badge={tab.key === "review" && reviewCount > 0 ? reviewCount : undefined}
               badgeTone="danger"
-              badgeLabel="needing review"
+              badgeLabel={t("appsTools.needingReview")}
             />
           ))}
         </div>

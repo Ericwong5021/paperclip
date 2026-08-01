@@ -4,10 +4,21 @@ import { cn } from "../lib/utils";
 import { StatusGlyph, type StatusGlyphSize } from "./StatusGlyph";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { getLocale, t } from "@/i18n";
 
 const allStatuses = ["backlog", "todo", "in_progress", "in_review", "done", "cancelled", "blocked"];
 
 function statusLabel(status: string): string {
+  const keys: Record<string, string> = {
+    backlog: "charts.backlog",
+    todo: "charts.todo",
+    in_progress: "charts.inProgress",
+    in_review: "charts.inReview",
+    done: "charts.done",
+    blocked: "charts.blocked",
+    cancelled: "charts.cancelled",
+  };
+  if (keys[status]) return t(keys[status]);
   return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
@@ -22,6 +33,34 @@ interface StatusIconProps {
 }
 
 function blockedAttentionLabel(blockerAttention: IssueBlockerAttention | null | undefined) {
+  if (getLocale() === "zh-CN") {
+    if (!blockerAttention || blockerAttention.state === "none") return "受阻";
+    if (blockerAttention.reason === "active_child") {
+      const count = blockerAttention.coveredBlockerCount;
+      return blockerAttention.sampleBlockerIdentifier
+        ? `受阻 · 正在等待活跃子任务 ${blockerAttention.sampleBlockerIdentifier}`
+        : `受阻 · 正在等待 ${count} 个活跃子任务`;
+    }
+    if (blockerAttention.reason === "active_dependency") {
+      const count = blockerAttention.coveredBlockerCount;
+      return blockerAttention.sampleBlockerIdentifier
+        ? `受阻 · 活跃依赖 ${blockerAttention.sampleBlockerIdentifier} 正在处理`
+        : `受阻 · ${count} 个活跃依赖正在处理`;
+    }
+    if (blockerAttention.reason === "stalled_review") {
+      const count = blockerAttention.stalledBlockerCount;
+      const leaf = blockerAttention.sampleStalledBlockerIdentifier ?? blockerAttention.sampleBlockerIdentifier;
+      return leaf ? `受阻 · ${leaf} 的审核已停滞` : `受阻 · ${count} 个审核缺少明确的下一步`;
+    }
+    if (blockerAttention.reason === "attention_required") {
+      const count = blockerAttention.attentionBlockerCount || blockerAttention.unresolvedBlockerCount;
+      const coveredCount = blockerAttention.coveredBlockerCount;
+      return coveredCount > 0
+        ? `受阻 · ${count} 个阻塞项需要处理，${coveredCount} 个正由活跃任务处理`
+        : `受阻 · ${count} 个阻塞项需要处理`;
+    }
+    return "受阻";
+  }
   if (!blockerAttention || blockerAttention.state === "none") return "Blocked";
 
   if (blockerAttention.reason === "active_child") {
@@ -104,7 +143,7 @@ export function StatusIcon({ status, blockerAttention, onChange, className, show
   const trigger = showLabel ? (
     <button
       type="button"
-      aria-label={`Change status (current: ${ariaLabel})`}
+      aria-label={getLocale() === "zh-CN" ? `更改状态（当前：${ariaLabel}）` : `Change status (current: ${ariaLabel})`}
       className="inline-flex min-h-5 items-center gap-1.5 cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
     >
       {glyph}
@@ -114,7 +153,7 @@ export function StatusIcon({ status, blockerAttention, onChange, className, show
     <button
       type="button"
       data-slot="icon-button"
-      aria-label={`Change status (current: ${ariaLabel})`}
+      aria-label={getLocale() === "zh-CN" ? `更改状态（当前：${ariaLabel}）` : `Change status (current: ${ariaLabel})`}
       className="inline-flex cursor-pointer items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-(length:--rad-3) focus-visible:ring-ring"
     >
       {glyph}

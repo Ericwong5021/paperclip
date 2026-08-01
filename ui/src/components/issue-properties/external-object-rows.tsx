@@ -16,6 +16,7 @@ import { cn } from "../../lib/utils";
 import { ExternalObjectStatusIcon } from "../ExternalObjectStatusIcon";
 import { PropertyRow } from "./primitives";
 import { ExpandRelationListButton } from "./relation-controls";
+import { t } from "@/i18n";
 
 const EXTERNAL_OBJECT_PROPERTY_PREVIEW_COUNT = 5;
 
@@ -32,8 +33,8 @@ function externalObjectRowDisplayKey(group: IssueExternalObjectGroup): string {
   const displayKey = pill.displayKey?.trim();
   if (displayKey) return displayKey;
   if (pill.providerKey === "github") {
-    if (pill.objectType === "pull_request") return "Github PR";
-    if (pill.objectType === "issue") return "Github Issue";
+    if (pill.objectType === "pull_request") return t("taskDetail.githubPr", { defaultValue: "GitHub PR" });
+    if (pill.objectType === "issue") return t("taskDetail.githubIssue", { defaultValue: "GitHub Issue" });
   }
   return externalObjectDisplayLabel(pill.providerKey, pill.objectType);
 }
@@ -175,7 +176,7 @@ export function ExternalObjectRows({
 
   if (externalObjectsError) {
     return (
-      <PropertyRow label="External objects">
+      <PropertyRow label={t("taskDetail.externalObjects")}>
         <span className="text-xs text-muted-foreground">
           Couldn't load external objects.
           {onRetryExternalObjects ? (
@@ -197,7 +198,7 @@ export function ExternalObjectRows({
 
   if (externalObjectsLoading) {
     return (
-      <PropertyRow label="External objects">
+      <PropertyRow label={t("taskDetail.externalObjects")}>
         <span className="h-4 w-24 animate-pulse rounded bg-muted/40" />
       </PropertyRow>
     );
@@ -226,7 +227,7 @@ export function ExternalObjectRows({
           );
         })}
       {expanded || hiddenExternalObjectCount > 0 ? (
-        <PropertyRow label="References">
+        <PropertyRow label={t("taskDetail.references")}>
           <ExpandRelationListButton
             hiddenCount={hiddenExternalObjectCount}
             expanded={expanded}

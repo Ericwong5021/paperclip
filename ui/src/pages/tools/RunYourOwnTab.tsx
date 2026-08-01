@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { queryKeys } from "@/lib/queryKeys";
 import { toolsApi } from "@/api/tools";
 import { useToast } from "@/context/ToastContext";
+import { t } from "@/i18n";
 import { LoadingState, ErrorState, RelativeTime } from "./shared";
 
 const ENV_KEY_RE = /^[A-Z_][A-Z0-9_]*$/i;
@@ -76,7 +77,7 @@ export function RunYourOwnTab({ companyId }: { companyId: string }) {
         envKeys,
       }),
     onSuccess: () => {
-      pushToast({ title: "Tool added", body: `"${name.trim()}" is ready to connect.`, tone: "success" });
+      pushToast({ title: t("appsTools.toolAdded", { defaultValue: "工具已添加" }), body: `"${name.trim()}" ${t("appsTools.readyToConnect", { defaultValue: "已准备好连接。" })}`, tone: "success" });
       setName("");
       setCommand("");
       setKeyRows([]);
@@ -94,40 +95,39 @@ export function RunYourOwnTab({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-6">
       <p className="max-w-2xl text-sm text-muted-foreground">
-        For a tool that runs from a command. Paperclip runs it in your company's own isolated workspace.
-        Administrators only.
+        {t("appsTools.runYourOwnHint", { defaultValue: "适用于通过命令运行的工具。Paperclip 会在公司独立工作区中运行它。仅限管理员。" })}
       </p>
 
       <div className="space-y-5 rounded-lg border border-border bg-card p-5">
         <div className="space-y-1.5">
-          <Label htmlFor="ryo-name">Name</Label>
+          <Label htmlFor="ryo-name">{t("appsTools.name", { defaultValue: "名称" })}</Label>
           <Input
             id="ryo-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Acme tools"
+            placeholder={t("appsTools.toolNamePlaceholder", { defaultValue: "例如 Acme tools" })}
             maxLength={160}
           />
-          <p className="text-xs text-muted-foreground">What you'll call this tool in your apps list.</p>
+          <p className="text-xs text-muted-foreground">{t("appsTools.toolNameInAppsHint", { defaultValue: "此名称会显示在应用列表中。" })}</p>
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="ryo-command">Command</Label>
+          <Label htmlFor="ryo-command">{t("appsTools.command", { defaultValue: "命令" })}</Label>
           <Input
             id="ryo-command"
             value={command}
             onChange={(event) => setCommand(event.target.value)}
-            placeholder="npx -y @acme/mcp-tool"
+            placeholder={t("appsTools.commandPlaceholder", { defaultValue: "例如 npx -y @acme/mcp-tool" })}
             spellCheck={false}
             className="bg-slate-900 font-mono text-(length:--text-compact) text-slate-100 placeholder:text-slate-500 focus-visible:ring-slate-400"
           />
-          <p className="text-xs text-muted-foreground">The command that runs the tool. From the tool's README.</p>
+          <p className="text-xs text-muted-foreground">{t("appsTools.commandHint", { defaultValue: "用于运行工具的命令，来自工具的 README。" })}</p>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-baseline gap-2">
-            <Label>Keys it needs</Label>
-            <span className="text-xs text-muted-foreground">· optional, depends on the tool</span>
+            <Label>{t("appsTools.keysNeeded", { defaultValue: "所需密钥" })}</Label>
+            <span className="text-xs text-muted-foreground">· {t("appsTools.optionalDepends", { defaultValue: "可选，取决于工具" })}</span>
           </div>
           {keyRows.length > 0 ? (
             <div className="space-y-2">
@@ -152,7 +152,7 @@ export function RunYourOwnTab({ companyId }: { companyId: string }) {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        aria-label="Remove key"
+                        aria-label={t("appsTools.removeKey", { defaultValue: "移除密钥" })}
                         onClick={() => setKeyRows((rows) => rows.filter((r) => r.id !== row.id))}
                       >
                         <X className="h-4 w-4" />
@@ -160,7 +160,7 @@ export function RunYourOwnTab({ companyId }: { companyId: string }) {
                     </div>
                     {invalid ? (
                       <p className="text-xs text-destructive">
-                        Use letters, numbers and underscores, starting with a letter or underscore (e.g. API_KEY).
+                        {t("appsTools.envKeyFormat", { defaultValue: "请使用字母、数字和下划线，并以字母或下划线开头（例如 API_KEY）。" })}
                       </p>
                     ) : null}
                   </div>
@@ -170,7 +170,7 @@ export function RunYourOwnTab({ companyId }: { companyId: string }) {
           ) : null}
           <Button type="button" variant="outline" size="sm" onClick={addKeyRow} className="gap-1.5">
             <Plus className="h-3.5 w-3.5" />
-            Add a key
+            {t("appsTools.addKey", { defaultValue: "添加密钥" })}
           </Button>
         </div>
 
@@ -178,11 +178,11 @@ export function RunYourOwnTab({ companyId }: { companyId: string }) {
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
           <div className="text-xs">
             <p className="font-medium text-foreground">
-              This runs in your company's own workspace, isolated from everything else.
+              {t("appsTools.isolatedWorkspaceHint", { defaultValue: "此工具会在公司独立工作区中运行，与其他内容隔离。" })}
             </p>
             <p className="mt-0.5 flex items-center gap-1 text-muted-foreground">
               <Lock className="h-3 w-3" />
-              Only administrators see this option.
+              {t("appsTools.adminOnly", { defaultValue: "只有管理员可以看到此选项。" })}
             </p>
           </div>
         </div>
@@ -191,31 +191,31 @@ export function RunYourOwnTab({ companyId }: { companyId: string }) {
 
         <div className="flex flex-wrap items-center gap-3">
           <Button onClick={() => createMutation.mutate()} disabled={!canSubmit || createMutation.isPending}>
-            {createMutation.isPending ? "Adding…" : "Check & continue"}
+            {createMutation.isPending ? t("appsTools.adding", { defaultValue: "添加中…" }) : t("appsTools.checkContinue", { defaultValue: "检查并继续" })}
           </Button>
           <span className="text-xs text-muted-foreground">
-            Paperclip will register the command and the keys it needs.
+            {t("appsTools.registerCommandHint", { defaultValue: "Paperclip 将注册此命令及其所需密钥。" })}
           </span>
         </div>
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">Your own tools</h3>
+        <h3 className="text-sm font-semibold text-foreground">{t("appsTools.yourOwnTools", { defaultValue: "你的工具" })}</h3>
         {templates.isLoading ? (
           <LoadingState />
         ) : templates.isError ? (
           <ErrorState error={templates.error} onRetry={() => templates.refetch()} />
         ) : adminTemplates.length === 0 ? (
-          <p className="text-sm text-muted-foreground">You haven't added any of your own tools yet.</p>
+          <p className="text-sm text-muted-foreground">{t("appsTools.noOwnTools", { defaultValue: "你还没有添加自己的工具。" })}</p>
         ) : (
           <div className="overflow-hidden rounded-lg border border-border">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-left text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-2.5">Name</th>
-                  <th className="px-4 py-2.5">Command</th>
-                  <th className="px-4 py-2.5">Keys</th>
-                  <th className="px-4 py-2.5">Added</th>
+                  <th className="px-4 py-2.5">{t("appsTools.name", { defaultValue: "名称" })}</th>
+                  <th className="px-4 py-2.5">{t("appsTools.command", { defaultValue: "命令" })}</th>
+                  <th className="px-4 py-2.5">{t("appsTools.keys", { defaultValue: "密钥" })}</th>
+                  <th className="px-4 py-2.5">{t("appsTools.added", { defaultValue: "添加时间" })}</th>
                   <th className="px-4 py-2.5" />
                 </tr>
               </thead>
@@ -244,12 +244,12 @@ function RunYourOwnRow({
   const disableMutation = useMutation({
     mutationFn: () => toolsApi.disableStdioTemplate(companyId, template.templateId),
     onSuccess: () => {
-      pushToast({ title: "Tool turned off", tone: "success" });
+      pushToast({ title: t("appsTools.toolTurnedOff", { defaultValue: "工具已关闭" }), tone: "success" });
       qc.invalidateQueries({ queryKey: queryKeys.tools.stdioTemplates(companyId) });
     },
     onError: (error) => {
       pushToast({
-        title: "Couldn't turn it off",
+        title: t("appsTools.couldNotTurnOff", { defaultValue: "无法关闭工具" }),
         body: error instanceof Error ? error.message : undefined,
         tone: "error",
       });
@@ -262,13 +262,13 @@ function RunYourOwnRow({
     <tr className="border-b border-border last:border-0">
       <td className="px-4 py-3">
         <div className="font-medium text-foreground">{template.name}</div>
-        {disabled ? <Badge variant="outline">off</Badge> : null}
+        {disabled ? <Badge variant="outline">{t("appsTools.off", { defaultValue: "关闭" })}</Badge> : null}
       </td>
       <td className="px-4 py-3">
         <code className="font-mono text-(length:--text-micro) text-muted-foreground">{fullCommand || "—"}</code>
       </td>
       <td className="px-4 py-3 text-muted-foreground">
-        {template.envKeys.length > 0 ? template.envKeys.join(", ") : "none"}
+        {template.envKeys.length > 0 ? template.envKeys.join(", ") : t("appsTools.none", { defaultValue: "无" })}
       </td>
       <td className="px-4 py-3">
         <RelativeTime value={template.createdAt} />
@@ -281,7 +281,7 @@ function RunYourOwnRow({
             onClick={() => disableMutation.mutate()}
             disabled={disableMutation.isPending}
           >
-            Turn off
+            {t("appsTools.turnOff", { defaultValue: "关闭" })}
           </Button>
         )}
       </td>

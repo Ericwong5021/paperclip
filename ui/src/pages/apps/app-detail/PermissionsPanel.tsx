@@ -16,6 +16,7 @@ import {
 } from "@/lib/tool-installs";
 import { QuarantinePill } from "./SetupPanel";
 import type { AccessDraft, AppDetailSectionProps } from "./types";
+import { t } from "@/i18n";
 
 type ActionPermission = "off" | "allowed" | "ask";
 
@@ -104,8 +105,8 @@ function AccessSection({
 
   const summary =
     access.mode === "all"
-      ? "Every agent can use it"
-      : `${access.agentIds.size} ${access.agentIds.size === 1 ? "agent" : "agents"} can use it`;
+      ? t("appsToolsResidual.everyAgentCanUse")
+      : t("appsToolsResidual.agentsCanUseCount", { count: access.agentIds.size });
 
   const canSave = draft.mode === "all" || draft.agentIds.size > 0;
 
@@ -113,12 +114,12 @@ function AccessSection({
     <section className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between px-5 py-4">
         <div>
-          <h2 className="text-sm font-bold text-foreground">Who can use it</h2>
+          <h2 className="text-sm font-bold text-foreground">{t("appsTools.whoCanUse", { defaultValue: "谁可以使用" })}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{summary}</p>
         </div>
         {!editing && (
           <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-            Change
+            {t("appsTools.change", { defaultValue: "更改" })}
           </Button>
         )}
       </div>
@@ -133,8 +134,8 @@ function AccessSection({
               onChange={() => setDraft({ mode: "all", agentIds: new Set() })}
             />
             <span>
-              <span className="text-sm font-semibold text-foreground">All agents</span>
-              <span className="block text-xs text-muted-foreground">Anyone you've added to Paperclip.</span>
+              <span className="text-sm font-semibold text-foreground">{t("appsTools.allowAllAgents")}</span>
+              <span className="block text-xs text-muted-foreground">{t("appsTools.anyoneAdded", { defaultValue: "你添加到 Paperclip 的所有 Agent。" })}</span>
             </span>
           </label>
           <label className="flex items-start gap-3">
@@ -145,8 +146,8 @@ function AccessSection({
               onChange={() => setDraft({ mode: "specific", agentIds: new Set(draft.agentIds) })}
             />
             <span>
-              <span className="text-sm font-semibold text-foreground">Only specific agents</span>
-              <span className="block text-xs text-muted-foreground">Pick who can use it.</span>
+              <span className="text-sm font-semibold text-foreground">{t("appsTools.selectedAgents")}</span>
+              <span className="block text-xs text-muted-foreground">{t("appsTools.pickWhoCanUse", { defaultValue: "选择可以使用它的 Agent。" })}</span>
             </span>
           </label>
 
@@ -168,10 +169,10 @@ function AccessSection({
                 setEditing(false);
               }}
             >
-              Save
+              {t("appsTools.save")}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setEditing(false)} disabled={disabled}>
-              Cancel
+              {t("appsTools.cancel")}
             </Button>
           </div>
         </div>
@@ -209,20 +210,20 @@ function InstalledSection({
     <section className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between gap-3 px-5 py-4">
         <div>
-          <h2 className="text-sm font-bold text-foreground">Installed on agents</h2>
+          <h2 className="text-sm font-bold text-foreground">{t("appsTools.installedOnAgents", { defaultValue: "已安装到 Agent" })}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Whose harness carries {appName}'s tools on every run.
+            {t("appsToolsResidual.installedAgentsHint", { app: appName })}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {disabled && <span className="text-xs text-muted-foreground">Saving…</span>}
+          {disabled && <span className="text-xs text-muted-foreground">{t("appsTools.saving")}</span>}
           {install.onAll ? (
-            <InstalledBadge label="Installed on all agents" />
+            <InstalledBadge label={t("appsTools.installedAllAgents", { defaultValue: "已安装到所有 Agent" })} />
           ) : install.agentIds.size > 0 ? (
-            <InstalledBadge label={`${installedCount} installed`} />
+            <InstalledBadge label={t("appsTools.installedCount", { defaultValue: "已安装到 {{count}} 个 Agent", count: installedCount })} />
           ) : (
             <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-              Permitted only — not installed on any agent
+              {t("appsTools.permittedNotInstalled", { defaultValue: "仅允许使用，尚未安装到任何 Agent" })}
             </span>
           )}
         </div>
@@ -240,14 +241,14 @@ function InstalledSection({
             disabled={disabled}
             triggerLabel={
               install.agentIds.size === 0
-                ? "Choose agents to install on"
-                : `${install.agentIds.size} ${install.agentIds.size === 1 ? "agent" : "agents"} installed`
+                ? t("appsToolsResidual.chooseAgentsToInstall")
+                : t("appsToolsResidual.agentsInstalled", { count: install.agentIds.size })
             }
-            getDescription={(agent) => (hasAccess(agent.id) ? "has access" : "no access yet")}
+            getDescription={(agent) => (hasAccess(agent.id) ? t("appsToolsResidual.hasAccess") : t("appsToolsResidual.noAccessYet"))}
             renderNameSuffix={(agent) =>
               !hasAccess(agent.id) && install.agentIds.has(agent.id) ? (
                 <span className={cn("rounded border px-1 py-0 text-xs font-medium", brandChipBadge.amber)}>
-                  will grant access
+                  {t("appsToolsResidual.willGrantAccess")}
                 </span>
               ) : null
             }
@@ -264,13 +265,13 @@ function InstalledSection({
           <Checkbox
             checked={install.onAll}
             disabled={disabled}
-            aria-label="Install on all agents"
+            aria-label={t("appsToolsResidual.installAllAgents")}
             onCheckedChange={(checked) =>
               onSave(checked ? { onAll: true, agentIds: new Set() } : { onAll: false, agentIds: new Set() })
             }
           />
           <span className="text-xs text-foreground">
-            <span className="font-semibold">Install on all agents</span>
+            <span className="font-semibold">{t("appsToolsResidual.installAllAgents")}</span>
             <span className="mt-0.5 block text-muted-foreground">
               {INSTALL_ALL_WARNING}
             </span>
@@ -335,13 +336,13 @@ function ActionsSection({
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-sm font-bold text-foreground">Action permissions</h2>
+          <h2 className="text-sm font-bold text-foreground">{t("appsTools.actionPermissions", { defaultValue: "操作权限" })}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Choose what agents can do and what needs a human first.
+            {t("appsTools.actionPermissionsHint", { defaultValue: "选择 Agent 可以执行的操作，以及需要先询问人工的操作。" })}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {disabled && <span className="text-xs text-muted-foreground">Saving...</span>}
+          {disabled && <span className="text-xs text-muted-foreground">{t("appsTools.saving")}</span>}
           <Button
             variant="outline"
             size="sm"
@@ -353,7 +354,7 @@ function ActionsSection({
             ) : (
               <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
             )}
-            Refresh actions
+            {t("appsTools.refreshActions", { defaultValue: "刷新操作" })}
           </Button>
         </div>
       </div>
@@ -368,8 +369,8 @@ function ActionsSection({
       )}
 
       <ActionGroup
-        title="Read only"
-        hint="Can look up context without changing anything."
+        title={t("appsTools.readOnly", { defaultValue: "只读" })}
+        hint={t("appsTools.readOnlyHint", { defaultValue: "可以查询信息，不会更改任何内容。" })}
         actions={readOnly}
         enabledIds={enabledIds}
         askFirstIds={askFirstIds}
@@ -378,8 +379,8 @@ function ActionsSection({
         onSetPermission={onSetPermission}
       />
       <ActionGroup
-        title="Can make changes"
-        hint="Can change something in another app."
+        title={t("appsTools.canMakeChanges", { defaultValue: "可以修改" })}
+        hint={t("appsTools.canMakeChangesHint", { defaultValue: "可以修改其他应用中的内容。" })}
         actions={canChange}
         enabledIds={enabledIds}
         askFirstIds={askFirstIds}
@@ -454,9 +455,9 @@ function ActionGroup({
                 disabled={disabled}
                 onChange={(event) => onSetPermission(action.id, event.currentTarget.value as ActionPermission)}
               >
-                <option value="off">Off</option>
-                <option value="allowed">Allowed</option>
-                <option value="ask">Ask a human first</option>
+                <option value="off">{t("appsTools.off", { defaultValue: "关闭" })}</option>
+                <option value="allowed">{t("appsTools.allowed", { defaultValue: "允许" })}</option>
+                <option value="ask">{t("appsTools.askHumanFirst", { defaultValue: "先询问人工" })}</option>
               </select>
             </div>
           );

@@ -10,6 +10,53 @@ import {
   taskStatusVarDefault,
 } from "../lib/status-colors";
 import { StatusGlyph } from "./StatusGlyph";
+import { getLocale, t } from "@/i18n";
+
+const statusTranslationKeys: Record<string, string> = {
+  backlog: "charts.backlog",
+  todo: "charts.todo",
+  in_progress: "charts.inProgress",
+  in_review: "charts.inReview",
+  done: "charts.done",
+  blocked: "charts.blocked",
+  cancelled: "charts.cancelled",
+  succeeded: "charts.succeeded",
+  failed: "charts.failed",
+  active: "agentsPage.active",
+  planned: "goalsPage.values.planned",
+  achieved: "goalsPage.values.achieved",
+  approved: "approvalsPage.statuses.approved",
+  rejected: "approvalsPage.statuses.rejected",
+  revision_requested: "approvalsPage.statuses.revision_requested",
+  pending: "approvalsPage.statuses.pending",
+  running: "dashboard.liveNow",
+  paused: "agentsPage.paused",
+  error: "agentsPage.error",
+  idle: "agentsPage.active",
+};
+
+const routinesStatusTranslationKeys: Record<string, string> = {
+  active: "routinesStatus.status.active",
+  archived: "routinesStatus.status.archived",
+  draft: "routinesStatus.status.draft",
+  enabled: "routinesStatus.status.enabled",
+  disabled: "routinesStatus.status.disabled",
+  paused: "routinesStatus.status.paused",
+  running: "routinesStatus.status.running",
+  queued: "routinesStatus.status.queued",
+  pending: "routinesStatus.status.pending",
+  succeeded: "routinesStatus.status.succeeded",
+  failed: "routinesStatus.status.failed",
+  cancelled: "routinesStatus.status.cancelled",
+  error: "routinesStatus.status.error",
+};
+
+function translatedStatus(status: string) {
+  const key = statusTranslationKeys[status] ?? routinesStatusTranslationKeys[status];
+  return getLocale() === "zh-CN" && key
+    ? t(key)
+    : status.replace(/[_-]/g, " ");
+}
 
 /** Inline `--sc` local var pointing a status helper at a base-hue CSS var. */
 function scStyle(cssVar: string): CSSProperties {
@@ -35,7 +82,7 @@ export function StatusBadge({ status, label }: { status: string; label?: string 
         statusBadge[status] ?? statusBadgeDefault
       )}
     >
-      {label ?? status.replace(/[_-]/g, " ")}
+      {label ?? translatedStatus(status)}
     </span>
   );
 }
@@ -53,7 +100,7 @@ export function AgentStatusBadge({ status }: { status: string }) {
       className="status-chip inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium leading-none whitespace-nowrap shrink-0"
       style={scStyle(cssVar)}
     >
-      {label.replace(/_/g, " ")}
+      {translatedStatus(label)}
     </span>
   );
 }
@@ -94,7 +141,7 @@ export function IssueStatusBadge({ status }: { status: string }) {
       style={scStyle(cssVar)}
     >
       <StatusGlyph status={status} size="sm" />
-      {sentenceCaseStatus(status)}
+      {getLocale() === "zh-CN" ? translatedStatus(status) : sentenceCaseStatus(status)}
     </span>
   );
 }

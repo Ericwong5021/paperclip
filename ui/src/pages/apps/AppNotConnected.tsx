@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppLogo } from "./AppLogo";
 import {
+  appDefinitionDescription,
   appDefinitionLogoUrl,
   appDefinitionName,
   appDefinitionSlug,
@@ -22,6 +23,7 @@ import { connectionAddress, connectionTransportLabel, DangerZone } from "./AppDe
 import { ActivityPanel } from "./app-detail/ActivityPanel";
 import { ReviewPanel } from "./app-detail/ReviewPanel";
 import { appApplicationTabHref, appTabHref, appTabLabel, isAppTabKey, type AppTabKey } from "./app-tabs";
+import { t } from "@/i18n";
 
 export function AppNotConnected() {
   const { applicationId = "", tab } = useParams<{ applicationId: string; tab?: string }>();
@@ -69,12 +71,19 @@ export function AppNotConnected() {
     enabled: !!selectedCompanyId && activeTab === "activity",
   });
 
-  const appName = application?.name ?? "App";
+  const gallery = (galleryQuery.data?.apps ?? []) as AppGalleryDisplayEntry[];
+  const galleryEntry = application?.applicationKey
+    ? gallery.find((entry) => appDefinitionSlug(entry) === application.applicationKey) ?? null
+    : null;
+  const appName = application
+    ? galleryEntry ? appDefinitionName(galleryEntry) : application.name
+    : t("appsToolsResidual.app");
+  const appDescription = galleryEntry ? appDefinitionDescription(galleryEntry) : application?.description ?? null;
   useEffect(() => {
     if (!activeTab) return;
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Apps", href: "/apps" },
+      { label: selectedCompany?.name ?? t("core.company", { defaultValue: "Company" }), href: "/dashboard" },
+      { label: t("appsToolsResidual.apps"), href: "/apps" },
       { label: appName, href: appApplicationTabHref(applicationId, "setup") },
       { label: appTabLabel(activeTab) },
     ]);
@@ -86,7 +95,7 @@ export function AppNotConnected() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tools.applications(selectedCompanyId ?? "__none__") });
       pushToast({
-        title: "App removed",
+        title: t("appsToolsResidual.appRemoved"),
         body: `${appName} no longer shows in your apps. You can connect it again any time.`,
         tone: "success",
       });
@@ -94,15 +103,15 @@ export function AppNotConnected() {
     },
     onError: (error) => {
       pushToast({
-        title: "Couldn’t remove the app",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("appsToolsResidual.couldNotRemoveApp"),
+        body: error instanceof Error ? error.message : t("appsToolsResidual.pleaseTryAgain"),
         tone: "error",
       });
     },
   });
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company to manage apps.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("appsToolsResidual.selectCompanyApps")}</div>;
   }
   if (!applicationId || !activeTab) {
     return <Navigate to={applicationId ? appApplicationTabHref(applicationId, "setup") : "/apps"} replace />;
@@ -118,8 +127,8 @@ export function AppNotConnected() {
   if (!application) {
     return (
       <div className="max-w-3xl space-y-3 p-6 text-sm text-muted-foreground">
-        <p>This app doesn’t exist anymore.</p>
-        <Button variant="outline" size="sm" onClick={() => navigate("/apps")}>Back to apps</Button>
+        <p>{t("appsToolsResidual.appMissing")}</p>
+        <Button variant="outline" size="sm" onClick={() => navigate("/apps")}>{t("appsToolsResidual.backToApps")}</Button>
       </div>
     );
   }
@@ -127,10 +136,9 @@ export function AppNotConnected() {
     return <Navigate to={appTabHref(activeConnection.id, activeTab)} replace />;
   }
 
-  const gallery = (galleryQuery.data?.apps ?? []) as AppGalleryDisplayEntry[];
   const logoUrl =
-    (application.applicationKey
-      ? appDefinitionLogoUrl(gallery.find((entry) => appDefinitionSlug(entry) === application.applicationKey))
+    (galleryEntry
+      ? appDefinitionLogoUrl(galleryEntry)
       : undefined) ??
     appDefinitionLogoUrl(
       gallery.find((entry) => appDefinitionName(entry).toLowerCase() === application.name.toLowerCase()),
@@ -145,7 +153,7 @@ export function AppNotConnected() {
 
   return (
     <div className="max-w-3xl space-y-6 pb-12">
-      <ApplicationHeader applicationName={application.name} description={application.description} logoUrl={logoUrl} />
+      <ApplicationHeader applicationName={appName} description={appDescription} logoUrl={logoUrl} />
 
       {activeTab === "setup" && (
         <SetupTab
@@ -159,8 +167,8 @@ export function AppNotConnected() {
           <ReviewPanel connectionId={previousConnection.id} />
         ) : (
           <EmptyTab
-            title="Nothing is waiting for your OK right now."
-            body="Review requests will appear here after this app is connected."
+            title={t("appsToolsResidual.reviewEmpty")}
+            body={t("appsToolsResidual.reviewEmpty")}
           />
         )
       )}
@@ -169,8 +177,8 @@ export function AppNotConnected() {
       )}
       {activeTab === "test" && (
         <EmptyTab
-          title="Reconnect to test this app."
-          body="Testing becomes available after this app is connected again."
+          title={t("appsToolsResidual.reconnectToTest")}
+          body={t("appsToolsResidual.reconnectToTest")}
         />
       )}
       {activeTab === "activity" && (
@@ -200,7 +208,7 @@ export function AppNotConnected() {
       )}
       {activeTab === "advanced" && (
         <AdvancedTab
-          appName={application.name}
+          appName={appName}
           previousConnection={previousConnection}
           previousAddress={previousAddress}
           removing={remove.isPending}
@@ -227,7 +235,7 @@ function ApplicationHeader({
         <div className="flex items-center gap-2">
           <h1 className="truncate text-2xl font-bold tracking-tight">{applicationName}</h1>
           <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            Not connected
+            {t("appsTools.notConnected")}
           </span>
         </div>
         {description && (
@@ -283,18 +291,18 @@ function PreviousSetup({
 }) {
   return (
     <section className="rounded-xl border border-border bg-card px-5 py-4">
-      <h2 className="text-sm font-bold text-foreground">Previous setup</h2>
+      <h2 className="text-sm font-bold text-foreground">{t("appsToolsResidual.previousSetup")}</h2>
       {connection.healthMessage && (
         <p className="mt-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
           Last error: {connection.healthMessage}
         </p>
       )}
       <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-(--gtc-59)">
-        <dt className="text-muted-foreground">Address</dt>
+        <dt className="text-muted-foreground">{t("appsToolsResidual.address")}</dt>
         <dd className="break-all font-mono text-foreground">{previousAddress}</dd>
-        <dt className="text-muted-foreground">Connection type</dt>
+        <dt className="text-muted-foreground">{t("appsToolsResidual.connectionType")}</dt>
         <dd className="text-foreground">{connectionTransportLabel(connection.transport)}</dd>
-        <dt className="text-muted-foreground">Last used</dt>
+        <dt className="text-muted-foreground">{t("appsToolsResidual.lastUsed")}</dt>
         <dd className="text-foreground">
           {connection.lastUsedAt ? timeAgo(connection.lastUsedAt) : "Never"}
         </dd>
@@ -306,7 +314,7 @@ function PreviousSetup({
 function PermissionsTab({ previousConnection }: { previousConnection: ToolConnection | null }) {
   return (
     <section className="rounded-xl border border-border bg-card px-5 py-4">
-      <h2 className="text-sm font-bold text-foreground">Permissions paused</h2>
+      <h2 className="text-sm font-bold text-foreground">{t("appsToolsResidual.permissionsPaused")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Reconnect this app to edit who can use it and which actions need a human first.
       </p>
@@ -338,7 +346,7 @@ function AdvancedTab({
         <PreviousSetup connection={previousConnection} previousAddress={previousAddress} />
       ) : (
         <EmptyTab
-          title="No previous connection details"
+          title={t("appsToolsResidual.noPreviousConnectionDetails")}
           body="Technical details will appear here after this app is connected."
         />
       )}

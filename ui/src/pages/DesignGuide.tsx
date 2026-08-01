@@ -158,6 +158,7 @@ import {
   warnTeam,
 } from "@/pages/TeamCatalog.fixtures";
 import type { IssueWorkProduct } from "@paperclipai/shared";
+import { useTranslation } from "@/i18n";
 
 /* ------------------------------------------------------------------ */
 /*  Sample data for the Issue Output surface showcase                  */
@@ -232,10 +233,11 @@ const DESIGN_GUIDE_DEGRADED_OUTPUTS: IssueWorkProduct[] = [
 /* ------------------------------------------------------------------ */
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const { t } = useTranslation();
   return (
     <section className="space-y-4">
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-        {title}
+        {t(`designGuide.${title}`)}
       </h3>
       <Separator />
       {children}
@@ -244,9 +246,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-3">
-      <h4 className="text-sm font-medium">{title}</h4>
+      <h4 className="text-sm font-medium">{t(`designGuide.${title}`)}</h4>
       {children}
     </div>
   );
@@ -372,6 +375,7 @@ function Swatch({ name, cssVar }: { name: string; cssVar: string }) {
 /* ------------------------------------------------------------------ */
 
 export function DesignGuide() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState("todo");
   const [priority, setPriority] = useState("medium");
   const [selectValue, setSelectValue] = useState("in_progress");
@@ -394,9 +398,9 @@ export function DesignGuide() {
     <div className="space-y-10 max-w-4xl">
       {/* Page header */}
       <div>
-        <h2 className="text-xl font-bold">Design Guide</h2>
+        <h2 className="text-xl font-bold">{t("designGuide.Design Guide")}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Every component, style, and pattern used across Paperclip.
+          {t("designGuide.copy.pageDescription")}
         </p>
       </div>
 
@@ -405,7 +409,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       <Section title="Component Coverage">
         <p className="text-sm text-muted-foreground">
-          This page should be updated when new UI primitives or app-level patterns ship.
+          {t("designGuide.copy.coverageDescription")}
         </p>
         <div className="grid gap-6 md:grid-cols-2">
           <SubSection title="UI primitives">
@@ -533,46 +537,46 @@ export function DesignGuide() {
       <Section title="Buttons">
         <SubSection title="Variants">
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="default">Default</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="outline">Outline</Button>
-            <Button variant="ghost">Ghost</Button>
-            <Button variant="destructive">Destructive</Button>
-            <Button variant="link">Link</Button>
+            <Button variant="default">{t("designGuide.copy.default")}</Button>
+            <Button variant="secondary">{t("designGuide.copy.secondary")}</Button>
+            <Button variant="outline">{t("designGuide.copy.outline")}</Button>
+            <Button variant="ghost">{t("designGuide.copy.ghost")}</Button>
+            <Button variant="destructive">{t("designGuide.copy.destructive")}</Button>
+            <Button variant="link">{t("designGuide.copy.link")}</Button>
           </div>
         </SubSection>
 
         <SubSection title="Sizes">
           <div className="flex items-center gap-2 flex-wrap">
-            <Button size="xs">Extra Small</Button>
-            <Button size="sm">Small</Button>
-            <Button size="default">Default</Button>
-            <Button size="lg">Large</Button>
+            <Button size="xs">{t("designGuide.copy.extraSmall")}</Button>
+            <Button size="sm">{t("designGuide.copy.small")}</Button>
+            <Button size="default">{t("designGuide.copy.default")}</Button>
+            <Button size="lg">{t("designGuide.copy.large")}</Button>
           </div>
         </SubSection>
 
         <SubSection title="Icon buttons">
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="ghost" size="icon-xs"><Search /></Button>
-            <Button variant="ghost" size="icon-sm"><Search /></Button>
-            <Button variant="outline" size="icon"><Search /></Button>
-            <Button variant="outline" size="icon-lg"><Search /></Button>
+            <Button variant="ghost" size="icon-xs" aria-label={t("designGuide.copy.search")}><Search /></Button>
+            <Button variant="ghost" size="icon-sm" aria-label={t("designGuide.copy.search")}><Search /></Button>
+            <Button variant="outline" size="icon" aria-label={t("designGuide.copy.search")}><Search /></Button>
+            <Button variant="outline" size="icon-lg" aria-label={t("designGuide.copy.search")}><Search /></Button>
           </div>
         </SubSection>
 
         <SubSection title="With icons">
           <div className="flex items-center gap-2 flex-wrap">
-            <Button><Plus /> New Issue</Button>
-            <Button variant="outline"><Upload /> Upload</Button>
-            <Button variant="destructive"><Trash2 /> Delete</Button>
-            <Button size="sm"><Plus /> Add</Button>
+            <Button><Plus /> {t("designGuide.copy.newIssue")}</Button>
+            <Button variant="outline"><Upload /> {t("designGuide.copy.upload")}</Button>
+            <Button variant="destructive"><Trash2 /> {t("designGuide.copy.delete")}</Button>
+            <Button size="sm"><Plus /> {t("designGuide.copy.add")}</Button>
           </div>
         </SubSection>
 
         <SubSection title="States">
           <div className="flex items-center gap-2 flex-wrap">
-            <Button disabled>Disabled</Button>
-            <Button variant="outline" disabled>Disabled Outline</Button>
+            <Button disabled>{t("designGuide.copy.disabled")}</Button>
+            <Button variant="outline" disabled>{t("designGuide.copy.disabledOutline")}</Button>
           </div>
         </SubSection>
       </Section>
@@ -583,11 +587,11 @@ export function DesignGuide() {
       <Section title="Badges">
         <SubSection title="Variants">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="default">Default</Badge>
-            <Badge variant="secondary">Secondary</Badge>
-            <Badge variant="outline">Outline</Badge>
-            <Badge variant="destructive">Destructive</Badge>
-            <Badge variant="ghost">Ghost</Badge>
+            <Badge variant="default">{t("designGuide.copy.default")}</Badge>
+            <Badge variant="secondary">{t("designGuide.copy.secondary")}</Badge>
+            <Badge variant="outline">{t("designGuide.copy.outline")}</Badge>
+            <Badge variant="destructive">{t("designGuide.copy.destructive")}</Badge>
+            <Badge variant="ghost">{t("designGuide.copy.ghost")}</Badge>
           </div>
         </SubSection>
       </Section>
@@ -633,7 +637,7 @@ export function DesignGuide() {
           </div>
           <div className="flex items-center gap-2 mt-2">
             <StatusIcon status={status} onChange={setStatus} />
-            <span className="text-sm">Click the icon to change status (current: {status})</span>
+            <span className="text-sm">{t("designGuide.copy.clickStatus", { status })}</span>
           </div>
         </SubSection>
 
@@ -648,7 +652,7 @@ export function DesignGuide() {
           </div>
           <div className="flex items-center gap-2 mt-2">
             <PriorityIcon priority={priority} onChange={setPriority} />
-            <span className="text-sm">Click the icon to change (current: {priority})</span>
+            <span className="text-sm">{t("designGuide.copy.clickPriority", { priority })}</span>
           </div>
         </SubSection>
 
@@ -682,9 +686,7 @@ export function DesignGuide() {
 
         <SubSection title="IssueReferencePill">
           <p className="text-xs text-muted-foreground">
-            Used wherever a task is referenced — in markdown, the Related Work tab, and activity summaries.
-            Pass <code className="font-mono">status</code> to show the target issue&apos;s state at a glance.
-            Use <code className="font-mono">strikethrough</code> for &quot;removed&quot; contexts.
+            {t("designGuide.copy.issueReference")}
           </p>
           <div className="flex items-center gap-2 flex-wrap">
             <IssueReferencePill issue={{ id: "demo-1", identifier: "PAP-123", title: "Identifier only — no status yet" }} />
@@ -765,27 +767,27 @@ export function DesignGuide() {
       <Section title="Form Elements">
         <div className="grid gap-6 md:grid-cols-2">
           <SubSection title="Input">
-            <Input placeholder="Default input" />
-            <Input placeholder="Disabled input" disabled className="mt-2" />
+            <Input placeholder={t("designGuide.copy.defaultInput")} />
+            <Input placeholder={t("designGuide.copy.disabledInput")} disabled className="mt-2" />
           </SubSection>
 
           <SubSection title="Textarea">
-            <Textarea placeholder="Write something..." />
+            <Textarea placeholder={t("designGuide.copy.writeSomething")} />
           </SubSection>
 
           <SubSection title="Checkbox & Label">
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Checkbox id="check1" defaultChecked />
-                <Label htmlFor="check1">Checked item</Label>
+                <Label htmlFor="check1">{t("designGuide.copy.checkedItem")}</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox id="check2" />
-                <Label htmlFor="check2">Unchecked item</Label>
+                <Label htmlFor="check2">{t("designGuide.copy.uncheckedItem")}</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox id="check3" disabled />
-                <Label htmlFor="check3">Disabled item</Label>
+                <Label htmlFor="check3">{t("designGuide.copy.disabledItem")}</Label>
               </div>
             </div>
           </SubSection>
@@ -793,7 +795,7 @@ export function DesignGuide() {
           <SubSection title="Inline Editor">
             <div className="space-y-4">
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Title (single-line)</p>
+                <p className="text-xs text-muted-foreground mb-1">{t("designGuide.copy.titleSingleLine")}</p>
                 <InlineEditor
                   value={inlineTitle}
                   onSave={setInlineTitle}
@@ -802,7 +804,7 @@ export function DesignGuide() {
                 />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Body text (single-line)</p>
+                <p className="text-xs text-muted-foreground mb-1">{t("designGuide.copy.bodySingleLine")}</p>
                 <InlineEditor
                   value={inlineText}
                   onSave={setInlineText}
@@ -811,13 +813,13 @@ export function DesignGuide() {
                 />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Description (multiline, auto-sizing)</p>
+                <p className="text-xs text-muted-foreground mb-1">{t("designGuide.copy.descriptionMultiline")}</p>
                 <InlineEditor
                   value={inlineDesc}
                   onSave={setInlineDesc}
                   as="p"
                   className="text-sm text-muted-foreground"
-                  placeholder="Add a description..."
+                  placeholder={t("designGuide.copy.addDescription")}
                   multiline
                 />
               </div>
@@ -834,17 +836,17 @@ export function DesignGuide() {
           <SubSection title="Default size">
             <Select value={selectValue} onValueChange={setSelectValue}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select status" />
+                <SelectValue placeholder={t("designGuide.copy.selectStatus")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="backlog">Backlog</SelectItem>
                 <SelectItem value="todo">Todo</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="in_review">In Review</SelectItem>
+                <SelectItem value="in_progress">{t("designGuide.copy.inProgress")}</SelectItem>
+                <SelectItem value="in_review">{t("designGuide.copy.inReview")}</SelectItem>
                 <SelectItem value="done">Done</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">Current value: {selectValue}</p>
+            <p className="text-xs text-muted-foreground">{t("designGuide.copy.currentValue", { value: selectValue })}</p>
           </SubSection>
           <SubSection title="Small trigger">
             <Select defaultValue="high">
@@ -852,10 +854,10 @@ export function DesignGuide() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="critical">{t("designGuide.copy.critical")}</SelectItem>
+                <SelectItem value="high">{t("designGuide.copy.high")}</SelectItem>
+                <SelectItem value="medium">{t("designGuide.copy.medium")}</SelectItem>
+                <SelectItem value="low">{t("designGuide.copy.low")}</SelectItem>
               </SelectContent>
             </Select>
           </SubSection>
@@ -869,30 +871,30 @@ export function DesignGuide() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
-              Quick Actions
+              {t("designGuide.copy.quickActions")}
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
             <DropdownMenuItem>
               <Check className="h-4 w-4" />
-              Mark as done
+              {t("designGuide.copy.markDone")}
               <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <BookOpen className="h-4 w-4" />
-              Open docs
+              {t("designGuide.copy.openDocs")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuCheckboxItem
               checked={menuChecked}
               onCheckedChange={(value) => setMenuChecked(value === true)}
             >
-              Watch issue
+              {t("designGuide.copy.watchIssue")}
             </DropdownMenuCheckboxItem>
             <DropdownMenuItem variant="destructive">
               <Trash2 className="h-4 w-4" />
-              Delete issue
+              {t("designGuide.copy.deleteIssue")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -904,14 +906,14 @@ export function DesignGuide() {
       <Section title="Popover">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm">Open Popover</Button>
+            <Button variant="outline" size="sm">{t("designGuide.copy.openPopover")}</Button>
           </PopoverTrigger>
           <PopoverContent className="space-y-2">
-            <p className="text-sm font-medium">Agent heartbeat</p>
+            <p className="text-sm font-medium">{t("designGuide.copy.agentHeartbeat")}</p>
             <p className="text-xs text-muted-foreground">
-              Last run succeeded 24s ago. Next timer run in 9m.
+              {t("designGuide.copy.heartbeatDescription")}
             </p>
-            <Button size="xs">Wake now</Button>
+            <Button size="xs">{t("designGuide.copy.wakeNow")}</Button>
           </PopoverContent>
         </Popover>
       </Section>
@@ -923,13 +925,13 @@ export function DesignGuide() {
         <Collapsible open={collapsibleOpen} onOpenChange={setCollapsibleOpen} className="space-y-2">
           <CollapsibleTrigger asChild>
             <Button variant="outline" size="sm">
-              {collapsibleOpen ? "Hide" : "Show"} advanced filters
+              {collapsibleOpen ? t("designGuide.copy.hide") : t("designGuide.copy.show")} {t("designGuide.copy.advancedFilters")}
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="rounded-md border border-border p-3">
             <div className="space-y-2">
-              <Label htmlFor="owner-filter">Owner</Label>
-              <Input id="owner-filter" placeholder="Filter by agent name" />
+              <Label htmlFor="owner-filter">{t("designGuide.copy.owner")}</Label>
+              <Input id="owner-filter" placeholder={t("designGuide.copy.filterAgent")} />
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -941,26 +943,26 @@ export function DesignGuide() {
       <Section title="Sheet">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm">Open Side Panel</Button>
+            <Button variant="outline" size="sm">{t("designGuide.copy.openSidePanel")}</Button>
           </SheetTrigger>
           <SheetContent side="right">
             <SheetHeader>
-              <SheetTitle>Issue Properties</SheetTitle>
-              <SheetDescription>Edit metadata without leaving the current page.</SheetDescription>
+              <SheetTitle>{t("designGuide.copy.issueProperties")}</SheetTitle>
+              <SheetDescription>{t("designGuide.copy.editMetadata")}</SheetDescription>
             </SheetHeader>
             <div className="space-y-4 px-4">
               <div className="space-y-1">
-                <Label htmlFor="sheet-title">Title</Label>
+                <Label htmlFor="sheet-title">{t("designGuide.copy.titleSingleLine")}</Label>
                 <Input id="sheet-title" defaultValue="Improve onboarding docs" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="sheet-description">Description</Label>
+                <Label htmlFor="sheet-description">{t("designGuide.copy.description")}</Label>
                 <Textarea id="sheet-description" defaultValue="Capture setup pitfalls and screenshots." />
               </div>
             </div>
             <SheetFooter>
-              <Button variant="outline">Cancel</Button>
-              <Button>Save</Button>
+              <Button variant="outline">{t("designGuide.copy.cancel")}</Button>
+              <Button>{t("designGuide.copy.save")}</Button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
@@ -987,28 +989,28 @@ export function DesignGuide() {
       <Section title="Command (CMDK)">
         <div className="rounded-md border border-border">
           <Command>
-            <CommandInput placeholder="Type a command or search..." />
+            <CommandInput placeholder={t("designGuide.copy.typeCommand")} />
             <CommandList>
-              <CommandEmpty>No results found.</CommandEmpty>
-              <CommandGroup heading="Pages">
+              <CommandEmpty>{t("designGuide.copy.noResults")}</CommandEmpty>
+              <CommandGroup heading={t("designGuide.copy.pages")}>
                 <CommandItem>
                   <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
+                  {t("designGuide.copy.dashboard")}
                 </CommandItem>
                 <CommandItem>
                   <CircleDot className="h-4 w-4" />
-                  Issues
+                  {t("designGuide.copy.issues")}
                 </CommandItem>
               </CommandGroup>
               <CommandSeparator />
-              <CommandGroup heading="Actions">
+              <CommandGroup heading={t("designGuide.copy.actions")}>
                 <CommandItem>
                   <CommandIcon className="h-4 w-4" />
-                  Open command palette
+                  {t("designGuide.copy.openCommandPalette")}
                 </CommandItem>
                 <CommandItem>
                   <Plus className="h-4 w-4" />
-                  Create new issue
+                  {t("designGuide.copy.createIssue")}
                 </CommandItem>
               </CommandGroup>
             </CommandList>
@@ -1023,15 +1025,15 @@ export function DesignGuide() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="#">Projects</BreadcrumbLink>
+              <BreadcrumbLink href="#">{t("designGuide.copy.projects")}</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href="#">Paperclip App</BreadcrumbLink>
+              <BreadcrumbLink href="#">{t("designGuide.copy.paperclipApp")}</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Issue List</BreadcrumbPage>
+              <BreadcrumbPage>{t("designGuide.copy.issueList")}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -1044,15 +1046,15 @@ export function DesignGuide() {
         <SubSection title="Standard Card">
           <Card>
             <CardHeader>
-              <CardTitle>Card Title</CardTitle>
-              <CardDescription>Card description with supporting text.</CardDescription>
+              <CardTitle>{t("designGuide.copy.cardTitle")}</CardTitle>
+              <CardDescription>{t("designGuide.copy.cardDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm">Card content goes here. This is the main body area.</p>
+              <p className="text-sm">{t("designGuide.copy.cardContent")}</p>
             </CardContent>
             <CardFooter className="gap-2">
-              <Button size="sm">Action</Button>
-              <Button variant="outline" size="sm">Cancel</Button>
+              <Button size="sm">{t("designGuide.copy.action")}</Button>
+              <Button variant="outline" size="sm">{t("designGuide.copy.cancel")}</Button>
             </CardFooter>
           </Card>
         </SubSection>
@@ -1074,22 +1076,22 @@ export function DesignGuide() {
         <SubSection title="Default (pill) variant">
           <Tabs defaultValue="overview">
             <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="runs">Runs</TabsTrigger>
-              <TabsTrigger value="config">Config</TabsTrigger>
-              <TabsTrigger value="costs">Costs</TabsTrigger>
+              <TabsTrigger value="overview">{t("designGuide.copy.overview")}</TabsTrigger>
+              <TabsTrigger value="runs">{t("designGuide.copy.runs")}</TabsTrigger>
+              <TabsTrigger value="config">{t("designGuide.copy.config")}</TabsTrigger>
+              <TabsTrigger value="costs">{t("designGuide.copy.costs")}</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
-              <p className="text-sm text-muted-foreground py-4">Overview tab content.</p>
+              <p className="text-sm text-muted-foreground py-4">{t("designGuide.copy.overviewContent")}</p>
             </TabsContent>
             <TabsContent value="runs">
-              <p className="text-sm text-muted-foreground py-4">Runs tab content.</p>
+              <p className="text-sm text-muted-foreground py-4">{t("designGuide.copy.runsContent")}</p>
             </TabsContent>
             <TabsContent value="config">
-              <p className="text-sm text-muted-foreground py-4">Config tab content.</p>
+              <p className="text-sm text-muted-foreground py-4">{t("designGuide.copy.configContent")}</p>
             </TabsContent>
             <TabsContent value="costs">
-              <p className="text-sm text-muted-foreground py-4">Costs tab content.</p>
+              <p className="text-sm text-muted-foreground py-4">{t("designGuide.copy.costsContent")}</p>
             </TabsContent>
           </Tabs>
         </SubSection>
@@ -1097,18 +1099,18 @@ export function DesignGuide() {
         <SubSection title="Line variant">
           <Tabs defaultValue="summary">
             <TabsList variant="line">
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="comments">Comments</TabsTrigger>
+              <TabsTrigger value="summary">{t("designGuide.copy.summary")}</TabsTrigger>
+              <TabsTrigger value="details">{t("designGuide.copy.details")}</TabsTrigger>
+              <TabsTrigger value="comments">{t("designGuide.copy.comments")}</TabsTrigger>
             </TabsList>
             <TabsContent value="summary">
-              <p className="text-sm text-muted-foreground py-4">Summary content with underline tabs.</p>
+              <p className="text-sm text-muted-foreground py-4">{t("designGuide.copy.summaryContent")}</p>
             </TabsContent>
             <TabsContent value="details">
-              <p className="text-sm text-muted-foreground py-4">Details content.</p>
+              <p className="text-sm text-muted-foreground py-4">{t("designGuide.copy.detailsContent")}</p>
             </TabsContent>
             <TabsContent value="comments">
-              <p className="text-sm text-muted-foreground py-4">Comments content.</p>
+              <p className="text-sm text-muted-foreground py-4">{t("designGuide.copy.commentsContent")}</p>
             </TabsContent>
           </Tabs>
         </SubSection>
@@ -1253,7 +1255,7 @@ export function DesignGuide() {
               ])
             }
           >
-            Reset filters
+            {t("designGuide.copy.resetFilters")}
           </Button>
         )}
       </Section>
@@ -1312,15 +1314,15 @@ export function DesignGuide() {
         <div className="flex items-center gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="sm">Hover me</Button>
+              <Button variant="outline" size="sm">{t("designGuide.copy.hoverMe")}</Button>
             </TooltipTrigger>
-            <TooltipContent>This is a tooltip</TooltipContent>
+            <TooltipContent>{t("designGuide.copy.tooltip")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon-sm"><Settings /></Button>
+              <Button variant="ghost" size="icon-sm" aria-label={t("designGuide.copy.settings")}><Settings /></Button>
             </TooltipTrigger>
-            <TooltipContent>Settings</TooltipContent>
+            <TooltipContent>{t("designGuide.copy.settings")}</TooltipContent>
           </Tooltip>
         </div>
       </Section>
@@ -1331,28 +1333,28 @@ export function DesignGuide() {
       <Section title="Dialog">
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline">Open Dialog</Button>
+            <Button variant="outline">{t("designGuide.copy.openDialog")}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Dialog Title</DialogTitle>
+              <DialogTitle>{t("designGuide.copy.dialogTitle")}</DialogTitle>
               <DialogDescription>
-                This is a sample dialog showing the standard layout with header, content, and footer.
+                {t("designGuide.copy.dialogDescription")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <div>
-                <Label>Name</Label>
-                <Input placeholder="Enter a name" className="mt-1.5" />
+                <Label>{t("designGuide.copy.name")}</Label>
+                <Input placeholder={t("designGuide.copy.enterName")} className="mt-1.5" />
               </div>
               <div>
-                <Label>Description</Label>
-                <Textarea placeholder="Describe..." className="mt-1.5" />
+                <Label>{t("designGuide.copy.description")}</Label>
+                <Textarea placeholder={t("designGuide.copy.describe")} className="mt-1.5" />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline">Cancel</Button>
-              <Button>Save</Button>
+              <Button variant="outline">{t("designGuide.copy.cancel")}</Button>
+              <Button>{t("designGuide.copy.save")}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1365,8 +1367,8 @@ export function DesignGuide() {
         <div className="border border-border rounded-md">
           <EmptyState
             icon={Inbox}
-            message="No items to show. Create your first one to get started."
-            action="Create Item"
+            message={t("designGuide.copy.emptyState")}
+            action={t("designGuide.copy.createItem")}
             onAction={() => {}}
           />
         </div>
@@ -1539,8 +1541,8 @@ export function DesignGuide() {
             </div>
           </div>
           <div className="space-y-2">
-            <Textarea placeholder="Leave a comment..." rows={3} />
-            <Button size="sm">Comment</Button>
+            <Textarea placeholder={t("designGuide.copy.leaveComment")} rows={3} />
+            <Button size="sm">{t("designGuide.copy.comment")}</Button>
           </div>
         </div>
       </Section>
@@ -1553,9 +1555,9 @@ export function DesignGuide() {
           <table className="w-full text-xs">
             <thead className="border-b border-border bg-accent/20">
               <tr>
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Model</th>
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Tokens</th>
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Cost</th>
+                <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t("designGuide.copy.tableModel")}</th>
+                <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t("designGuide.copy.tableTokens")}</th>
+                <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t("designGuide.copy.tableCost")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1570,7 +1572,7 @@ export function DesignGuide() {
                 <td className="px-3 py-2 font-mono">$1.25</td>
               </tr>
               <tr>
-                <td className="px-3 py-2 font-medium">Total</td>
+                <td className="px-3 py-2 font-medium">{t("designGuide.copy.tableTotal")}</td>
                 <td className="px-3 py-2 font-mono">1.7M</td>
                 <td className="px-3 py-2 font-mono font-medium">$19.25</td>
               </tr>
@@ -1924,9 +1926,9 @@ export function DesignGuide() {
         <SubSection title="EmptyState (canonical, with description + action)">
           <EmptyState
             icon={Inbox}
-            message="No connections yet"
-            description="Add a connection to an application to configure credentials and discover its tools."
-            action="New connection"
+            message={t("designGuide.copy.noConnections")}
+            description={t("designGuide.copy.addConnection")}
+            action={t("designGuide.copy.newConnection")}
             onAction={() => {}}
           />
         </SubSection>
@@ -1989,7 +1991,7 @@ export function DesignGuide() {
           <InlineBanner
             tone="info"
             title="Built-in agent"
-            actions={<Button variant="outline" size="sm">Reset to defaults</Button>}
+            actions={<Button variant="outline" size="sm">{t("designGuide.copy.resetDefaults")}</Button>}
           >
             Ships with Paperclip and powers <strong>Briefs</strong>. It can be paused but not deleted.
           </InlineBanner>
@@ -1998,8 +2000,8 @@ export function DesignGuide() {
             title="Briefs is paused."
             actions={
               <>
-                <Button variant="ghost" size="sm">View agent</Button>
-                <Button size="sm">Resume agent</Button>
+                <Button variant="ghost" size="sm">{t("designGuide.copy.viewAgent")}</Button>
+                <Button size="sm">{t("designGuide.copy.resumeAgent")}</Button>
               </>
             }
           >
@@ -2008,7 +2010,7 @@ export function DesignGuide() {
           <InlineBanner
             tone="danger"
             title="Summary generation failed."
-            actions={<Button size="sm">Retry</Button>}
+            actions={<Button size="sm">{t("designGuide.copy.retry")}</Button>}
           >
             The linked issue reached a terminal state before a summary was written.
           </InlineBanner>

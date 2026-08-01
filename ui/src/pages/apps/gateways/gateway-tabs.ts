@@ -1,4 +1,5 @@
 import { Activity, LayoutGrid, KeyRound, Wrench, Boxes } from "lucide-react";
+import { appsCatalogT } from "@/i18n/apps-catalog-messages";
 
 /**
  * Gateway detail tabs (PAP-11200). Terminology is locked by the approved
@@ -6,11 +7,11 @@ import { Activity, LayoutGrid, KeyRound, Wrench, Boxes } from "lucide-react";
  * Advanced. Raw protocol / JSON / transport details live under Advanced.
  */
 export const GATEWAY_TABS = [
-  { key: "overview", label: "Overview", icon: LayoutGrid },
-  { key: "apps", label: "Apps & tools", icon: Boxes },
-  { key: "tokens", label: "Tokens", icon: KeyRound },
-  { key: "activity", label: "Activity", icon: Activity },
-  { key: "advanced", label: "Advanced", icon: Wrench },
+  { key: "overview", icon: LayoutGrid },
+  { key: "apps", icon: Boxes },
+  { key: "tokens", icon: KeyRound },
+  { key: "activity", icon: Activity },
+  { key: "advanced", icon: Wrench },
 ] as const;
 
 export type GatewayTabKey = (typeof GATEWAY_TABS)[number]["key"];
@@ -24,5 +25,5 @@ export function isGatewayTabKey(value: string | undefined): value is GatewayTabK
 }
 
 export function gatewayTabLabel(tabKey: GatewayTabKey): string {
-  return GATEWAY_TABS.find((tab) => tab.key === tabKey)?.label ?? "Overview";
+  return appsCatalogT("gatewayTabs")[tabKey];
 }

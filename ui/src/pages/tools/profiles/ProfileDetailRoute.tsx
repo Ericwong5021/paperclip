@@ -4,6 +4,7 @@ import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
 import { advancedTabHref } from "../tool-tabs";
 import { ToolsAdminGate } from "./ToolsAdminGate";
+import { t } from "@/i18n";
 import { ProfileDetail } from "./ProfileDetail";
 
 export function ProfileDetailRoute() {
@@ -22,7 +23,7 @@ export function ProfileDetailRoute() {
   }, [setBreadcrumbs, selectedCompany?.name]);
 
   if (!selectedCompanyId || !params.profileId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company and profile.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("appsTools.selectCompanyProfile", { defaultValue: "请选择公司和配置档案。" })}</div>;
   }
 
   return (

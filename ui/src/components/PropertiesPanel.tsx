@@ -5,8 +5,10 @@ import { useTaskChatRedesignEnabled } from "../hooks/useTaskChatRedesignEnabled"
 import { cn } from "../lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTranslation } from "../i18n";
 
 export function PropertiesPanel() {
+  const { t } = useTranslation();
   const { panelContent, panelVisible, setPanelVisible } = usePanel();
   const { enabled: redesignEnabled } = useTaskChatRedesignEnabled();
 
@@ -20,8 +22,8 @@ export function PropertiesPanel() {
       >
         <div className="w-80 flex-1 flex flex-col min-w-(--sz-320px) min-h-0">
           <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-            <span className="text-sm font-medium">Properties</span>
-            <Button variant="ghost" size="icon-xs" onClick={() => setPanelVisible(false)}>
+            <span className="text-sm font-medium">{t("commonComponents.properties")}</span>
+            <Button variant="ghost" size="icon-xs" aria-label={t("commonComponents.closeProperties")} onClick={() => setPanelVisible(false)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -138,6 +140,7 @@ function ResizablePropertiesPanel({
   panelVisible,
   setPanelVisible,
 }: ResizablePropertiesPanelProps) {
+  const { t } = useTranslation();
   const [width, setWidth] = useState(() => clampPaneWidth(readStoredPaneWidth()));
   const [dragging, setDragging] = useState(false);
   const [maximized, setMaximized] = useState(false);
@@ -330,7 +333,7 @@ function ResizablePropertiesPanel({
           <div
             role="separator"
             aria-orientation="vertical"
-            aria-label="Resize panel"
+            aria-label={t("commonComponents.resizePanel")}
             data-dragging={dragging ? "" : undefined}
             className="group absolute inset-y-0 z-10 cursor-col-resize touch-none"
             style={{ left: -4, width: 8 }}
@@ -368,8 +371,8 @@ function ResizablePropertiesPanel({
                 variant="ghost"
                 size="icon-xs"
                 className="size-7"
-                title={maximized ? "Restore panel" : "Maximize panel"}
-                aria-label={maximized ? "Restore panel" : "Maximize panel"}
+                title={maximized ? t("commonComponents.restorePanel") : t("commonComponents.maximizePanel")}
+                aria-label={maximized ? t("commonComponents.restorePanel") : t("commonComponents.maximizePanel")}
                 onClick={maximized ? handleRestore : handleMaximize}
               >
                 {maximized ? (
@@ -378,7 +381,7 @@ function ResizablePropertiesPanel({
                   <Maximize2 className="h-3.5 w-3.5" />
                 )}
               </Button>
-              <Button variant="ghost" size="icon-xs" onClick={() => setPanelVisible(false)}>
+              <Button variant="ghost" size="icon-xs" aria-label={t("commonComponents.closeProperties")} onClick={() => setPanelVisible(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>

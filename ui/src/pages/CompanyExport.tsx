@@ -28,7 +28,6 @@ import { createZipArchive, estimateZipArchiveSize } from "../lib/zip";
 import {
   type ExportCategoryKey,
   type ExportCategorySelection,
-  EXPORT_CATEGORY_LABELS,
   EXPORT_CATEGORY_ORDER,
   buildDefaultExportCategorySelection,
   buildExportCheckedFiles,
@@ -55,6 +54,7 @@ import {
   FRONTMATTER_FIELD_LABELS,
   FileTree,
 } from "../components/FileTree";
+import { t, useTranslation } from "@/i18n";
 
 /**
  * Extract the set of agent/project/task slugs that are "checked" based on
@@ -511,7 +511,7 @@ function ExportPreviewPane({
 }) {
   if (!selectedFile || content === null) {
     return (
-      <EmptyState icon={Package} message="Select a file to preview its contents." />
+      <EmptyState icon={Package} message={t("admin.export.selectPreview")} />
     );
   }
 
@@ -557,7 +557,7 @@ function ExportPreviewPane({
           </pre>
         ) : (
           <div className="rounded-lg border border-border bg-accent/10 px-4 py-3 text-sm text-muted-foreground">
-            Binary asset preview is not available for this file type.
+            {t("admin.export.binaryPreviewUnavailable")}
           </div>
         )}
       </div>
@@ -590,6 +590,7 @@ function expandAncestors(filePath: string): string[] {
 }
 
 export function CompanyExport() {
+  const { t } = useTranslation();
   const { selectedCompanyId, selectedCompany } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToastActions();
@@ -689,9 +690,9 @@ export function CompanyExport() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Settings", href: "/company/settings" },
-      { label: "Export" },
+      { label: selectedCompany?.name ?? t("admin.common.company"), href: "/dashboard" },
+      { label: t("admin.common.settings"), href: "/company/settings" },
+      { label: t("admin.export.title") },
     ]);
   }, [selectedCompany?.name, setBreadcrumbs]);
 
@@ -730,8 +731,8 @@ export function CompanyExport() {
     onError: (err) => {
       pushToast({
         tone: "error",
-        title: "Export failed",
-        body: err instanceof Error ? err.message : "Failed to load export data.",
+        title: t("admin.export.failed"),
+        body: err instanceof Error ? err.message : t("admin.export.loadFailed"),
       });
     },
   });
@@ -748,15 +749,15 @@ export function CompanyExport() {
       downloadZip(result, resultCheckedFiles, result.files);
       pushToast({
         tone: "success",
-        title: "Export downloaded",
+        title: t("admin.export.downloaded"),
         body: `${resultCheckedFiles.size} file${resultCheckedFiles.size === 1 ? "" : "s"} exported as ${result.rootPath}.zip`,
       });
     },
     onError: (err) => {
       pushToast({
         tone: "error",
-        title: "Export failed",
-        body: err instanceof Error ? err.message : "Failed to build export package.",
+        title: t("admin.export.failed"),
+        body: err instanceof Error ? err.message : t("admin.export.buildFailed"),
       });
     },
   });
@@ -845,7 +846,7 @@ export function CompanyExport() {
 
     // Regenerate README.md based on checked selection
     if (typeof exportData.files["README.md"] === "string") {
-      const companyName = exportData.manifest.company?.name ?? selectedCompany?.name ?? "Company";
+      const companyName = exportData.manifest.company?.name ?? selectedCompany?.name ?? t("admin.common.company");
       const companyDescription = exportData.manifest.company?.description ?? null;
       filtered["README.md"] = generateReadmeFromSelection(
         exportData.manifest,
@@ -946,7 +947,7 @@ export function CompanyExport() {
   }
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Package} message="Select a company to export." />;
+    return <EmptyState icon={Package} message={t("admin.export.selectCompany")} />;
   }
 
   if (exportPreviewMutation.isPending && !exportData) {
@@ -954,7 +955,7 @@ export function CompanyExport() {
   }
 
   if (!exportData) {
-    return <EmptyState icon={Package} message="Loading export data..." />;
+    return <EmptyState icon={Package} message={t("admin.export.loading")} />;
   }
 
   const previewContent = selectedFile
@@ -970,15 +971,15 @@ export function CompanyExport() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <span className="font-medium">
-              {selectedCompany?.name ?? "Company"} export
+              {selectedCompany?.name ?? t("admin.common.company")} {t("admin.export.title")}
             </span>
             <span className="text-muted-foreground">
-              Exporting {selectedCount.toLocaleString()} of {totalFiles.toLocaleString()} file{totalFiles === 1 ? "" : "s"}
+              {t("admin.export.exportingFiles", { selected: selectedCount.toLocaleString(), total: totalFiles.toLocaleString(), suffix: totalFiles === 1 ? "" : "s" })}
               {selectedCount > 0 && ` (~${formatBytes(estimatedZipBytes)})`}
             </span>
             {warnings.length > 0 && (
               <span className="text-amber-500">
-                {warnings.length} warning{warnings.length === 1 ? "" : "s"}
+                {t("admin.export.warnings", { count: warnings.length, suffix: warnings.length === 1 ? "" : "s" })}
               </span>
             )}
           </div>
@@ -989,8 +990,8 @@ export function CompanyExport() {
           >
             <Download className="mr-1.5 h-3.5 w-3.5" />
             {downloadMutation.isPending
-              ? "Building export..."
-              : `Export ${selectedCount.toLocaleString()} file${selectedCount === 1 ? "" : "s"}`}
+              ? t("admin.export.building")
+              : t("admin.export.exportFiles", { count: selectedCount.toLocaleString(), suffix: selectedCount === 1 ? "" : "s" })}
           </Button>
         </div>
       </div>
@@ -1007,7 +1008,7 @@ export function CompanyExport() {
       {/* Export fidelity: data the bundle will not carry */}
       {fidelityReport && fidelityReport.warnings.length > 0 && (
         <div className="mx-5 mt-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
-          <h3 className="mb-1.5 text-xs font-medium">Not included in this export</h3>
+          <h3 className="mb-1.5 text-xs font-medium">{t("admin.export.notIncluded")}</h3>
           {fidelityReport.warnings.map((warning) => (
             <div
               key={warning.code}
@@ -1026,11 +1027,11 @@ export function CompanyExport() {
       <div className="grid gap-4 xl:h-(--sz-calc-30) xl:grid-cols-(--gtc-25) xl:gap-0">
         <aside className="flex max-h-(--sz-24rem) flex-col overflow-hidden border-b border-border xl:max-h-none xl:border-b-0 xl:border-r">
           <div className="border-b border-border px-4 py-3 shrink-0">
-            <h2 className="text-base font-semibold">Package files</h2>
+            <h2 className="text-base font-semibold">{t("admin.export.packageFiles")}</h2>
           </div>
           <div className="border-b border-border px-4 py-3 shrink-0">
-            <h3 className="mb-2 text-xs font-medium text-muted-foreground">What to include</h3>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5" role="group" aria-label="What to include">
+            <h3 className="mb-2 text-xs font-medium text-muted-foreground">{t("admin.export.whatToInclude")}</h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5" role="group" aria-label={t("admin.export.whatToInclude")}>
               {EXPORT_CATEGORY_ORDER.map((key) => {
                 const isAttachments = key === "attachments";
                 const disabled = isAttachments && !isAttachmentsCategoryEnabled(categories);
@@ -1045,7 +1046,7 @@ export function CompanyExport() {
                     )}
                     title={
                       disabled
-                        ? "Attachments travel with tasks and routines; re-enable one of them to include attachments."
+                        ? t("admin.export.attachmentsHint")
                         : undefined
                     }
                   >
@@ -1057,7 +1058,7 @@ export function CompanyExport() {
                       className="accent-foreground"
                       data-export-category={key}
                     />
-                    <span className="min-w-0 truncate">{EXPORT_CATEGORY_LABELS[key]}</span>
+                    <span className="min-w-0 truncate">{t(`admin.export.${key}`)}</span>
                     <span className="text-xs text-muted-foreground">{count.toLocaleString()}</span>
                   </label>
                 );
@@ -1071,7 +1072,7 @@ export function CompanyExport() {
                 type="text"
                 value={treeSearch}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Search files..."
+                placeholder={t("admin.export.searchFiles")}
                 className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 data-page-search-target="true"
               />
@@ -1095,7 +1096,7 @@ export function CompanyExport() {
                   onClick={() => setTaskLimit((prev) => prev + TASKS_PAGE_SIZE)}
                   className="w-full rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors"
                 >
-                  Show more tasks ({visibleTaskChildren} of {totalTaskChildren})
+                  {t("admin.export.showMoreTasks", { visible: visibleTaskChildren, total: totalTaskChildren })}
                 </button>
               </div>
             )}

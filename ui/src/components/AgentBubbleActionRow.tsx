@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Check, Copy, MoreHorizontal, ThumbsDown, ThumbsUp } from "lucide-react";
+import { t } from "@/i18n";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -85,8 +86,8 @@ export function AgentBubbleActionRow({
       <button
         type="button"
         className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        title="Copy message"
-        aria-label="Copy message"
+        title={t("interactions.copyMessage")}
+        aria-label={t("interactions.copyMessage")}
         onClick={() => {
           void navigator.clipboard.writeText(copyText).then(() => {
             setCopied(true);
@@ -125,8 +126,8 @@ export function AgentBubbleActionRow({
             variant="ghost"
             size="icon-xs"
             className="text-muted-foreground hover:text-foreground"
-            title="More actions"
-            aria-label="More actions"
+            title={t("taskDetail.moreActions")}
+            aria-label={t("taskDetail.moreActions")}
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
           </Button>
@@ -138,7 +139,7 @@ export function AgentBubbleActionRow({
             }}
           >
             <Copy className="mr-2 h-3.5 w-3.5" />
-            Copy message
+            {t("interactions.copyMessage")}
           </DropdownMenuItem>
           {menuItems}
         </DropdownMenuContent>
@@ -242,8 +243,8 @@ export function IssueChatFeedbackButtons({
             ? "text-green-600 dark:text-green-400"
             : "text-muted-foreground hover:bg-accent hover:text-foreground",
         )}
-        title="Helpful"
-        aria-label="Helpful"
+        title={t("interactions.helpful")}
+        aria-label={t("interactions.helpful")}
         onClick={handleThumbsUp}
       >
         <ThumbsUp className="h-3.5 w-3.5" />
@@ -259,19 +260,19 @@ export function IssueChatFeedbackButtons({
                 ? "text-amber-600 dark:text-amber-400"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
-            title="Needs work"
-            aria-label="Needs work"
+            title={t("interactions.needsWork")}
+            aria-label={t("interactions.needsWork")}
             onClick={handleThumbsDown}
           >
             <ThumbsDown className="h-3.5 w-3.5" />
           </button>
         </PopoverTrigger>
         <PopoverContent side="top" align="start" className="w-80 p-3">
-          <div className="mb-2 text-sm font-medium">What could have been better?</div>
+          <div className="mb-2 text-sm font-medium">{t("interactions.feedbackPrompt")}</div>
           <Textarea
             value={downvoteReason}
             onChange={(event) => setDownvoteReason(event.target.value)}
-            placeholder="Add a short note"
+            placeholder={t("interactions.shortNote")}
             className="min-h-20 resize-y bg-background text-sm"
             disabled={isSaving}
           />
@@ -286,7 +287,7 @@ export function IssueChatFeedbackButtons({
                 setDownvoteReason("");
               }}
             >
-              Dismiss
+              {t("interactions.dismiss")}
             </Button>
             <Button
               type="button"
@@ -294,7 +295,7 @@ export function IssueChatFeedbackButtons({
               disabled={isSaving || !downvoteReason.trim()}
               onClick={handleSubmitReason}
             >
-              {isSaving ? "Saving..." : "Save note"}
+              {isSaving ? t("interactions.saving") : t("interactions.saveNote")}
             </Button>
           </div>
         </PopoverContent>
@@ -311,21 +312,18 @@ export function IssueChatFeedbackButtons({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save your feedback sharing preference</DialogTitle>
+            <DialogTitle>{t("interactions.saveFeedbackPreference")}</DialogTitle>
             <DialogDescription>
-              Choose whether voted AI outputs can be shared with Paperclip Labs. This
-              answer becomes the default for future thumbs up and thumbs down votes.
+              {t("interactions.feedbackSharingDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
-            <p>This vote is always saved locally.</p>
+            <p>{t("interactions.voteSavedLocally")}</p>
             <p>
-              Choose <span className="font-medium text-foreground">Always allow</span> to share
-              this vote and future voted AI outputs. Choose{" "}
-              <span className="font-medium text-foreground">Don't allow</span> to keep this vote
-              and future votes local.
+              {t("interactions.choose")} <span className="font-medium text-foreground">{t("interactions.alwaysAllow")}</span> {t("interactions.shareVote")}。
+              {t("interactions.choose")} <span className="font-medium text-foreground">{t("interactions.doNotAllow")}</span> {t("interactions.keepVoteLocal")}。
             </p>
-            <p>You can change this later in Instance Settings &gt; General.</p>
+            <p>{t("interactions.changeLater")}</p>
             {termsUrl ? (
               <a
                 href={termsUrl}
@@ -333,7 +331,7 @@ export function IssueChatFeedbackButtons({
                 rel="noreferrer"
                 className="inline-flex text-sm text-foreground underline underline-offset-4"
               >
-                Read our terms of service
+                {t("interactions.readTerms")}
               </a>
             ) : null}
           </div>
@@ -350,7 +348,7 @@ export function IssueChatFeedbackButtons({
                 ).then(() => setPendingSharingDialog(null));
               }}
             >
-              {isSaving ? "Saving..." : "Don't allow"}
+              {isSaving ? t("interactions.saving") : t("interactions.doNotAllow")}
             </Button>
             <Button
               type="button"
@@ -363,7 +361,7 @@ export function IssueChatFeedbackButtons({
                 }).then(() => setPendingSharingDialog(null));
               }}
             >
-              {isSaving ? "Saving..." : "Always allow"}
+              {isSaving ? t("interactions.saving") : t("interactions.alwaysAllow")}
             </Button>
           </DialogFooter>
         </DialogContent>

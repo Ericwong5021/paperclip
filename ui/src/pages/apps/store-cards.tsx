@@ -1,6 +1,7 @@
 import { ServerCog, Wrench } from "lucide-react";
 import { Link } from "@/lib/router";
 import { advancedTabHref } from "@/pages/tools/tool-tabs";
+import { t } from "@/i18n";
 
 /** Popular gallery keys surfaced first in the Browse store (PAP-13254, door 1). */
 export const POPULAR_KEYS = ["zapier", "github", "slack", "notion", "linear"];
@@ -26,12 +27,12 @@ export function ByoConnectCard({ onConnect }: { onConnect: () => void }) {
         <ServerCog className="h-5 w-5 text-muted-foreground" />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-foreground">Connect your own tool</div>
+        <div className="text-sm font-semibold text-foreground">{t("appsToolsResidual.connectOwnTool")}</div>
         <div className="text-xs text-muted-foreground">
-          Paste the URL from a custom or self-hosted MCP server and review its actions before enabling it.
+          {t("appsTools.browseDescription")}
         </div>
       </div>
-      <span className="shrink-0 text-xs font-semibold text-primary">Connect →</span>
+      <span className="shrink-0 text-xs font-semibold text-primary">{t("appsToolsResidual.connectArrow")}</span>
     </button>
   );
 }
@@ -44,7 +45,7 @@ export function AdvancedToolsLink() {
       className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
     >
       <Wrench className="h-3.5 w-3.5" />
-      Developer tools (advanced)
+      {t("appsTools.developerTools", { defaultValue: "Developer tools" })} ({t("appsTools.advancedSettings", { defaultValue: "advanced" })})
     </Link>
   );
 }

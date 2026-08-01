@@ -12,6 +12,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { fuzzyTextMatchesQuery, normalizeSearchText, scoreFuzzyTextFields } from "@/lib/searchable-select";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "../i18n";
 
 export interface SearchableSelectOption<TValue extends string = string> {
   key: string;
@@ -91,9 +92,9 @@ export function SearchableSelect<
   groups,
   onValueChange,
   placeholder,
-  searchPlaceholder = "Search...",
-  emptyMessage = "No options found.",
-  loadingMessage = "Loading...",
+  searchPlaceholder,
+  emptyMessage,
+  loadingMessage,
   loading = false,
   disabled = false,
   className,
@@ -109,6 +110,10 @@ export function SearchableSelect<
   disablePortal,
   createItem,
 }: SearchableSelectProps<TValue, TOption>) {
+  const { t } = useTranslation();
+  const resolvedSearchPlaceholder = searchPlaceholder ?? t("commonComponents.search");
+  const resolvedEmptyMessage = emptyMessage ?? t("commonComponents.noOptions");
+  const resolvedLoadingMessage = loadingMessage ?? t("commonComponents.loading");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const pointerFocusRef = useRef(false);
@@ -247,7 +252,7 @@ export function SearchableSelect<
           <CommandInput
             value={query}
             onValueChange={setQuery}
-            placeholder={searchPlaceholder}
+            placeholder={resolvedSearchPlaceholder}
           />
           <CommandList
             className="overscroll-contain touch-pan-y"
@@ -258,12 +263,12 @@ export function SearchableSelect<
             }}
           >
             {loading ? (
-              <div className="px-3 py-6 text-center text-sm text-muted-foreground">{loadingMessage}</div>
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">{resolvedLoadingMessage}</div>
             ) : (
               <>
-                {!hasOptions && !createItem ? <CommandEmpty>{emptyMessage}</CommandEmpty> : null}
+                {!hasOptions && !createItem ? <CommandEmpty>{resolvedEmptyMessage}</CommandEmpty> : null}
                 {!hasOptions && createItem ? (
-                  <div className="px-3 py-3 text-center text-xs text-muted-foreground">{emptyMessage}</div>
+                  <div className="px-3 py-3 text-center text-xs text-muted-foreground">{resolvedEmptyMessage}</div>
                 ) : null}
                 {filteredGroups.map((group) => (
                   <CommandGroup key={group.id} heading={group.label}>

@@ -49,6 +49,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/context/ToastContext";
 import { EmptyState } from "@/components/EmptyState";
+import { t } from "@/i18n";
 import {
   CapabilityBadges,
   ErrorState,
@@ -377,7 +378,7 @@ function EntryFields({
   return (
     <div className="grid gap-3 sm:grid-cols-(--gtc-60)">
       <div className="space-y-1.5">
-        <Label>Selector</Label>
+        <Label>{t("appsTools.selector", { defaultValue: "选择器" })}</Label>
         <Select value={selectorType} onValueChange={(value) => setSelectorType(value as ToolProfileEntrySelectorType)}>
           <SelectTrigger>
             <SelectValue />
@@ -385,30 +386,30 @@ function EntryFields({
           <SelectContent>
             {SELECTOR_TYPES.map((type) => (
               <SelectItem key={type.value} value={type.value}>
-                {type.label}
+                {t(`appsTools.profileSelector.${type.value}`, { defaultValue: type.label })}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Label>Effect</Label>
+        <Label>{t("appsTools.effect", { defaultValue: "效果" })}</Label>
         <Select value={effect} onValueChange={(value) => setEffect(value as ToolProfileEntryEffect)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="include">Include</SelectItem>
-            <SelectItem value="exclude">Exclude</SelectItem>
+            <SelectItem value="include">{t("appsTools.include", { defaultValue: "包含" })}</SelectItem>
+            <SelectItem value="exclude">{t("appsTools.exclude", { defaultValue: "排除" })}</SelectItem>
           </SelectContent>
         </Select>
       </div>
       {selectorType === "application" ? (
         <div className="space-y-1.5 sm:col-span-2">
-          <Label>Application</Label>
+          <Label>{t("appsTools.application", { defaultValue: "应用" })}</Label>
           <Select value={applicationId} onValueChange={setApplicationId}>
             <SelectTrigger>
-              <SelectValue placeholder="Select an application" />
+              <SelectValue placeholder={t("appsTools.selectApplication", { defaultValue: "选择应用" })} />
             </SelectTrigger>
             <SelectContent>
               {applications.map((app) => (
@@ -422,10 +423,10 @@ function EntryFields({
       ) : null}
       {selectorType === "connection" ? (
         <div className="space-y-1.5 sm:col-span-2">
-          <Label>Connection</Label>
+          <Label>{t("appsTools.connection", { defaultValue: "连接" })}</Label>
           <Select value={connectionId} onValueChange={setConnectionId}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a connection" />
+              <SelectValue placeholder={t("appsTools.selectConnection", { defaultValue: "选择连接" })} />
             </SelectTrigger>
             <SelectContent>
               {connections.map((conn) => (
@@ -439,19 +440,19 @@ function EntryFields({
       ) : null}
       {selectorType === "catalog_entry" ? (
         <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="catalog-entry-id">Catalog entry ID</Label>
+          <Label htmlFor="catalog-entry-id">{t("appsTools.catalogEntryId", { defaultValue: "目录条目 ID" })}</Label>
           <Input id="catalog-entry-id" value={catalogEntryId} onChange={(event) => setCatalogEntryId(event.target.value)} />
         </div>
       ) : null}
       {selectorType === "tool_name" ? (
         <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="tool-name">Tool name</Label>
-          <Input id="tool-name" value={toolName} onChange={(event) => setToolName(event.target.value)} placeholder="e.g. send_email or slack.list_*" />
+          <Label htmlFor="tool-name">{t("appsTools.toolName", { defaultValue: "工具名称" })}</Label>
+          <Input id="tool-name" value={toolName} onChange={(event) => setToolName(event.target.value)} placeholder={t("appsTools.toolNameExample", { defaultValue: "例如 send_email 或 slack.list_*" })} />
         </div>
       ) : null}
       {selectorType === "risk_level" ? (
         <div className="space-y-1.5 sm:col-span-2">
-          <Label>Risk level</Label>
+          <Label>{t("appsTools.riskLevel", { defaultValue: "风险级别" })}</Label>
           <Select value={riskLevel} onValueChange={(value) => setRiskLevel(value as ToolRiskLevel)}>
             <SelectTrigger>
               <SelectValue />
@@ -483,10 +484,10 @@ export function EffectiveAgentPanel({ companyId, agentOptions }: { companyId: st
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="space-y-1.5">
-        <Label>Agent</Label>
+        <Label>{t("appsTools.agent", { defaultValue: "Agent" })}</Label>
         <Select value={agentId} onValueChange={setAgentId}>
           <SelectTrigger>
-            <SelectValue placeholder="Select an agent" />
+            <SelectValue placeholder={t("appsTools.selectAgent", { defaultValue: "选择 Agent" })} />
           </SelectTrigger>
           <SelectContent>
             {agentOptions.map((agent) => (
@@ -509,7 +510,7 @@ export function EffectiveAgentPanel({ companyId, agentOptions }: { companyId: st
         <div className="min-h-0 space-y-5 overflow-y-auto pr-1">
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-foreground">Can use</h3>
+              <h3 className="text-sm font-semibold text-foreground">{t("appsTools.canUse", { defaultValue: "可以使用" })}</h3>
               <span className="text-xs text-muted-foreground tabular-nums">
                 {(effective.data?.allowedToolNames ?? []).length} tools
               </span>
@@ -527,7 +528,7 @@ export function EffectiveAgentPanel({ companyId, agentOptions }: { companyId: st
             )}
           </div>
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Access profiles</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("appsTools.accessProfiles", { defaultValue: "访问配置档案" })}</h3>
             {(effective.data?.profiles ?? []).length === 0 ? (
               <div className="rounded-lg border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
                 No active profile applies to this agent.
@@ -538,7 +539,7 @@ export function EffectiveAgentPanel({ companyId, agentOptions }: { companyId: st
                   <div key={profile.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
                     <span className="min-w-0 truncate text-sm font-medium text-foreground">{profile.name}</span>
                     {profile.summary.isCompanyDefault ? (
-                      <Badge variant="secondary">Company default</Badge>
+                      <Badge variant="secondary">{t("appsTools.companyDefault", { defaultValue: "公司默认" })}</Badge>
                     ) : null}
                   </div>
                 ))}
@@ -554,10 +555,10 @@ export function EffectiveAgentPanel({ companyId, agentOptions }: { companyId: st
 /** The Source column — the key v2 addition. Patterns are flagged as a foot-gun. */
 function SourceBadge({ source }: { source: AllowSource }) {
   if (source.kind === "explicit") {
-    return <Badge variant="secondary">explicit</Badge>;
+    return <Badge variant="secondary">{t("appsTools.explicit", { defaultValue: "显式" })}</Badge>;
   }
   if (source.kind === "default") {
-    return <Badge variant="outline">default allow</Badge>;
+    return <Badge variant="outline">{t("appsTools.defaultAllow", { defaultValue: "默认允许" })}</Badge>;
   }
   return (
     <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-700 dark:text-amber-400">
@@ -575,7 +576,7 @@ function AllowList({ rows, catalogLoading }: { rows: AllowListRow[]; catalogLoad
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold text-foreground">Allow list</h4>
+        <h4 className="text-sm font-semibold text-foreground">{t("appsTools.allowList", { defaultValue: "允许列表" })}</h4>
         <p className="text-xs text-muted-foreground">
           {rows.length} tool{rows.length === 1 ? "" : "s"}
           {explicitCount > 0 ? ` · ${explicitCount} explicit` : ""}
@@ -595,11 +596,11 @@ function AllowList({ rows, catalogLoading }: { rows: AllowListRow[]; catalogLoad
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                  <th className="px-3 py-2.5 font-medium">Tool</th>
-                  <th className="px-3 py-2.5 font-medium">Application</th>
-                  <th className="px-3 py-2.5 font-medium">Capabilities</th>
-                  <th className="px-3 py-2.5 font-medium">Risk</th>
-                  <th className="px-3 py-2.5 font-medium">Source</th>
+                  <th className="px-3 py-2.5 font-medium">{t("appsTools.tool", { defaultValue: "工具" })}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("appsTools.application", { defaultValue: "应用" })}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("appsTools.capabilities", { defaultValue: "能力" })}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("appsTools.risk", { defaultValue: "风险" })}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("appsTools.source", { defaultValue: "来源" })}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -638,8 +639,7 @@ function AllowList({ rows, catalogLoading }: { rows: AllowListRow[]; catalogLoad
       {patternCount > 0 ? (
         <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
           <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-amber-500" />
-          Tools marked <span className="font-medium">pattern</span> were pulled in by a wildcard, application,
-          connection, or risk selector rather than named explicitly — review them when the catalog changes.
+          {t("appsTools.patternHintPrefix", { defaultValue: "标记为" })} <span className="font-medium">pattern</span> {t("appsTools.patternHintSuffix", { defaultValue: "的工具由通配符、应用、连接或风险选择器引入，而不是显式指定。目录变化后请复核。" })}
         </p>
       ) : null}
     </div>
@@ -919,7 +919,7 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-4">
       <ToolsPageHeader
-        title="Access profiles"
+        title={t("appsTools.accessProfiles", { defaultValue: "访问配置档案" })}
         description="Reusable bundles of allowed applications, connections, and tools, assignable to agents, projects, routines, or issues."
         actions={
           <Button size="sm" onClick={() => setCreateOpen(true)}>
@@ -1027,7 +1027,7 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
           <div className="space-y-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="profile-name">Name</Label>
+                <Label htmlFor="profile-name">{t("appsTools.name", { defaultValue: "名称" })}</Label>
                 <Input
                   id="profile-name"
                   value={name}
@@ -1039,12 +1039,12 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="profile-key">Key</Label>
+                <Label htmlFor="profile-key">{t("appsTools.key", { defaultValue: "键" })}</Label>
                 <Input id="profile-key" value={profileKey} onChange={(event) => setProfileKey(event.target.value)} />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="profile-description">Description</Label>
+              <Label htmlFor="profile-description">{t("appsTools.description", { defaultValue: "描述" })}</Label>
               <Textarea
                 id="profile-description"
                 value={description}
@@ -1054,27 +1054,27 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>Default action</Label>
+                <Label>{t("appsTools.defaultAction", { defaultValue: "默认操作" })}</Label>
                 <Select value={defaultAction} onValueChange={(value) => setDefaultAction(value as ToolProfileDefaultAction)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="deny">Deny unless included</SelectItem>
-                    <SelectItem value="allow">Allow unless excluded</SelectItem>
+                    <SelectItem value="deny">{t("appsTools.denyUnlessIncluded", { defaultValue: "除非包含，否则拒绝" })}</SelectItem>
+                    <SelectItem value="allow">{t("appsTools.allowUnlessExcluded", { defaultValue: "除非排除，否则允许" })}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Status</Label>
+                <Label>{t("appsTools.status", { defaultValue: "状态" })}</Label>
                 <Select value={status} onValueChange={(value) => setStatus(value as ToolProfileStatus)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="disabled">Disabled</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
+                    <SelectItem value="active">{t("appsTools.active", { defaultValue: "启用" })}</SelectItem>
+                    <SelectItem value="disabled">{t("appsTools.disabled", { defaultValue: "已禁用" })}</SelectItem>
+                    <SelectItem value="archived">{t("appsTools.archived", { defaultValue: "已归档" })}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1124,7 +1124,7 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
       }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add entry</DialogTitle>
+            <DialogTitle>{t("appsTools.addEntry", { defaultValue: "添加条目" })}</DialogTitle>
             <DialogDescription>{entryProfile?.name}</DialogDescription>
           </DialogHeader>
           <EntryFields
@@ -1146,7 +1146,7 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
             connections={connectionOptions}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEntryProfile(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEntryProfile(null)}>{t("appsTools.cancel", { defaultValue: "取消" })}</Button>
             <Button disabled={addEntry.isPending} onClick={saveEntry}>
               Add entry
             </Button>
@@ -1159,12 +1159,12 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Bind profile</DialogTitle>
+            <DialogTitle>{t("appsTools.bindProfile", { defaultValue: "绑定配置档案" })}</DialogTitle>
             <DialogDescription>{bindProfileFor?.name}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Target type</Label>
+              <Label>{t("appsTools.targetType", { defaultValue: "目标类型" })}</Label>
               <Select value={targetType} onValueChange={(value) => setTargetType(value as ToolProfileBindingTargetType)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -1172,7 +1172,7 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
                 <SelectContent>
                   {TARGET_TYPES.map((target) => (
                     <SelectItem key={target.value} value={target.value}>
-                      {target.label}
+                      {t(`appsTools.profileTarget.${target.value}`, { defaultValue: target.label })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1180,9 +1180,9 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
             </div>
             {targetType === "agent" ? (
               <div className="space-y-1.5">
-                <Label>Agent</Label>
+                <Label>{t("appsTools.agent", { defaultValue: "Agent" })}</Label>
                 <Select value={targetAgentId} onValueChange={setTargetAgentId}>
-                  <SelectTrigger><SelectValue placeholder="Select an agent" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("appsTools.selectAgent", { defaultValue: "选择 Agent" })} /></SelectTrigger>
                   <SelectContent>
                     {agentOptions.map((agent) => <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>)}
                   </SelectContent>
@@ -1191,9 +1191,9 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
             ) : null}
             {targetType === "project" ? (
               <div className="space-y-1.5">
-                <Label>Project</Label>
+                <Label>{t("appsTools.project", { defaultValue: "项目" })}</Label>
                 <Select value={targetProjectId} onValueChange={setTargetProjectId}>
-                  <SelectTrigger><SelectValue placeholder="Select a project" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("appsTools.selectProject", { defaultValue: "选择项目" })} /></SelectTrigger>
                   <SelectContent>
                     {projectOptions.map((project) => <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>)}
                   </SelectContent>
@@ -1202,9 +1202,9 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
             ) : null}
             {targetType === "routine" ? (
               <div className="space-y-1.5">
-                <Label>Routine</Label>
+                <Label>{t("appsTools.routine", { defaultValue: "例行任务" })}</Label>
                 <Select value={targetRoutineId} onValueChange={setTargetRoutineId}>
-                  <SelectTrigger><SelectValue placeholder="Select a routine" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("appsTools.selectRoutine", { defaultValue: "选择例行任务" })} /></SelectTrigger>
                   <SelectContent>
                     {routineOptions.map((routine) => <SelectItem key={routine.id} value={routine.id}>{routine.title}</SelectItem>)}
                   </SelectContent>
@@ -1213,19 +1213,19 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
             ) : null}
             {targetType === "issue" ? (
               <div className="space-y-1.5">
-                <Label htmlFor="target-issue-id">Issue ID</Label>
+              <Label htmlFor="target-issue-id">{t("appsTools.issueId", { defaultValue: "Issue ID" })}</Label>
                 <Input id="target-issue-id" value={targetIssueId} onChange={(event) => setTargetIssueId(event.target.value)} />
               </div>
             ) : null}
             <div className="space-y-1.5">
-              <Label htmlFor="profile-priority">Priority</Label>
+              <Label htmlFor="profile-priority">{t("appsTools.priority", { defaultValue: "优先级" })}</Label>
               <Input id="profile-priority" type="number" min={0} max={10000} value={priority} onChange={(event) => setPriority(event.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBindProfileFor(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setBindProfileFor(null)}>{t("appsTools.cancel", { defaultValue: "取消" })}</Button>
             <Button disabled={bind.isPending} onClick={saveBinding}>
-              Bind
+              {t("appsTools.bind", { defaultValue: "绑定" })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1311,10 +1311,10 @@ function ProfileDetail({
 
         {/* Targets */}
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Targets</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t("appsTools.targets", { defaultValue: "目标" })}</h4>
           <div className="flex flex-wrap gap-2">
             {profile.bindings.length === 0 ? (
-              <span className="text-sm text-muted-foreground">No targets bound.</span>
+              <span className="text-sm text-muted-foreground">{t("appsTools.noTargetsBound", { defaultValue: "尚未绑定目标。" })}</span>
             ) : profile.bindings.map((binding) => (
               <span key={binding.id} className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs">
                 <Badge variant="outline">{binding.targetType}</Badge>
@@ -1335,27 +1335,27 @@ function ProfileDetail({
 
         {/* Effective scope summary */}
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Effective scope</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t("appsTools.effectiveScope", { defaultValue: "生效范围" })}</h4>
           <div className="flex flex-wrap gap-2 text-xs">
             <span className="rounded-md border border-border px-2 py-1 text-muted-foreground">
               Default <span className="font-medium text-foreground">{profile.defaultAction}</span>
             </span>
             <span className="rounded-md border border-border px-2 py-1 text-muted-foreground">
-              <span className="font-medium text-foreground">{rows.length}</span> tools allowed
+              <span className="font-medium text-foreground">{rows.length}</span> {t("appsTools.toolsAllowed", { defaultValue: "个工具允许使用" })}
             </span>
             <span className="rounded-md border border-border px-2 py-1 text-muted-foreground">
               <span className="font-medium text-foreground">{includeCount}</span> include /{" "}
-              <span className="font-medium text-foreground">{excludeCount}</span> exclude
+              <span className="font-medium text-foreground">{excludeCount}</span> {t("appsTools.exclude", { defaultValue: "排除" })}
             </span>
           </div>
         </div>
 
         {/* Selectors (entry management) */}
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Selectors</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t("appsTools.selectors", { defaultValue: "选择器" })}</h4>
           <div className="flex flex-wrap gap-2">
             {profile.entries.length === 0 ? (
-              <span className="text-sm text-muted-foreground">No selectors.</span>
+              <span className="text-sm text-muted-foreground">{t("appsTools.noSelectors", { defaultValue: "没有选择器。" })}</span>
             ) : profile.entries.map((entry) => (
               <span key={entry.id} className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs">
                 <Badge variant={entry.effect === "include" ? "secondary" : "destructive"}>{entry.effect}</Badge>

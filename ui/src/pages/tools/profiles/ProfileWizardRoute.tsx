@@ -4,6 +4,7 @@ import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
 import { advancedTabHref } from "../tool-tabs";
 import { ToolsAdminGate } from "./ToolsAdminGate";
+import { t } from "@/i18n";
 import { ProfileWizard } from "./ProfileWizard";
 import { TEMPLATES, type TemplateKey } from "./profile-model";
 
@@ -37,7 +38,7 @@ export function ProfileWizardRoute({ mode }: { mode: "new" | "edit" }) {
   }, [setBreadcrumbs, selectedCompany?.name, mode]);
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company to create a profile.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("appsTools.selectCompanyCreateProfile", { defaultValue: "请选择公司以创建配置档案。" })}</div>;
   }
 
   return (

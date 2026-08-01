@@ -1,4 +1,5 @@
 import type { AppDefinition } from "@paperclipai/shared";
+import { officialAppMetadata } from "@/i18n/apps-catalog-messages";
 
 export type AppGalleryDisplayEntry = AppDefinition & {
   key?: string;
@@ -12,11 +13,11 @@ export function appDefinitionSlug(entry: AppGalleryDisplayEntry | null | undefin
 }
 
 export function appDefinitionName(entry: AppGalleryDisplayEntry | null | undefined): string {
-  return entry?.name ?? appDefinitionSlug(entry) ?? "App";
+  return officialAppMetadata(appDefinitionSlug(entry))?.name ?? entry?.name ?? appDefinitionSlug(entry) ?? "App";
 }
 
 export function appDefinitionDescription(entry: AppGalleryDisplayEntry | null | undefined): string {
-  return entry?.description ?? entry?.tagline ?? "";
+  return officialAppMetadata(appDefinitionSlug(entry))?.description ?? entry?.description ?? entry?.tagline ?? "";
 }
 
 export function appDefinitionLogoUrl(entry: AppGalleryDisplayEntry | null | undefined): string | undefined {

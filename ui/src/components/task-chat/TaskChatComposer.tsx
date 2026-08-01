@@ -18,6 +18,7 @@ import {
 import { nextWorkMode, workModeMetaFor, workModeMetaList } from "@/lib/work-mode-meta";
 import type { InlineEntityOption } from "@/components/InlineEntitySelector";
 import type { IssueAttachment, IssueWorkMode } from "@paperclipai/shared";
+import { t } from "@/i18n";
 
 /** Structurally identical to IssueChatThread's module-private CommentReassignment. */
 interface CommentReassignment {
@@ -54,20 +55,20 @@ function modeHue(mode: IssueWorkMode): string {
 }
 
 const MODE_DESCRIPTION: Partial<Record<IssueWorkMode, string>> = {
-  standard: "Make changes and run work",
-  planning: "Draft a plan before acting",
-  ask: "Answer questions only, no changes",
+  standard: t("interactions.modeStandardDescription"),
+  planning: t("interactions.modePlanningDescription"),
+  ask: t("interactions.modeAskDescription"),
 };
 
 /** v7 per-mode placeholder copy; `{agent}` is the pending assignee's name. */
 function modePlaceholder(mode: IssueWorkMode, agentName: string): string {
   switch (mode) {
     case "planning":
-      return `Plan with ${agentName} — shapes the plan doc, no code changes…`;
+      return t("interactions.modePlanningPlaceholder", { agent: agentName });
     case "ask":
-      return `Ask ${agentName} a question — read-only, nothing runs…`;
+      return t("interactions.modeAskPlaceholder", { agent: agentName });
     default:
-      return `Message ${agentName} — describe what you want done…`;
+      return t("interactions.modeStandardPlaceholder", { agent: agentName });
   }
 }
 
@@ -156,8 +157,8 @@ export function TaskChatComposer({
   const showAssignee = Boolean(enableReassign && reassignOptions && reassignOptions.length > 0);
   const assigneeValue = pendingAssignee ?? currentAssigneeValue;
   const assigneeLabel =
-    reassignOptions?.find((o) => o.id === assigneeValue)?.label ?? "Unassigned";
-  const assigneeName = assigneeLabel === "Unassigned" ? "the agent" : assigneeLabel;
+    reassignOptions?.find((o) => o.id === assigneeValue)?.label ?? t("interactions.handoffUnassigned");
+  const assigneeName = assigneeLabel === t("interactions.handoffUnassigned") ? t("interactions.theAgent") : assigneeLabel;
   const effectivePlaceholder = placeholder ?? modePlaceholder(pendingMode, assigneeName);
 
   function insertReference(name: string, url: string, asImage: boolean) {
@@ -197,7 +198,7 @@ export function TaskChatComposer({
         setAttachments((prev) =>
           prev.map((item) =>
             item.id === id
-              ? { ...item, status: "error", error: "This file type cannot be attached here" }
+              ? { ...item, status: "error", error: t("interactions.chatFileTypeUnsupported") }
               : item,
           ),
         );
@@ -206,7 +207,7 @@ export function TaskChatComposer({
       setAttachments((prev) =>
         prev.map((item) =>
           item.id === id
-            ? { ...item, status: "error", error: err instanceof Error ? err.message : "Upload failed" }
+            ? { ...item, status: "error", error: err instanceof Error ? err.message : t("interactions.chatUploadFailed") }
             : item,
         ),
       );
@@ -318,7 +319,7 @@ export function TaskChatComposer({
         }}
         onPaste={handlePaste}
         disabled={disabled}
-        placeholder={disabled ? (disabledReason ?? "Composer disabled") : effectivePlaceholder}
+        placeholder={disabled ? (disabledReason ?? t("interactions.composerDisabled")) : effectivePlaceholder}
         rows={2}
         className="w-full resize-none bg-transparent px-1 py-1 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-60"
         data-testid="task-chat-composer-input"
@@ -354,10 +355,10 @@ export function TaskChatComposer({
               <span className="shrink-0">
                 ·{" "}
                 {attachment.status === "uploading"
-                  ? "Uploading…"
+                  ? t("interactions.chatUploading")
                   : attachment.status === "error"
-                    ? (attachment.error ?? "Upload failed")
-                    : "Attached"}
+                    ? (attachment.error ?? t("interactions.chatUploadFailed"))
+                    : t("interactions.chatAttached")}
               </span>
             </span>
           ))}
@@ -378,8 +379,8 @@ export function TaskChatComposer({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled}
-              title="Attach file"
-              aria-label="Attach file"
+              title={t("interactions.attachFile")}
+              aria-label={t("interactions.attachFile")}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
               data-testid="task-chat-composer-attach"
             >
@@ -458,8 +459,8 @@ export function TaskChatComposer({
           type="button"
           onClick={() => void submit()}
           disabled={disabled || submitting || body.trim().length === 0}
-          title="Send (⌘+Enter)"
-          aria-label="Send"
+          title={t("interactions.sendWithShortcut")}
+          aria-label={t("interactions.send")}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-transform hover:scale-105 disabled:scale-100 disabled:bg-muted disabled:text-muted-foreground"
           data-testid="task-chat-composer-send"
         >
