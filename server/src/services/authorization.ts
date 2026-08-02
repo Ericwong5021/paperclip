@@ -255,18 +255,40 @@ function evaluateAuthorizationPolicyForAssignment(
   const agentVisibility = readPolicyObject(policy, "agentVisibility");
   const assignmentPolicy = readPolicyObject(policy, "assignmentPolicy");
   const protectedAgent = readPolicyObject(policy, "protectedAgent");
+  const trustPreset = readString(policy.trustPreset);
+  const reviewPreset = readPolicyObject(policy, "reviewPreset");
+  const trustBoundary = readPolicyObject(policy, "trustBoundary");
   const knownTopLevelKeys = new Set([
     "agentVisibility",
     "assignmentPolicy",
     "protectedAgent",
     "managedBy",
+    "trustPreset",
+    "reviewPreset",
+    "trustBoundary",
   ]);
   const hasUnknownTopLevelKey = Object.keys(policy).some((key) => !knownTopLevelKeys.has(key));
-  const hasKnownPolicySection = Boolean(agentVisibility || assignmentPolicy || protectedAgent);
+  const hasKnownPolicySection = Boolean(
+    agentVisibility || assignmentPolicy || protectedAgent || trustPreset || reviewPreset || trustBoundary,
+  );
   if (hasUnknownTopLevelKey || !hasKnownPolicySection) {
     return {
       kind: "unknown",
       explanation: `${label} has authorization policy data that core cannot evaluate for task assignment.`,
+    };
+  }
+
+  if (trustPreset && trustPreset !== "standard" && trustPreset !== "low_trust_review") {
+    return {
+      kind: "unknown",
+      explanation: `${label} has an unsupported trust preset.`,
+    };
+  }
+
+  if (trustPreset === "low_trust_review" || reviewPreset || trustBoundary) {
+    return {
+      kind: "restricted",
+      explanation: `${label} is low-trust scoped and requires an explicit assignment grant.`,
     };
   }
 
